@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Template\Template.csproj" />
+		<ProjectReference Include="..\Template\Ordo.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
