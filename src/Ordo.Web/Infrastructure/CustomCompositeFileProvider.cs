@@ -93,53 +93,88 @@ namespace Ordo.Web.Infrastructure
 
     public class CompositePhysicalFileProvider : IFileProvider
     {
-        PhysicalFileProvider _p;
-        string _baseFolder;
-        string _relativeFolder;
+        private readonly PhysicalFileProvider _p;
+        private readonly string _baseFolder;
+        private readonly string _relativeFolder;
 
         public CompositePhysicalFileProvider(string baseFolder, string relativeFolder)
         {
-            _relativeFolder = "/" + relativeFolder;
+            if (string.IsNullOrWhiteSpace(baseFolder))
+                throw new ArgumentNullException(nameof(baseFolder));
+            if (string.IsNullOrWhiteSpace(relativeFolder))
+                throw new ArgumentNullException(nameof(relativeFolder));
+
+            // normalizza: _relativeFolder con separator standard (usato per confronti con subpath)
+            _relativeFolder = Path.DirectorySeparatorChar + relativeFolder.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             _baseFolder = baseFolder;
-            _p = new PhysicalFileProvider(Path.Combine(baseFolder, relativeFolder));
+
+            // costruisci percorso fisico e normalizza
+            var physicalPath = Path.GetFullPath(Path.Combine(baseFolder, relativeFolder));
+            _p = new PhysicalFileProvider(physicalPath);
         }
 
         public IDirectoryContents GetDirectoryContents(string subpath)
         {
-            if (subpath.StartsWith(_relativeFolder))
+            if (string.IsNullOrEmpty(subpath))
             {
-                var relative = subpath.Substring(_relativeFolder.Length);
-                return _p.GetDirectoryContents(subpath);
+                return _p.GetDirectoryContents(string.Empty);
+            }
+
+            // normalizza subpath in termini di separator e rimuovi eventuale trailing query/hash
+            var normalized = subpath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+            if (normalized.StartsWith(_relativeFolder, System.StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = normalized.Substring(_relativeFolder.Length).TrimStart(Path.DirectorySeparatorChar);
+                return _p.GetDirectoryContents(relative);
             }
             else
             {
-                return _p.GetDirectoryContents(subpath);
+                // se subpath non è relativo alla cartella gestita, chiedi contenuto relativo direttamente
+                var trimmed = normalized.TrimStart(Path.DirectorySeparatorChar);
+                return _p.GetDirectoryContents(trimmed);
             }
         }
 
         public IFileInfo GetFileInfo(string subpath)
         {
-            if (subpath.StartsWith(_relativeFolder))
+            if (string.IsNullOrEmpty(subpath))
             {
-                var relative = subpath.Substring(_relativeFolder.Length);
+                return _p.GetFileInfo(string.Empty);
+            }
+
+            var normalized = subpath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+            if (normalized.StartsWith(_relativeFolder, System.StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = normalized.Substring(_relativeFolder.Length).TrimStart(Path.DirectorySeparatorChar);
                 return _p.GetFileInfo(relative);
             }
             else
             {
-                return _p.GetFileInfo(subpath);
+                var trimmed = normalized.TrimStart(Path.DirectorySeparatorChar);
+                return _p.GetFileInfo(trimmed);
             }
         }
 
         public IChangeToken Watch(string filter)
         {
-            if (filter.StartsWith(_relativeFolder))
+            if (string.IsNullOrEmpty(filter))
             {
-                var relative = filter.Substring(_relativeFolder.Length);
+                return _p.Watch(string.Empty);
+            }
+
+            var normalized = filter.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+            if (normalized.StartsWith(_relativeFolder, System.StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = normalized.Substring(_relativeFolder.Length).TrimStart(Path.DirectorySeparatorChar);
                 return _p.Watch(relative);
             }
             else
             {
-                return _p.Watch(filter);
+                var trimmed = normalized.TrimStart(Path.DirectorySeparatorChar);
+                return _p.Watch(trimmed);
             }
         }
     }

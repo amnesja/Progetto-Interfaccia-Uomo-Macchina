@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Ordo.Infrastructure;
+using Ordo.Services;
 
 namespace Ordo.Web
 {
@@ -7,7 +11,25 @@ namespace Ordo.Web
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var host = CreateHostBuilder(args).Build();
+
+            using (var scope = host.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<OrdoDbContext>();
+
+                if (context.Database.IsRelational())
+                {
+                    context.Database.Migrate();             // applica automaticamente le migration mancanti
+                }
+                else
+                {
+                    context.Database.EnsureCreated(); // per InMemory durante i test/dev
+                }
+
+                DataGenerator.InitializeUsers(context);  // poi esegue il seeding, in sicurezza
+            }
+
+            host.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
