@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -34,7 +35,25 @@ namespace Ordo.Web
 
             services.AddDbContext<OrdoDbContext>(options =>
             {
-                options.UseInMemoryDatabase(databaseName: "Ordo");
+                var connectionString = Configuration.GetConnectionString("DefaultConnection")
+                                       ?? Environment.GetEnvironmentVariable("ORDO_CONNECTION");
+
+                if (!string.IsNullOrEmpty(connectionString))
+                {
+                    if (connectionString.Contains("Data Source=") || connectionString.Contains("Filename=") || connectionString.EndsWith(".db"))
+                    {
+                        options.UseSqlite(connectionString);
+                    }
+                    else
+                    {
+                        options.UseSqlServer(connectionString);
+                    }
+                }
+                else
+                {
+                    // Fallback veloce per sviluppo se non è configurata alcuna connessione
+                    options.UseInMemoryDatabase(databaseName: "Ordo");
+                }
             });
 
             // SERVICES FOR AUTHENTICATION

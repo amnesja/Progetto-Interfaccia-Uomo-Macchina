@@ -14,7 +14,16 @@ namespace Ordo.Services.Design
             var connectionString = Environment.GetEnvironmentVariable("ORDO_CONNECTION")
                                    ?? "Server=(localdb)\\mssqllocaldb;Database=Ordo;Trusted_Connection=True;MultipleActiveResultSets=true";
 
-            builder.UseSqlServer(connectionString);
+            // Sceglie il provider in base alla connection string (SQLite vs SQL Server)
+            if (!string.IsNullOrEmpty(connectionString) &&
+                (connectionString.Contains("Data Source=") || connectionString.Contains("Filename=") || connectionString.EndsWith(".db")))
+            {
+                builder.UseSqlite(connectionString);
+            }
+            else
+            {
+                builder.UseSqlServer(connectionString);
+            }
 
             return new OrdoDbContext(builder.Options);
         }

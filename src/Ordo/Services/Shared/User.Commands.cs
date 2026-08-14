@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Ordo.Infrastructure;
 
 namespace Ordo.Services.Shared
 {
@@ -9,6 +13,15 @@ namespace Ordo.Services.Shared
     {
         public Guid? Id { get; set; }
         public string Email { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string NickName { get; set; }
+    }
+
+    public class RegisterUserCommand
+    {
+        public string   Email { get; set; }
+        public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string NickName { get; set; }
@@ -37,6 +50,32 @@ namespace Ordo.Services.Shared
 
             await _dbContext.SaveChangesAsync();
 
+            return user.Id;
+        }
+
+        public async Task<Guid> Handle(RegisterUserCommand cmd)
+        {
+            var usedEmail = await _dbContext.Users.AnyAsync(x => x.Email == cmd.Email);
+
+            if (usedEmail)
+            {
+                throw new EmailAlreadyExistException("Esiste già un account registrato con quela email");
+            }
+
+            var sha256 = SHA3_256.Create();
+            var hashedPassword = Convert.ToBase64String(sha256.ComputeHash(Encoding.ASCII.GetBytes(cmd.Password)));
+
+            var user = new User
+            {
+                Email = cmd.Email,
+                Password = hashedPassword,
+                FirstName = cmd.FirstName,
+                LastName = cmd.LastName,
+                NickName = cmd.NickName,
+            };
+            _dbContext.Users.Add(user);
+
+            await _dbContext.SaveChangesAsync();
             return user.Id;
         }
     }
