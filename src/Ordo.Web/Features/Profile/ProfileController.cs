@@ -21,8 +21,7 @@ namespace Ordo.Web.Features.Profile
             _sharedService = sharedService;
         }
 
-        [HttpGet("/Profile")]
-        [HttpGet("/Profile/Profile")]
+        [HttpGet]
         public virtual async Task<IActionResult> Profile()
         {
             var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -38,36 +37,11 @@ namespace Ordo.Web.Features.Profile
             if (user == null)
                 return Challenge();
 
-            var tasks = _dbContext.Tasks
-                .AsNoTracking()
-                .Where(x => x.AssignedUserId == userId);
-
-            var today = DateTime.Today;
             var model = new ProfileViewModel
             {
                 Email = user.Email,
                 NomeCompleto = string.Join(" ", new[] { user.FirstName, user.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))),
-                NickName = user.NickName,
-                AttivitaDaFare = await tasks.CountAsync(x => x.Stato == TaskState.ToDo),
-                AttivitaInCorso = await tasks.CountAsync(x => x.Stato == TaskState.InProgress),
-                AttivitaInRevisione = await tasks.CountAsync(x => x.Stato == TaskState.Review),
-                AttivitaCompletate = await tasks.CountAsync(x => x.Stato == TaskState.Done),
-                AttivitaScadute = await tasks.CountAsync(x => x.Stato != TaskState.Done && x.Scadenza.HasValue && x.Scadenza.Value.Date < today),
-                AttivitaAperte = await tasks
-                    .Where(x => x.Stato != TaskState.Done)
-                    .OrderBy(x => x.Scadenza == null)
-                    .ThenBy(x => x.Scadenza)
-                    .ThenBy(x => x.Titolo)
-                    .Select(x => new AttivitaAssegnataViewModel
-                    {
-                        Titolo = x.Titolo,
-                        Progetto = x.Board.Project.Nome,
-                        Board = x.Board.Nome,
-                        Priorita = x.Priorita,
-                        Stato = x.Stato,
-                        Scadenza = x.Scadenza
-                    })
-                    .ToArrayAsync()
+                NickName = user.NickName
             };
 
             return View(model);

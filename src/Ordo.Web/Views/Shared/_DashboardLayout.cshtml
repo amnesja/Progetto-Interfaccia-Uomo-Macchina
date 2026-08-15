@@ -1,0 +1,34 @@
+@{
+    Layout = "_LayoutHtml";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+
+@section styles {
+    <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
+    @RenderSection("styles", required: false)
+}
+
+<div class="ordo-dashboard-shell">
+    <aside class="ordo-dashboard-sidebar">
+        <a class="ordo-brand" asp-controller="Dashboard" asp-action="Index" aria-label="Ordo, dashboard">
+            <span class="ordo-brand-mark">O</span><span>Ordo</span>
+        </a>
+
+        <nav class="ordo-dashboard-nav" aria-label="Navigazione principale">
+            <a class="@(controller == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-table-cells-large"></i> Dashboard</a>
+            <span class="disabled"><i class="fa-regular fa-folder"></i> I miei progetti</span>
+            <span class="disabled"><i class="fa-solid fa-list"></i> Attività</span>
+            <a class="@(controller == "Profile" ? "active" : "")" asp-controller="Profile" asp-action="Profile"><i class="fa-regular fa-user"></i> Profilo</a>
+        </nav>
+
+        <form asp-controller="Login" asp-action="Logout" method="post">
+            <button class="ordo-dashboard-logout" type="submit">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Esci
+            </button>
+        </form>
+    </aside>
+
+    <main class="ordo-dashboard-main">
+        @RenderBody()
+    </main>
+</div>

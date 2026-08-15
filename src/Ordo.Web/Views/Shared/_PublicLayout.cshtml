@@ -23,8 +23,15 @@
             </nav>
         </div>
         <div class="ordo-public-actions">
-            <a asp-controller="Login" asp-action="Login" class="ordo-link-muted">Accedi</a>
-            <a asp-controller="Registrazione" asp-action="Registrazione" class="ordo-btn-cta">Crea un account</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Dashboard" asp-action="Index" class="ordo-btn-cta">Vai alla dashboard</a>
+            }
+            else
+            {
+                <a asp-controller="Login" asp-action="Login" class="ordo-link-muted">Accedi</a>
+                <a asp-controller="Registrazione" asp-action="Registrazione" class="ordo-btn-cta">Crea un account</a>
+            }
         </div>
     </header>
 

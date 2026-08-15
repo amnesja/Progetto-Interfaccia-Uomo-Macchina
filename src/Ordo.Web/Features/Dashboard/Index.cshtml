@@ -1,0 +1,114 @@
+@model Ordo.Web.Features.Dashboard.DashboardViewModel
+@using Ordo.Services.Shared
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="ordo-dashboard-page">
+    <header class="ordo-dashboard-heading">
+        <div>
+            <span class="ordo-eyebrow">Dashboard</span>
+            <h1>Buongiorno, @Model.NomeUtente</h1>
+            <p>Qui trovi una panoramica del lavoro da seguire.</p>
+        </div>
+    </header>
+
+    <section class="ordo-dashboard-stats" aria-label="Riepilogo attività">
+        <article class="ordo-dashboard-stat todo">
+            <span>Da fare</span><strong>@Model.AttivitaDaFare</strong>
+        </article>
+        <article class="ordo-dashboard-stat progress">
+            <span>In corso</span><strong>@Model.AttivitaInCorso</strong>
+        </article>
+        <article class="ordo-dashboard-stat review">
+            <span>In revisione</span><strong>@Model.AttivitaInRevisione</strong>
+        </article>
+        <article class="ordo-dashboard-stat overdue">
+            <span>Scadute</span><strong>@Model.AttivitaScadute</strong>
+        </article>
+    </section>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title">
+            <h2>Le mie attività</h2>
+            <span>Le prossime da seguire</span>
+        </div>
+
+        @if (!Model.Attivita.Any())
+        {
+            <div class="ordo-dashboard-empty">
+                Non hai attività aperte assegnate.
+            </div>
+        }
+        else
+        {
+            <div class="ordo-dashboard-table-wrap">
+                <table class="ordo-dashboard-table">
+                    <thead>
+                    <tr>
+                        <th>Attività</th>
+                        <th>Progetto</th>
+                        <th>Stato</th>
+                        <th>Scadenza</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var task in Model.Attivita)
+                    {
+                        var stato = task.Stato switch
+                        {
+                            TaskState.ToDo => "Da fare",
+                            TaskState.InProgress => "In corso",
+                            TaskState.Review => "In revisione",
+                            _ => "Completata"
+                        };
+
+                        var scaduta = task.Scadenza.HasValue &&
+                                      task.Scadenza.Value.Date < DateTime.Today;
+
+                        <tr>
+                            <td><strong>@task.Titolo</strong></td>
+                            <td>@task.Progetto <small>@task.Board</small></td>
+                            <td><span class="ordo-status stato-@task.Stato.ToString().ToLowerInvariant()">@stato</span></td>
+                            <td class="@(scaduta ? "is-overdue" : "")">
+                                @(task.Scadenza?.ToString("dd MMM yyyy") ?? "Nessuna scadenza")
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title">
+            <h2>I miei progetti</h2>
+            <span>Progetti di cui sei proprietario</span>
+        </div>
+
+        @if (!Model.Progetti.Any())
+        {
+            <div class="ordo-dashboard-empty">
+                Non hai ancora creato progetti.
+            </div>
+        }
+        else
+        {
+            <div class="ordo-project-grid">
+                @foreach (var project in Model.Progetti)
+                {
+                    <article class="ordo-project-card">
+                        <h3>@project.Nome</h3>
+                        <p>@(string.IsNullOrWhiteSpace(project.Descrizione) ? "Nessuna descrizione." : project.Descrizione)</p>
+                        <footer>
+                            <span>@project.NumeroBoard board</span>
+                            <span>@project.NumeroTask attività</span>
+                        </footer>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>

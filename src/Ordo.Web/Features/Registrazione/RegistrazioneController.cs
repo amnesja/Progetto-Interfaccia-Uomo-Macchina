@@ -29,7 +29,7 @@ namespace Ordo.Web.Features.Registrazione
             if (HttpContext.User != null && HttpContext.User.Identity != null &&
                 HttpContext.User.Identity.IsAuthenticated)
             {
-                return RedirectToAction(MVC.Example.Users.Index());
+                return RedirectToAction("Index", "Dashboard");
             }
 
             var model = new RegistrazioneViewModel();
@@ -53,7 +53,7 @@ namespace Ordo.Web.Features.Registrazione
                     });
                     
                     Alerts.AddSuccess(this, "Registrazione completata");
-                    return RedirectToAction(MVC.Login.Login());
+                    return RedirectToAction("Login", "Login", new { returnUrl = "/Dashboard" });
                 }
                 catch (EmailAlreadyExistException e)
                 {
@@ -65,4 +65,3 @@ namespace Ordo.Web.Features.Registrazione
         }
     }
 }
-
