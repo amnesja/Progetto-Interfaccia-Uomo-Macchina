@@ -132,7 +132,7 @@ namespace Ordo.Web
                 endpoints.MapHub<OrdoHub>("/OrdoHub");
 
                 endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
-                endpoints.MapControllerRoute("profile-edit", "Profile/Edit", new { controller = "Profile", action = "Edit" });
+                endpoints.MapControllerRoute("dashboard", "Dashboard/{action=Index}/{id?}", new { controller = "Dashboard" });
                 endpoints.MapControllerRoute("profile", "Profile/{action=Profile}/{id?}", new { controller = "Profile" });
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
             });

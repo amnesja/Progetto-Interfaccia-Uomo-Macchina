@@ -27,7 +27,7 @@ namespace Ordo.Web.Features.Login
             _sharedLocalizer = sharedLocalizer;
         }
 
-        private ActionResult LoginAndRedirect(UserDetailDTO utente, string returnUrl, bool rememberMe)
+        private async Task<ActionResult> LoginAndRedirect(UserDetailDTO utente, string returnUrl, bool rememberMe)
         {
             var claims = new List<Claim>
             {
@@ -37,16 +37,16 @@ namespace Ordo.Web.Features.Login
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), new AuthenticationProperties
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), new AuthenticationProperties
             {
                 ExpiresUtc = (rememberMe) ? DateTimeOffset.UtcNow.AddMonths(3) : null,
                 IsPersistent = rememberMe,
             });
 
-            if (string.IsNullOrWhiteSpace(returnUrl) == false)
-                return Redirect(returnUrl);
+            if (Url.IsLocalUrl(returnUrl) && !returnUrl.StartsWith("/Example", StringComparison.OrdinalIgnoreCase))
+                return LocalRedirect(returnUrl);
 
-            return RedirectToAction(MVC.Example.Users.Index());
+            return RedirectToAction("Index", "Dashboard");
         }
 
         [HttpGet]
@@ -54,10 +54,10 @@ namespace Ordo.Web.Features.Login
         {
             if (HttpContext.User != null && HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated)
             {
-                if (string.IsNullOrWhiteSpace(returnUrl) == false)
-                    return Redirect(returnUrl);
+                if (Url.IsLocalUrl(returnUrl) && !returnUrl.StartsWith("/Example", StringComparison.OrdinalIgnoreCase))
+                    return LocalRedirect(returnUrl);
 
-                return RedirectToAction(MVC.Example.Users.Index());
+                return RedirectToAction("Index", "Dashboard");
             }
 
             var model = new LoginViewModel
@@ -81,7 +81,7 @@ namespace Ordo.Web.Features.Login
                         Password = model.Password,
                     });
 
-                    return LoginAndRedirect(utente, model.ReturnUrl, model.RememberMe);
+                    return await LoginAndRedirect(utente, model.ReturnUrl, model.RememberMe);
                 }
                 catch (LoginException e)
                 {
@@ -89,7 +89,7 @@ namespace Ordo.Web.Features.Login
                 }
             }
 
-            return RedirectToAction(MVC.Login.Login());
+            return View(model);
         }
 
         [HttpPost]

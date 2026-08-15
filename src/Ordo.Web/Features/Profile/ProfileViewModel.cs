@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Ordo.Services.Shared;
 
 namespace Ordo.Web.Features.Profile
 {
@@ -10,23 +7,6 @@ namespace Ordo.Web.Features.Profile
         public string Email { get; set; }
         public string NomeCompleto { get; set; }
         public string NickName { get; set; }
-
-        public int AttivitaDaFare { get; set; }
-        public int AttivitaInCorso { get; set; }
-        public int AttivitaInRevisione { get; set; }
-        public int AttivitaCompletate { get; set; }
-        public int AttivitaScadute { get; set; }
-        public IEnumerable<AttivitaAssegnataViewModel> AttivitaAperte { get; set; } = Array.Empty<AttivitaAssegnataViewModel>();
-    }
-
-    public class AttivitaAssegnataViewModel
-    {
-        public string Titolo { get; set; }
-        public string Progetto { get; set; }
-        public string Board { get; set; }
-        public Priorita Priorita { get; set; }
-        public TaskState Stato { get; set; }
-        public DateTime? Scadenza { get; set; }
     }
 
     public class ProfileEditViewModel
