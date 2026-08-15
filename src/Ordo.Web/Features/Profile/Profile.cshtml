@@ -1,0 +1,71 @@
+@model ProfileViewModel
+@using Ordo.Services.Shared
+@{
+    Layout = "_ProfileLayout";
+    ViewData["Title"] = "Profilo";
+    var nomeVisualizzato = string.IsNullOrWhiteSpace(Model.NomeCompleto) ? Model.Email : Model.NomeCompleto;
+    var iniziali = string.Concat(nomeVisualizzato
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2)
+        .Select(parte => char.ToUpperInvariant(parte[0])));
+    var attivita = Model.AttivitaAperte.ToArray();
+}
+
+<div class="ordo-profile-page">
+    <h1>Profilo</h1>
+
+    <section class="ordo-profile-card" aria-label="Dati profilo">
+        <div class="ordo-avatar" aria-hidden="true">@iniziali</div>
+        <div class="ordo-user-details">
+            <div class="ordo-user-name">@nomeVisualizzato</div>
+            @if (!string.IsNullOrWhiteSpace(Model.NickName))
+            {
+                <div>@@@Model.NickName</div>
+            }
+            <div><i class="fa-regular fa-envelope"></i> @Model.Email</div>
+        </div>
+        <a class="ordo-edit-profile" href="/Profile/Edit"><i class="fa-regular fa-pen-to-square"></i> Modifica profilo</a>
+    </section>
+
+    <section class="ordo-stat-grid" aria-label="Riepilogo attività">
+        <div class="ordo-stat todo"><span>Da fare</span><b>@Model.AttivitaDaFare</b><i></i></div>
+        <div class="ordo-stat progress"><span>In corso</span><b>@Model.AttivitaInCorso</b><i></i></div>
+        <div class="ordo-stat review"><span>In revisione</span><b>@Model.AttivitaInRevisione</b><i></i></div>
+        <div class="ordo-stat done"><span>Completate</span><b>@Model.AttivitaCompletate</b><i></i></div>
+        <div class="ordo-stat overdue"><span>Scadute</span><b>@Model.AttivitaScadute</b><i></i></div>
+    </section>
+
+    <section class="ordo-activities-card" aria-labelledby="attivita-heading">
+        <header>
+            <h2 id="attivita-heading">Le mie attività</h2>
+            <span class="ordo-total">@attivita.Length attività aperte</span>
+        </header>
+        @if (!attivita.Any())
+        {
+            <div class="ordo-empty-state">Non hai attività aperte assegnate.</div>
+        }
+        else
+        {
+            <div class="ordo-table-scroll">
+                <table class="ordo-activity-table">
+                    <thead><tr><th>Nome attività</th><th>Progetto</th><th>Stato</th><th>Priorità</th><th>Scadenza</th></tr></thead>
+                    <tbody>
+                    @foreach (var attivitaAssegnata in attivita)
+                    {
+                        var scaduta = attivitaAssegnata.Scadenza.HasValue && attivitaAssegnata.Scadenza.Value.Date < DateTime.Today;
+                        var stato = attivitaAssegnata.Stato switch { TaskState.ToDo => "Da fare", TaskState.InProgress => "In corso", TaskState.Review => "In revisione", TaskState.Done => "Completata", _ => "" };
+                        var priorita = attivitaAssegnata.Priorita switch { Priorita.Alta => "Alta", Priorita.Media => "Media", _ => "Bassa" };
+                        <tr>
+                            <td><strong>@attivitaAssegnata.Titolo</strong></td>
+                            <td>@attivitaAssegnata.Progetto<small>@attivitaAssegnata.Board</small></td>
+                            <td><span class="ordo-badge stato-@attivitaAssegnata.Stato.ToString().ToLowerInvariant()">@stato</span></td>
+                            <td><span class="ordo-badge priorita-@attivitaAssegnata.Priorita.ToString().ToLowerInvariant()">@priorita</span></td>
+                            <td class="@(scaduta ? "is-overdue" : "")"><i class="fa-regular fa-calendar"></i> @(attivitaAssegnata.Scadenza?.ToString("dd MMM yyyy") ?? "Nessuna")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
