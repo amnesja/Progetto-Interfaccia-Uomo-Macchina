@@ -1,0 +1,28 @@
+@{ Layout = "_LayoutHtml"; }
+@section metas { <meta name="color-schema" content="light"/>}
+@section styles { <link href="~/css/auth.css" asp-append-version="true" rel="stylesheet"> @RenderSection("styles", required: false) }
+
+<div class="ordo-auth-shell">
+    <aside class="ordo-auth-panel" aria-hidden="true">
+        <a class="ordo-brand" href="/">
+            <span class="ordo-brand-mark">O</span><span>Ordo</span>
+        </a>
+        <p class="ordo-auth-tagline">Organizza. Collabora. Cresci.</p>
+
+        @RenderSection("sidepanel", required: false)
+
+        <footer class="ordo-auth-footer">&copy; @DateTime.Now.Year Ordo Technologies Inc. Tutti i diritti riservati.</footer>
+    </aside>
+
+    <main class="ordo-auth-content">
+        <div class="ordo-auth-form-wrap">
+            @RenderBody()
+        </div>
+    </main>
+</div>
+
+@section scripts {
+    <script src="~/js/auth-toggle-password.js" asp-append-version="true"></script>
+    @RenderSection("scripts", required: false)
+}
+

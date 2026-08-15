@@ -10,7 +10,13 @@ namespace Ordo.Web.Features.Home
         public HomeController()
         {
         }
-
+        
+        [HttpGet]
+        public virtual IActionResult Index()
+        {
+            return View();
+        }
+        
         [HttpPost]
         public virtual IActionResult ChangeLanguageTo(string cultureName)
         {

@@ -1,0 +1,32 @@
+@{
+    Layout = "_LayoutHtml";
+}
+
+@section metas {
+    <meta name="color-scheme" content="light" />
+}
+
+@section styles {
+    <link href="~/css/profile.css" asp-append-version="true" rel="stylesheet" />
+    @RenderSection("styles", required: false)
+}
+
+<div class="ordo-profile-shell">
+    <header class="ordo-profile-nav">
+        <a class="ordo-brand" href="/" aria-label="Ordo, home">
+            <span class="ordo-brand-mark">O</span><span>Ordo</span>
+        </a>
+        <div class="ordo-profile-nav-actions">
+            <form asp-controller="Login" asp-action="Logout" method="post">
+                <button class="ordo-logout" type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i> Esci</button>
+            </form>
+        </div>
+</header>
+    <main class="ordo-main-content">
+        @RenderBody()
+    </main>
+</div>
+
+@section scripts {
+    @RenderSection("scripts", required: false)
+}

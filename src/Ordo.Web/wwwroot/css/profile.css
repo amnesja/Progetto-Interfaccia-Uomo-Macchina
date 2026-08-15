@@ -1,0 +1,54 @@
+:root { color-scheme:only light; --ordo-navy:#10192e; --ordo-blue:#24429d; --ordo-orange:#fba007; --ordo-bg:#f2f5f9; --ordo-border:#dfe5ed; --ordo-text:#141c31; --ordo-muted:#93a0b4; }
+* { box-sizing:border-box; }
+body { background:var(--ordo-bg); color:var(--ordo-text); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.ordo-profile-shell { min-height:100vh; }
+.ordo-profile-nav { display:flex; align-items:center; min-height:72px; padding:16px 40px; color:#a9b5ca; background:var(--ordo-navy); }
+.ordo-profile-nav-actions { display:flex; align-items:center; gap:20px; margin-left:auto; }
+.ordo-profile-nav-link, .ordo-logout { padding:8px 10px; color:#a9b5ca; background:transparent; border:0; border-radius:7px; font:inherit; font-size:14px; text-decoration:none; }
+.ordo-profile-nav-link.active, .ordo-profile-nav-link:hover, .ordo-logout:hover { color:#fff; background:rgba(255,255,255,.1); }
+.ordo-logout { cursor:pointer; }
+.ordo-sidebar { width:260px; flex:0 0 260px; min-height:100vh; display:flex; flex-direction:column; padding:24px; color:#a9b5ca; background:var(--ordo-navy); border-radius:0; }
+.ordo-brand { display:flex; align-items:center; gap:9px; color:white; font-size:26px; font-weight:750; text-decoration:none; }
+.ordo-brand-mark { display:grid; width:32px; height:32px; place-items:center; color:#10192e; background:var(--ordo-orange); border-radius:6px; font-size:18px; font-weight:850; }
+.ordo-sidebar-nav { display:grid; gap:6px; margin-top:44px; }
+.ordo-sidebar-nav a { display:flex; align-items:center; gap:14px; padding:11px 13px; color:#9ba9bf; border-radius:8px; font-size:15px; text-decoration:none; }
+.ordo-sidebar-nav a:hover, .ordo-sidebar-nav a.active { background:#2645a2; color:#fff; }
+.ordo-sidebar-nav i { width:17px; text-align:center; }
+.ordo-workspace { display:grid; gap:11px; margin-top:auto; font-size:12px; }
+.ordo-workspace > span { color:#8693a9; font-size:11px; font-weight:700; letter-spacing:.08em; }
+.ordo-workspace strong { display:flex; align-items:center; gap:9px; color:#fff; font-size:14px; font-weight:500; }
+.ordo-workspace i { width:24px; height:24px; background:#10b981; border-radius:4px; }
+.ordo-main-content { width:100%; min-width:0; padding:56px 40px 72px; background:var(--ordo-bg); }
+.ordo-profile-page { max-width:1100px; margin:0 auto; }
+.ordo-breadcrumb { color:#98a5b8; font-size:12px; font-weight:700; letter-spacing:.08em; }
+.ordo-breadcrumb span { padding:0 5px; color:#c0c8d4; }
+.ordo-profile-page h1 { margin:4px 0 31px; font-size:30px; font-weight:750; letter-spacing:-.04em; }
+.ordo-profile-card, .ordo-activities-card, .ordo-stat { background:#fff; border:1px solid var(--ordo-border); border-radius:12px; }
+.ordo-profile-card { display:flex; align-items:center; gap:20px; min-height:120px; padding:23px; }
+.ordo-avatar { display:grid; flex:0 0 72px; width:72px; height:72px; place-items:center; color:white; background:#263f99; border-radius:50%; font-size:27px; font-weight:700; }
+.ordo-user-details { display:grid; gap:3px; color:#4d5a6e; font-size:14px; }
+.ordo-user-details i { margin-right:5px; font-size:13px; }
+.ordo-user-name { color:var(--ordo-text); font-size:21px; font-weight:750; }
+.ordo-user-name span { margin-left:5px; padding:2px 5px; color:#24429d; border:1px solid #cbd6f8; border-radius:4px; font-size:11px; font-weight:500; vertical-align:middle; }
+.ordo-edit-profile { margin-left:auto; padding:10px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:9px; box-shadow:0 1px 1px #d98500; font-size:14px; font-weight:700; text-decoration:none; }
+.ordo-edit-profile i { margin-right:6px; }
+.ordo-back-link { display:inline-flex; align-items:center; gap:8px; margin-bottom:14px; color:#536177; font-size:14px; text-decoration:none; }
+.ordo-back-link:hover { color:var(--ordo-blue); }
+.ordo-profile-form { display:grid; gap:20px; max-width:620px; padding:28px; background:#fff; border:1px solid var(--ordo-border); border-radius:12px; }
+.ordo-profile-form .ordo-field { display:grid; gap:7px; }
+.ordo-profile-form label { color:#39465b; font-size:14px; font-weight:650; }
+.ordo-profile-form input { width:100%; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; outline:0; }
+.ordo-profile-form input:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }
+.ordo-profile-form input[readonly] { color:#718096; background:#f8fafc; cursor:not-allowed; }
+.ordo-profile-form small, .field-validation-error { color:#718096; font-size:12px; }.field-validation-error { color:#c62828; }
+.ordo-profile-form-actions { display:flex; justify-content:flex-end; align-items:center; gap:18px; padding-top:4px; }.ordo-profile-form-actions a { color:#536177; font-size:14px; text-decoration:none; }.ordo-profile-form-actions button { padding:10px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:8px; box-shadow:0 1px 1px #d98500; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+.ordo-stat-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; margin:32px 0; }
+.ordo-stat { position:relative; display:grid; gap:5px; min-height:100px; padding:15px; overflow:hidden; }
+.ordo-stat span { font-size:14px; }.ordo-stat b { font-size:30px; line-height:1; }.ordo-stat i { position:absolute; top:18px; right:16px; width:10px; height:10px; border-radius:50%; background:#9aa6b7; }
+.ordo-stat.progress span,.ordo-stat.progress i { color:#24429d; background-color:#24429d; }.ordo-stat.review span,.ordo-stat.review i { color:#f59e0b; background-color:#f59e0b; }.ordo-stat.done span,.ordo-stat.done i { color:#10b981; background-color:#10b981; }.ordo-stat.overdue span,.ordo-stat.overdue i { color:#e12d35; background-color:#e12d35; }
+.ordo-stat.progress span,.ordo-stat.review span,.ordo-stat.done span,.ordo-stat.overdue span { background:none; }
+.ordo-activities-card { padding:23px; }.ordo-activities-card header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }.ordo-activities-card h2 { margin:0; font-size:19px; font-weight:750; }.ordo-total { padding:3px 8px; color:#24429d; background:#f5f7fc; border:1px solid #dfe5ed; border-radius:999px; font-size:12px; font-weight:600; }
+.ordo-filters { display:flex; align-items:center; gap:11px; margin-bottom:20px; }.ordo-search { display:flex; align-items:center; width:280px; padding:0 12px; border:1px solid var(--ordo-border); border-radius:8px; color:#63748d; }.ordo-search input { width:100%; padding:10px 8px; border:0; outline:0; color:var(--ordo-text); font-size:14px; }.ordo-filters button { padding:10px 12px; color:#536177; background:#fff; border:1px solid var(--ordo-border); border-radius:7px; font-size:14px; }.ordo-filters button i { padding-left:8px; font-size:10px; }.ordo-overdue-filter { display:flex; align-items:center; gap:8px; padding-left:11px; color:#e12d35; border-left:1px solid var(--ordo-border); font-size:13px; font-weight:650; }.ordo-overdue-filter input { width:18px; height:18px; accent-color:#e12d35; }
+.ordo-table-scroll { overflow-x:auto; border:1px solid var(--ordo-border); border-radius:8px; }.ordo-activity-table { width:100%; min-width:830px; border-collapse:collapse; font-size:14px; }.ordo-activity-table th { padding:11px 15px; color:#99a5b7; background:#fafbfc; font-size:11px; font-weight:700; letter-spacing:.03em; text-align:left; text-transform:uppercase; white-space:nowrap; }.ordo-activity-table td { padding:14px 15px; color:#56647a; border-top:1px solid var(--ordo-border); vertical-align:middle; }.ordo-activity-table td strong { color:#192238; }.ordo-activity-table td small { display:block; margin-top:2px; color:#98a5b7; font-size:11px; }.ordo-activity-table td > i { margin-right:5px; color:#667790; }.ordo-activity-table .is-overdue { color:#e12d35; font-weight:650; }.ordo-activity-table .is-overdue i { color:#e12d35; }
+.ordo-badge { display:inline-block; padding:3px 7px; border:1px solid currentColor; border-radius:5px; font-size:11px; font-weight:750; letter-spacing:.03em; line-height:1; text-transform:uppercase; }.stato-todo { color:#96a1b2; }.stato-inprogress { color:#24429d; }.stato-review { color:#ed8b00; }.stato-done { color:#05a86d; }.priorita-alta { color:#e12d35; }.priorita-media { color:#ed8b00; }.priorita-bassa { color:#96a1b2; }.ordo-assignee { display:grid; width:30px; height:30px; place-items:center; color:#24429d; background:#f8fafc; border:1px solid var(--ordo-border); border-radius:50%; font-size:10px; font-weight:750; }.ordo-empty-state { padding:36px 20px; color:#718096; border:1px dashed var(--ordo-border); border-radius:8px; text-align:center; }
+@media (max-width: 640px) { .ordo-profile-nav { padding:14px 16px; }.ordo-profile-nav-actions { gap:6px; }.ordo-main-content { padding:32px 16px; }.ordo-profile-page h1 { margin-bottom:20px; }.ordo-profile-card { align-items:flex-start; flex-wrap:wrap; }.ordo-avatar { width:56px; height:56px; flex-basis:56px; font-size:21px; }.ordo-user-name { font-size:18px; }.ordo-stat-grid { grid-template-columns:repeat(2,1fr); gap:10px; margin:20px 0; }.ordo-activities-card { padding:16px; }.ordo-total { display:none; } }
