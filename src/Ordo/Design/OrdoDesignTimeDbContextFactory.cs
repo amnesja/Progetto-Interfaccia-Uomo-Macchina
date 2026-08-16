@@ -10,9 +10,9 @@ namespace Ordo.Services.Design
         {
             var builder = new DbContextOptionsBuilder<OrdoDbContext>();
 
-            // Legge ORDO_CONNECTION oppure usa LocalDB come fallback
+            // Legge ORDO_CONNECTION oppure usa SQLite locale come fallback (standard del team)
             var connectionString = Environment.GetEnvironmentVariable("ORDO_CONNECTION")
-                                   ?? "Server=(localdb)\\mssqllocaldb;Database=Ordo;Trusted_Connection=True;MultipleActiveResultSets=true";
+                                   ?? "Data Source=Ordo.db";
 
             // Sceglie il provider in base alla connection string (SQLite vs SQL Server)
             if (!string.IsNullOrEmpty(connectionString) &&
