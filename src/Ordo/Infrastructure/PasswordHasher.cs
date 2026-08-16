@@ -1,6 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using Org.BouncyCastle.Crypto.Digests;
 
 namespace Ordo.Infrastructure
 {
@@ -13,10 +14,14 @@ namespace Ordo.Infrastructure
                 throw new ArgumentException("Password cannot be empty.", nameof(password));
             }
 
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = SHA3_256.HashData(bytes);
+            var input = Encoding.UTF8.GetBytes(password);
+            var digest = new Sha3Digest(256);
+            var output = new byte[digest.GetDigestSize()];
 
-            return Convert.ToHexString(hash).ToLowerInvariant();
+            digest.BlockUpdate(input, 0, input.Length);
+            digest.DoFinal(output, 0);
+
+            return Convert.ToHexString(output).ToLowerInvariant();
         }
 
         public static bool Verify(string password, string storedHash)
@@ -29,9 +34,10 @@ namespace Ordo.Infrastructure
             var expectedHash = storedHash.Trim();
             var computedHash = Hash(password);
 
-            return CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(expectedHash),
-                Encoding.UTF8.GetBytes(computedHash));
+            var expectedBytes = Encoding.UTF8.GetBytes(expectedHash.ToLowerInvariant());
+            var computedBytes = Encoding.UTF8.GetBytes(computedHash);
+
+            return CryptographicOperations.FixedTimeEquals(expectedBytes, computedBytes);
         }
     }
 }
