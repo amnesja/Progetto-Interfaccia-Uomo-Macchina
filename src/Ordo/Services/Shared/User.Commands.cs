@@ -62,9 +62,7 @@ namespace Ordo.Services.Shared
                 throw new EmailAlreadyExistException("Esiste già un account registrato con quela email");
             }
 
-            var sha256 = SHA3_256.Create();
-            var hashedPassword = Convert.ToBase64String(sha256.ComputeHash(Encoding.ASCII.GetBytes(cmd.Password)));
-
+            var hashedPassword = Ordo.Infrastructure.PasswordHasher.Hash(cmd.Password);
             var user = new User
             {
                 Email = cmd.Email,
