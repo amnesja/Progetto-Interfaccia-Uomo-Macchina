@@ -47,4 +47,10 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <_ContentIncludedByDefault Remove="Areas\Progetti\Dettaglio.cshtml" />
+	  <_ContentIncludedByDefault Remove="Areas\Progetti\Edit.cshtml" />
+	  <_ContentIncludedByDefault Remove="Areas\Progetti\Index.cshtml" />
+	</ItemGroup>
+
 </Project>

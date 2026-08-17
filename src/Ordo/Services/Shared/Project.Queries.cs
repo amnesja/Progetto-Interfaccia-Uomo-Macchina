@@ -26,6 +26,7 @@ namespace Ordo.Services.Shared
             public string Nome { get; set; }
             public string Descrizione { get; set; }
             public Guid OwnerId { get; set; }
+            public bool IsOwner { get; set; }
         }
     }
 
@@ -50,7 +51,8 @@ namespace Ordo.Services.Shared
         public async Task<ProjectsIndexDTO> Query(ProjectsIndexQuery qry)
         {
             var queryable = _dbContext.Projects
-                .Where(x => x.OwnerId == qry.IdCurrentUser);
+                .Where(x => x.OwnerId == qry.IdCurrentUser
+                        || x.Members.Any(m => m.UserId == qry.IdCurrentUser));
 
             if (string.IsNullOrWhiteSpace(qry.Filter) == false)
             {
@@ -66,7 +68,8 @@ namespace Ordo.Services.Shared
                         Id = x.Id,
                         Nome = x.Nome,
                         Descrizione = x.Descrizione,
-                        OwnerId = x.OwnerId
+                        OwnerId = x.OwnerId,
+                        IsOwner = x.OwnerId == qry.IdCurrentUser
                     })
                     .ToArrayAsync(),
                 Count = await queryable.CountAsync()

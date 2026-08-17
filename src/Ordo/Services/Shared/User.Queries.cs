@@ -81,7 +81,7 @@ namespace Ordo.Services.Shared
 
             if (string.IsNullOrWhiteSpace(qry.Filter) == false)
             {
-                queryable = queryable.Where(x => x.Email.Contains(qry.Filter, StringComparison.OrdinalIgnoreCase));
+                queryable = queryable.Where(x => x.Email.ToLower().Contains(qry.Filter.ToLower()));
             }
 
             return new UsersSelectDTO

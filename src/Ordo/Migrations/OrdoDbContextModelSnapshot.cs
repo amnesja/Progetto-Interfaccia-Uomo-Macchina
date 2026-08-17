@@ -85,6 +85,31 @@ namespace Ordo.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("Ordo.Services.Shared.ProjectMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DataInvito")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProjectId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectMembers");
+                });
+
             modelBuilder.Entity("Ordo.Services.Shared.TaskItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -188,6 +213,25 @@ namespace Ordo.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("Ordo.Services.Shared.ProjectMember", b =>
+                {
+                    b.HasOne("Ordo.Services.Shared.Project", "Project")
+                        .WithMany("Members")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ordo.Services.Shared.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Ordo.Services.Shared.TaskItem", b =>
                 {
                     b.HasOne("Ordo.Services.Shared.User", "AssignedUser")
@@ -214,6 +258,8 @@ namespace Ordo.Migrations
             modelBuilder.Entity("Ordo.Services.Shared.Project", b =>
                 {
                     b.Navigation("Boards");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Ordo.Services.Shared.TaskItem", b =>

@@ -20,6 +20,7 @@ namespace Ordo.Services
         public DbSet<Board> Boards { get; set; }
         public DbSet<TaskItem> Tasks { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<ProjectMember> ProjectMembers { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,6 +57,22 @@ namespace Ordo.Services
                 .WithMany(b => b.Tasks)
                 .HasForeignKey(t => t.BoardId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasOne(pm => pm.Project)
+                .WithMany(p => p.Members)
+                .HasForeignKey(pm => pm.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);   // se elimino il progetto, sparisce anche l'elenco membri
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasOne(pm => pm.User)
+                .WithMany()
+                .HasForeignKey(pm => pm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);  // stesso motivo di Owner/AssignedUser: niente cascata verso User
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasIndex(pm => new { pm.ProjectId, pm.UserId })
+                .IsUnique();   // impedisce di invitare due volte la stessa persona allo stesso progetto
 
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Task)
