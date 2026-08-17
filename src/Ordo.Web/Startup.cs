@@ -79,6 +79,7 @@ namespace Ordo.Web
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 options.AreaViewLocationFormats.Clear();
+                options.AreaViewLocationFormats.Add("/Areas/{2}/{0}.cshtml");
                 options.AreaViewLocationFormats.Add("/Areas/{2}/{1}/{0}.cshtml");
                 options.AreaViewLocationFormats.Add("/Areas/{2}/Views/{1}/{0}.cshtml");
                 options.AreaViewLocationFormats.Add("/Areas/{2}/Views/Shared/{0}.cshtml");
@@ -131,7 +132,16 @@ namespace Ordo.Web
                 // ROUTING PER HUB
                 endpoints.MapHub<OrdoHub>("/OrdoHub");
 
+                // ROUTE DELLE AREE - Semplificata per Progetti
+                endpoints.MapAreaControllerRoute(
+                    name: "Progetti", 
+                    areaName: "Progetti", 
+                    pattern: "Progetti/{action=Index}/{id?}", 
+                    defaults: new { controller = "Progetti" });
+
                 endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
+
+                // ROUTE GENERICHE
                 endpoints.MapControllerRoute("dashboard", "Dashboard/{action=Index}/{id?}", new { controller = "Dashboard" });
                 endpoints.MapControllerRoute("profile", "Profile/{action=Profile}/{id?}", new { controller = "Profile" });
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");

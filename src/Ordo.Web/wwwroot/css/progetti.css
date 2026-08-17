@@ -1,0 +1,76 @@
+:root { --ordo-navy:#10192e; --ordo-blue:#24429d; --ordo-orange:#fba007; --ordo-bg:#f2f5f9; --ordo-border:#dfe5ed; --ordo-text:#141c31; --ordo-muted:#718096; }
+* { box-sizing:border-box; }
+
+.ordo-projects-page { max-width:1100px; margin:0 auto; }
+.ordo-projects-page-narrow { max-width:620px; }
+.ordo-projects-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
+.ordo-projects-heading h1 { margin:0 0 8px; font-size:32px; letter-spacing:-.035em; }
+.ordo-projects-heading p { margin:0; color:var(--ordo-muted); font-size:15px; }
+
+.ordo-btn-primary, .ordo-btn-secondary { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; cursor:pointer; border:1px solid transparent; white-space:nowrap; }
+.ordo-btn-primary { color:#111827; background:var(--ordo-orange); border-color:#111827; box-shadow:0 1px 1px #d98500; }
+.ordo-btn-primary:hover { filter:brightness(.96); }
+.ordo-btn-secondary { color:var(--ordo-text); background:#fff; border-color:var(--ordo-border); }
+.ordo-btn-secondary:hover { border-color:var(--ordo-blue); color:var(--ordo-blue); }
+
+.ordo-projects-search { display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+.ordo-search { display:flex; align-items:center; width:320px; padding:0 12px; background:#fff; border:1px solid var(--ordo-border); border-radius:8px; color:#63748d; }
+.ordo-search input { width:100%; padding:10px 8px; border:0; outline:0; color:var(--ordo-text); font:inherit; font-size:14px; background:transparent; }
+.ordo-projects-search button { padding:10px 16px; color:#fff; background:var(--ordo-blue); border:1px solid var(--ordo-blue); border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; }
+.ordo-clear-search { color:var(--ordo-muted); font-size:13px; text-decoration:none; }
+.ordo-clear-search:hover { color:var(--ordo-blue); }
+
+.ordo-project-card-link { display:block; color:inherit; text-decoration:none; }
+.ordo-project-card-link h3 { transition:color .15s ease; }
+.ordo-project-card:hover .ordo-project-card-link h3 { color:var(--ordo-blue); }
+.ordo-project-card footer a, .ordo-project-card footer button { display:inline-flex; align-items:center; gap:6px; color:#536177; background:none; border:0; padding:0; font:inherit; font-size:12px; font-weight:650; text-decoration:none; cursor:pointer; }
+.ordo-project-card footer a:hover { color:var(--ordo-blue); }
+.ordo-link-danger { color:#c62828 !important; }
+.ordo-link-danger:hover { color:#9e1c1c !important; }
+
+.ordo-pagination { display:flex; align-items:center; justify-content:center; gap:18px; margin-top:24px; color:var(--ordo-muted); font-size:13px; }
+.ordo-pagination a { color:var(--ordo-blue); text-decoration:none; font-weight:650; }
+.ordo-pagination a.disabled { color:#c3cad6; pointer-events:none; }
+
+.ordo-back-link { display:inline-flex; align-items:center; gap:8px; margin-bottom:14px; color:#536177; font-size:14px; text-decoration:none; }
+.ordo-back-link:hover { color:var(--ordo-blue); }
+
+.ordo-project-form { display:grid; gap:20px; padding:28px; background:#fff; border:1px solid var(--ordo-border); border-radius:12px; }
+.ordo-project-form .ordo-field { display:grid; gap:7px; }
+.ordo-project-form label { color:#39465b; font-size:14px; font-weight:650; }
+.ordo-project-form input, .ordo-project-form textarea { width:100%; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; outline:0; resize:vertical; }
+.ordo-project-form input:focus, .ordo-project-form textarea:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }
+.field-validation-error { color:#c62828; font-size:12px; }
+.ordo-project-form-actions { display:flex; align-items:center; gap:18px; padding-top:4px; flex-wrap:wrap; }
+.ordo-project-form-actions a { color:#536177; font-size:14px; text-decoration:none; }
+.ordo-project-form-actions button[type="submit"] { margin-left:auto; padding:10px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:8px; box-shadow:0 1px 1px #d98500; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+.ordo-project-form-actions .ordo-link-danger { background:none; border:0; font-size:14px; font-weight:650; cursor:pointer; }
+
+.ordo-project-detail-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+.ordo-project-detail-heading h1 { margin:0 0 8px; font-size:28px; letter-spacing:-.03em; }
+.ordo-project-detail-heading p { margin:0; color:var(--ordo-muted); font-size:15px; }
+
+.ordo-board-list { display:grid; gap:10px; margin-bottom:20px; }
+.ordo-board-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#f8fafc; border:1px solid var(--ordo-border); border-radius:8px; }
+.ordo-board-inline-form { display:flex; align-items:center; flex:1; gap:10px; }
+.ordo-board-inline-form i { color:var(--ordo-blue); }
+.ordo-board-inline-form input { flex:1; padding:8px 10px; border:1px solid transparent; border-radius:6px; background:transparent; font:inherit; }
+.ordo-board-inline-form input:hover, .ordo-board-inline-form input:focus { border-color:var(--ordo-border); background:#fff; outline:0; }
+.ordo-board-inline-form button { padding:6px 10px; color:#059669; background:none; border:0; cursor:pointer; }
+.ordo-board-row form:last-child button { padding:6px 10px; background:none; border:0; cursor:pointer; }
+.ordo-board-add-form { display:flex; gap:10px; }
+.ordo-board-add-form input { flex:1; padding:11px 12px; border:1px dashed var(--ordo-border); border-radius:8px; font:inherit; outline:0; }
+.ordo-board-add-form input:focus { border-style:solid; border-color:var(--ordo-blue); }
+.ordo-board-add-form button { padding:11px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:8px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
+
+@media (max-width:640px) {
+    .ordo-projects-heading, .ordo-project-detail-heading { flex-direction:column; }
+    .ordo-projects-search { flex-wrap:wrap; }
+    .ordo-search { width:100%; }
+}
+
+.ordo-role-badge { display:inline-block; margin-left:8px; padding:2px 8px; color:var(--ordo-blue); background:#eef1fb; border-radius:5px; font-size:11px; font-weight:700; text-transform:uppercase; vertical-align:middle; }
+.ordo-member-info { display:flex; align-items:center; gap:12px; flex:1; }
+.ordo-member-avatar { display:flex; align-items:center; justify-content:center; width:34px; height:34px; color:#fff; background:var(--ordo-blue); border-radius:50%; font-size:14px; font-weight:700; flex-shrink:0; }
+.ordo-member-info strong { display:block; font-size:14px; }
+.ordo-member-info small { color:var(--ordo-muted); font-size:12px; }

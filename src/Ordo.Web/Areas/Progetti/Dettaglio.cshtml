@@ -1,0 +1,135 @@
+@model Ordo.Web.Areas.Progetti.DettaglioViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.Nome;
+}
+
+@section styles {
+    <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-projects-page">
+    <a class="ordo-back-link" href="@Url.Action(MVC.Progetti.Progetti.Index())">
+        <i class="fa-solid fa-arrow-left"></i> Torna ai progetti
+    </a>
+
+    <header class="ordo-project-detail-heading">
+        <div>
+            <span class="ordo-eyebrow">Progetto</span>
+            <h1>@Model.Nome</h1>
+            <p>@(string.IsNullOrWhiteSpace(Model.Descrizione) ? "Nessuna descrizione." : Model.Descrizione)</p>
+            <span class="ordo-role-badge">@(Model.IsOwner ? "Proprietario" : "Collaboratore")</span>
+        </div>
+        @if (Model.IsOwner)
+        {
+            <a class="ordo-btn-secondary" href="@Url.Action(MVC.Progetti.Progetti.Edit(Model.Id))">
+                <i class="fa-solid fa-pen"></i> Modifica progetto
+            </a>
+        }
+    </header>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title">
+            <h2>Board</h2>
+            <span>@Model.Boards.Count() board in questo progetto</span>
+        </div>
+
+        @if (!Model.Boards.Any())
+        {
+            <div class="ordo-dashboard-empty">
+                Nessuna board creata.
+            </div>
+        }
+        else
+        {
+            <div class="ordo-board-list">
+                @foreach (var board in Model.Boards)
+                {
+                    <div class="ordo-board-row">
+                        @if (Model.IsOwner)
+                        {
+                            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.BoardSalva())" class="ordo-board-inline-form">
+                                <input type="hidden" name="Id" value="@board.Id" />
+                                <input type="hidden" name="ProjectId" value="@Model.Id" />
+                                <i class="fa-solid fa-table-columns"></i>
+                                <input type="text" name="Nome" value="@board.Nome" autocomplete="off" />
+                                <button type="submit" title="Salva nome board"><i class="fa-solid fa-check"></i></button>
+                            </form>
+                            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.BoardElimina())"
+                                  onsubmit="return confirm('Eliminare questa board e tutti i suoi task?');">
+                                <input type="hidden" name="id" value="@board.Id" />
+                                <input type="hidden" name="projectId" value="@Model.Id" />
+                                <button type="submit" class="ordo-link-danger" title="Elimina board"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="ordo-board-inline-form">
+                                <i class="fa-solid fa-table-columns"></i>
+                                <span><strong>@board.Nome</strong></span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.IsOwner)
+        {
+            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.BoardSalva())" class="ordo-board-add-form">
+                <input type="hidden" name="ProjectId" value="@Model.Id" />
+                <input type="text" name="Nome" placeholder="Nome nuova board (es. Sprint 1)" autocomplete="off" required />
+                <button type="submit"><i class="fa-solid fa-plus"></i> Aggiungi board</button>
+            </form>
+        }
+    </section>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title">
+            <h2>Collaboratori</h2>
+            <span>@Model.Membri.Count() invitati, oltre al proprietario</span>
+        </div>
+
+        @if (!Model.Membri.Any())
+        {
+            <div class="ordo-dashboard-empty">Nessun collaboratore invitato. Solo tu puoi vedere questo progetto per ora.</div>
+        }
+        else
+        {
+            <div class="ordo-board-list">
+                @foreach (var membro in Model.Membri)
+                {
+                    <div class="ordo-board-row">
+                        <div class="ordo-member-info">
+                            <span class="ordo-member-avatar">@membro.NomeCompleto.Substring(0, 1).ToUpper()</span>
+                            <div>
+                                <strong>@membro.NomeCompleto</strong>
+                                <small>@membro.Email</small>
+                            </div>
+                        </div>
+                        @if (Model.IsOwner)
+                        {
+                            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.MembroRimuovi())"
+                                onsubmit="return confirm('Rimuovere questo collaboratore dal progetto?');">
+                                <input type="hidden" name="projectId" value="@Model.Id" />
+                                <input type="hidden" name="userId" value="@membro.UserId" />
+                                <button type="submit" class="ordo-link-danger" title="Rimuovi collaboratore"><i class="fa-solid fa-user-minus"></i></button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.IsOwner)
+        {
+            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.MembroAggiungi())" class="ordo-board-add-form">
+                <input type="hidden" name="ProjectId" value="@Model.Id" />
+                <input type="email" name="Email" placeholder="Email del collaboratore da invitare" autocomplete="off" required />
+                <button type="submit"><i class="fa-solid fa-user-plus"></i> Invita</button>
+            </form>
+        }
+    </section>
+
+</div>

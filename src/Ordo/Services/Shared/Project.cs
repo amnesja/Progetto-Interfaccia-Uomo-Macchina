@@ -18,5 +18,6 @@ namespace Ordo.Services.Shared
         public User Owner { get; set; }
 
         public ICollection<Board> Boards { get; set; } = new List<Board>();
+        public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
     }
 }

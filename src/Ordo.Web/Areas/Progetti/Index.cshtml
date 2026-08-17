@@ -1,0 +1,84 @@
+@model Ordo.Web.Areas.Progetti.IndexViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "I miei progetti";
+}
+
+@section styles {
+    <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-projects-page">
+    <header class="ordo-projects-heading">
+        <div>
+            <span class="ordo-eyebrow">Progetti</span>
+            <h1>I miei progetti</h1>
+            <p>Crea e gestisci gli spazi di lavoro dei tuoi progetti.</p>
+        </div>
+        <a class="ordo-btn-primary" href="@Url.Action(MVC.Progetti.Progetti.New())">
+            <i class="fa-solid fa-plus"></i> Nuovo progetto
+        </a>
+    </header>
+
+    <form class="ordo-projects-search" method="get">
+        <div class="ordo-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input asp-for="Filter" placeholder="Cerca per nome..." />
+        </div>
+        <button type="submit">Cerca</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Filter))
+        {
+            <a class="ordo-clear-search" href="@Url.Action(MVC.Progetti.Progetti.Index())">Azzera</a>
+        }
+    </form>
+
+    @if (!Model.Progetti.Any())
+    {
+        <div class="ordo-dashboard-empty">
+            Nessun progetto trovato. Crea il tuo primo progetto per iniziare.
+        </div>
+    }
+    else
+    {
+        <div class="ordo-project-grid">
+            @foreach (var progetto in Model.Progetti)
+            {
+                <article class="ordo-project-card">
+                    <a class="ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(progetto.Id))">
+                        <h3>@progetto.Nome</h3>
+                        @if (!progetto.IsOwner)
+                        {
+                            <span class="ordo-role-badge">Collaboratore</span>
+                        }
+                        <p>@(string.IsNullOrWhiteSpace(progetto.Descrizione) ? "Nessuna descrizione." : progetto.Descrizione)</p>
+                    </a>
+
+                    @* Mostra le azioni di gestione solo se l'utente è Owner *@
+                    @if (progetto.IsOwner)
+                    {
+                        <footer>
+                            <a href="@Url.Action(MVC.Progetti.Progetti.Edit(progetto.Id))" title="Modifica progetto">
+                                <i class="fa-solid fa-pen"></i> Modifica
+                            </a>
+                            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.Delete())"
+                                  onsubmit="return confirm('Eliminare definitivamente questo progetto e tutte le sue board?');">
+                                <input type="hidden" name="id" value="@progetto.Id" />
+                                <button type="submit" class="ordo-link-danger"><i class="fa-solid fa-trash"></i> Elimina</button>
+                            </form>
+                        </footer>
+                    }
+                </article>
+            }
+        </div>
+
+        @if (Model.TotalPages() > 1)
+        {
+            <nav class="ordo-pagination">
+                <a class="@(Model.Page <= 1 ? "disabled" : "")" href="@Model.PrevPageUrl(Url)">&laquo; Precedente</a>
+                <span>Pagina @Model.Page di @Model.TotalPages()</span>
+                <a class="@(Model.Page >= Model.TotalPages() ? "disabled" : "")" href="@Model.NextPageUrl(Url)">Successiva &raquo;</a>
+            </nav>
+        }
+    }
+</div>
