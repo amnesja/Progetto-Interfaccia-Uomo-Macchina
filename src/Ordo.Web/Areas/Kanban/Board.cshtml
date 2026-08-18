@@ -1,0 +1,53 @@
+@model Ordo.Web.Areas.Kanban.BoardViewModel
+@{
+    ViewData["Title"] = "Board - " + Model.BoardName;
+}
+
+@section pageTitle{
+    <nav class="navbar navbar-expand navbar-light flex-wrap">
+        <div class="navbar-brand text-truncate">@Model.BoardName</div>
+    </nav>
+}
+
+<link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
+
+<div id="pageId" class="kanban-board">
+    <div class="kanban-column" v-for="col in columns" :key="col.stato">
+        <div class="kanban-column-header">
+            <span>{{ col.titolo }}</span>
+            <span class="kanban-count">{{ tasksByStato(col.stato).length }}</span>
+        </div>
+        <div class="kanban-column-body"
+             @@dragover.prevent
+             @@drop="onDrop(col.stato)">
+            <div class="kanban-card"
+                 v-for="task in tasksByStato(col.stato)"
+                 :key="task.id"
+                 draggable="true"
+                 @@dragstart="onDragStart(task)">
+                <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
+                <b>{{ task.titolo }}</b>
+                <div class="kanban-card-meta" v-if="task.scadenza">
+                    <i class="fa-regular fa-clock"></i> {{ formatDate(task.scadenza) }}
+                </div>
+                <div class="kanban-card-assignee" v-if="task.assignedUserName">
+                    {{ task.assignedUserName }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="/js/bundle-vue.js" asp-append-version="true"></script>
+    <script src="~/Areas/Kanban/Board.js" asp-append-version="true"></script>
+
+    <script type="application/json" id="Seed_JSON">
+        @Html.Raw(Model.ToJson())
+    </script>
+    <script type="text/javascript">
+        var seed = JSON.parse(document.getElementById("Seed_JSON").innerText);
+        var kanbanApp = Ordo.Kanban.createBoardApp(seed, "@Url.Action("MoveTask")");
+        kanbanApp.mount("#pageId");
+    </script>
+}

@@ -70,6 +70,14 @@
                                 <span><strong>@board.Nome</strong></span>
                             </div>
                         }
+
+                        <a class="ordo-btn-secondary ordo-board-open-link"
+                           asp-area="Kanban"
+                           asp-controller="Kanban"
+                           asp-action="Board"
+                           asp-route-id="@board.Id">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Apri board
+                        </a>
                     </div>
                 }
             </div>
