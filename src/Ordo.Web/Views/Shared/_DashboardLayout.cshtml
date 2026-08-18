@@ -31,7 +31,12 @@
                 <i class="fa-regular fa-folder"></i> I miei progetti
             </a>
 
-            <span class="disabled"><i class="fa-solid fa-list"></i> Attività</span>
+            <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")" 
+               asp-area="" 
+               asp-controller="Attivita" 
+               asp-action="Index">
+                <i class="fa-solid fa-list"></i> Attività
+            </a>
 
             <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")" 
             asp-area="" 

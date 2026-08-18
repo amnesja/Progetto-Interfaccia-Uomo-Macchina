@@ -1,0 +1,73 @@
+@model Ordo.Web.Areas.Tasks.EditViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.Id.HasValue ? "Modifica task" : "Nuovo task";
+}
+
+@section styles {
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-projects-page ordo-projects-page-narrow">
+    <a class="ordo-back-link" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId">
+        <i class="fa-solid fa-arrow-left"></i> Torna alla board
+    </a>
+    <h1>@ViewData["Title"]</h1>
+
+    <form class="ordo-project-form" method="post" action="@Url.Action(MVC.Tasks.Tasks.Edit())">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="BoardId" />
+        <input type="hidden" asp-for="ProjectId" />
+        <div asp-validation-summary="ModelOnly" class="field-validation-error"></div>
+
+        <div class="ordo-field">
+            <label asp-for="Titolo"></label>
+            <input asp-for="Titolo" autocomplete="off" />
+            <span asp-validation-for="Titolo" class="field-validation-error"></span>
+        </div>
+
+        <div class="ordo-field">
+            <label asp-for="Descrizione"></label>
+            <textarea asp-for="Descrizione" rows="4"></textarea>
+        </div>
+
+        <div class="ordo-field-row">
+            <div class="ordo-field">
+                <label asp-for="Priorita"></label>
+                <select asp-for="Priorita" asp-items="Model.PrioritaOptions"></select>
+            </div>
+            <div class="ordo-field">
+                <label asp-for="Scadenza"></label>
+                <input asp-for="Scadenza" type="date" />
+            </div>
+        </div>
+
+        <div class="ordo-field">
+            <label asp-for="AssignedUserId"></label>
+            <select asp-for="AssignedUserId" asp-items="Model.UtentiAssegnabili">
+                <option value="">Nessuna assegnazione</option>
+            </select>
+        </div>
+
+        <div class="ordo-project-form-actions">
+            @if (Model.Id.HasValue)
+            {
+                <button type="button" class="ordo-link-danger" onclick="document.getElementById('delete-form').submit();">
+                    Elimina task
+                </button>
+            }
+            <a asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId">Annulla</a>
+            <button type="submit">Salva</button>
+        </div>
+    </form>
+
+    @if (Model.Id.HasValue)
+    {
+        <form id="delete-form" hidden method="post" action="@Url.Action(MVC.Tasks.Tasks.Delete())"
+              onsubmit="return confirm('Eliminare definitivamente questo task e tutti i suoi commenti?');">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="hidden" name="boardId" value="@Model.BoardId" />
+        </form>
+    }
+</div>

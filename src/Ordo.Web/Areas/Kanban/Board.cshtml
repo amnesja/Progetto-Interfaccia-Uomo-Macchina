@@ -6,6 +6,7 @@
 
 @section styles {
     <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
 }
 
 <a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId"
@@ -13,7 +14,17 @@
     <i class="fa-solid fa-arrow-left"></i> Torna al progetto
 </a>
 
-<h1 class="kanban-page-title">@Model.BoardName</h1>
+<!-- HEADER BOARD CON PULSANTE NUOVO TASK -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="kanban-page-title mb-0">@Model.BoardName</h1>
+    <a class="ordo-btn-primary btn btn-primary" 
+       asp-area="Tasks" 
+       asp-controller="Tasks" 
+       asp-action="Edit" 
+       asp-route-boardId="@Model.BoardId">
+        <i class="fa-solid fa-plus"></i> Nuovo task
+    </a>
+</div>
 
 <div id="pageId" class="kanban-board">
     <div class="kanban-column" v-for="col in columns" :key="col.stato">
@@ -24,11 +35,16 @@
         <div class="kanban-column-body"
              @@dragover.prevent
              @@drop="onDrop(col.stato)">
+            
+            <!-- CARD DEL TASK CON CLICK PER APRIRE IL DETTAGLIO -->
             <div class="kanban-card"
                  v-for="task in tasksByStato(col.stato)"
                  :key="task.id"
                  draggable="true"
-                 @@dragstart="onDragStart(task)">
+                 @@dragstart="onDragStart(task)"
+                 @@click="openTaskDetail(task.id)"
+                 style="cursor: pointer;">
+                 
                 <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
                 <b>{{ task.titolo }}</b>
                 <div class="kanban-card-meta" v-if="task.scadenza">
@@ -38,6 +54,7 @@
                     {{ task.assignedUserName }}
                 </div>
             </div>
+
         </div>
     </div>
 </div>

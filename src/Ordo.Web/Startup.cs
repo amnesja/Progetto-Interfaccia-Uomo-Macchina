@@ -146,12 +146,21 @@ namespace Ordo.Web
                     pattern: "Kanban/{action=Index}/{id?}",
                     defaults: new { controller = "Kanban" }
                 );
+               
+                // ROUTE DELLE AREE - Semplificata per Tasks
+                endpoints.MapAreaControllerRoute(
+                    name: "Tasks",
+                    areaName: "Tasks",
+                    pattern: "Tasks/{action=Dettaglio}/{id?}",
+                    defaults: new { controller = "Tasks" });                
+                
                 
                 endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
 
                 // ROUTE GENERICHE
                 endpoints.MapControllerRoute("dashboard", "Dashboard/{action=Index}/{id?}", new { controller = "Dashboard" });
                 endpoints.MapControllerRoute("profile", "Profile/{action=Profile}/{id?}", new { controller = "Profile" });
+                endpoints.MapControllerRoute("attivita", "Attivita/{action=Index}", new { controller = "Attivita" });
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
             });
         }

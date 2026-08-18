@@ -54,6 +54,9 @@ var Ordo;
                             console.error("Impossibile spostare il task", err);
                             alert("Non è stato possibile salvare lo spostamento. Riprova.");
                         }
+                    },
+                    openTaskDetail(taskId) {
+                        window.location.href = '/Tasks/Tasks/Dettaglio/' + taskId;
                     }
                 }
             });
