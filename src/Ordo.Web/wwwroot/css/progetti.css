@@ -58,6 +58,7 @@
 .ordo-board-inline-form input:hover, .ordo-board-inline-form input:focus { border-color:var(--ordo-border); background:#fff; outline:0; }
 .ordo-board-inline-form button { padding:6px 10px; color:#059669; background:none; border:0; cursor:pointer; }
 .ordo-board-row form:last-child button { padding:6px 10px; background:none; border:0; cursor:pointer; }
+.ordo-board-open-link { margin-left:auto; }
 .ordo-board-add-form { display:flex; gap:10px; }
 .ordo-board-add-form input { flex:1; padding:11px 12px; border:1px dashed var(--ordo-border); border-radius:8px; font:inherit; outline:0; }
 .ordo-board-add-form input:focus { border-style:solid; border-color:var(--ordo-blue); }

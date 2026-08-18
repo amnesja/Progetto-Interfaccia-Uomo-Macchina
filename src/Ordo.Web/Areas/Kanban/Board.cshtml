@@ -1,0 +1,55 @@
+@model Ordo.Web.Areas.Kanban.BoardViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Board - " + Model.BoardName;
+}
+
+@section styles {
+    <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId"
+   class="kanban-back-link">
+    <i class="fa-solid fa-arrow-left"></i> Torna al progetto
+</a>
+
+<h1 class="kanban-page-title">@Model.BoardName</h1>
+
+<div id="pageId" class="kanban-board">
+    <div class="kanban-column" v-for="col in columns" :key="col.stato">
+        <div class="kanban-column-header">
+            <span>{{ col.titolo }}</span>
+            <span class="kanban-count">{{ tasksByStato(col.stato).length }}</span>
+        </div>
+        <div class="kanban-column-body"
+             @@dragover.prevent
+             @@drop="onDrop(col.stato)">
+            <div class="kanban-card"
+                 v-for="task in tasksByStato(col.stato)"
+                 :key="task.id"
+                 draggable="true"
+                 @@dragstart="onDragStart(task)">
+                <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
+                <b>{{ task.titolo }}</b>
+                <div class="kanban-card-meta" v-if="task.scadenza">
+                    <i class="fa-regular fa-clock"></i> {{ formatDate(task.scadenza) }}
+                </div>
+                <div class="kanban-card-assignee" v-if="task.assignedUserName">
+                    {{ task.assignedUserName }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/bundle-vue.js" asp-append-version="true"></script>
+<script src="~/Areas/Kanban/Board.js" asp-append-version="true"></script>
+
+<script type="application/json" id="Seed_JSON">
+    @Html.Raw(Model.ToJson())
+</script>
+<script type="text/javascript">
+    var seed = JSON.parse(document.getElementById("Seed_JSON").innerText);
+    var kanbanApp = Ordo.Kanban.createBoardApp(seed, "@Url.Action("MoveTask")");
+    kanbanApp.mount("#pageId");
+</script>

@@ -138,7 +138,15 @@ namespace Ordo.Web
                     areaName: "Progetti", 
                     pattern: "Progetti/{action=Index}/{id?}", 
                     defaults: new { controller = "Progetti" });
-
+                
+                // ROUTE DELLE AREE - Semplificata per Kanban
+                endpoints.MapAreaControllerRoute(
+                    name: "Kanban",
+                    areaName: "Kanban",
+                    pattern: "Kanban/{action=Index}/{id?}",
+                    defaults: new { controller = "Kanban" }
+                );
+                
                 endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
 
                 // ROUTE GENERICHE
