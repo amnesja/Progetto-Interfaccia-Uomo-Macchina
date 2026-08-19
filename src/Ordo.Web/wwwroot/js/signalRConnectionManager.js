@@ -1,3 +1,4 @@
+"use strict";
 class SignalRConnectionManager {
     constructor(connectionUrl, joinGroupParamethers, joinGroupMethod, leaveGroupMethod) {
         this.joinGroupMethod = joinGroupMethod;

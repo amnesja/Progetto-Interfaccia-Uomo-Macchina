@@ -107,3 +107,13 @@
     font-size: 11px;
     color: #4d5a6e;
 }
+
+.kanban-page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0;
+}
+.kanban-page-title-row .kanban-page-title {
+    padding: 0;
+}

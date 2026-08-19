@@ -25,24 +25,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="Areas\Example\Users\EditViewModel.cs">
-			<Generator>DtsGenerator</Generator>
-			<LastGenOutput>EditViewModel.cs.d.ts</LastGenOutput>
-		</Compile>
-		<Compile Update="Areas\Example\Users\IndexViewModel.cs">
-			<Generator></Generator>
-		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="Areas\Example\Users\EditViewModel.cs.d.ts">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>EditViewModel.cs</DependentUpon>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11" />
 	</ItemGroup>

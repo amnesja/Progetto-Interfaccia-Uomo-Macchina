@@ -1,5 +1,6 @@
-/// <reference path="../../../node_modules/vue/dist/vue.d.ts" />
+/// <reference path="../../node_modules/vue/dist/vue.d.ts" />
 
+declare const Vue: any;
 namespace Ordo.Kanban {
 
     interface TaskCard {
@@ -36,6 +37,9 @@ namespace Ordo.Kanban {
                 };
             },
             methods: {
+                openTaskDetail(taskId: string){
+                    window.location.href = "/Tasks/Dettaglio/" + taskId;
+                }, 
                 tasksByStato(stato: number): TaskCard[] {
                     return this.tasks.filter(t => t.stato === stato);
                 },
