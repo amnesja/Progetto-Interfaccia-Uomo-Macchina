@@ -154,8 +154,6 @@ namespace Ordo.Web
                     pattern: "Tasks/{action=Dettaglio}/{id?}",
                     defaults: new { controller = "Tasks" });                
                 
-                
-                endpoints.MapAreaControllerRoute("Example", "Example", "Example/{controller=Users}/{action=Index}/{id?}");
 
                 // ROUTE GENERICHE
                 endpoints.MapControllerRoute("dashboard", "Dashboard/{action=Index}/{id?}", new { controller = "Dashboard" });

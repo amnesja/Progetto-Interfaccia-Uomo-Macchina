@@ -6,8 +6,8 @@
     "removeComments": false,
     "sourceMap": true,
     "target": "es2019",
-    "module": "none",
-
+    "module": "esnext",
+    "strict": false,
     "skipLibCheck": true
   },
   "exclude": [

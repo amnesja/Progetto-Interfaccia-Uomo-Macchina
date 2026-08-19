@@ -1,3 +1,4 @@
+"use strict";
 var utilities;
 (function (utilities) {
     async function postJson(url, body) {
