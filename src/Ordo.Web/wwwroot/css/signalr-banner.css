@@ -1,0 +1,21 @@
+.ordo-signalr-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #fef3cd;
+    color: #7a5b00;
+}
+.ordo-signalr-banner-error {
+    background: #fdecec;
+    color: #a11f26;
+}
+.ordo-signalr-banner a {
+    margin-left: auto;
+    font-weight: 600;
+    color: inherit;
+    text-decoration: underline;
+}

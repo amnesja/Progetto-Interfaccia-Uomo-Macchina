@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Ordo.Services.Shared;
+using Ordo.Web.SignalR;
+using Ordo.Web.SignalR.Hubs.Events;
 
 namespace Ordo.Web.Areas.Kanban
 {
@@ -10,10 +12,12 @@ namespace Ordo.Web.Areas.Kanban
     public partial class KanbanController : AuthenticatedBaseController
     {
         private readonly SharedService _sharedService;
+        private readonly IPublishDomainEvents _publisher;
 
-        public KanbanController(SharedService sharedService)
+        public KanbanController(SharedService sharedService, IPublishDomainEvents publisher)
         {
             _sharedService = sharedService;
+            _publisher = publisher;
         }
 
         [HttpGet]
@@ -50,6 +54,16 @@ namespace Ordo.Web.Areas.Kanban
             await _sharedService.Handle(new MoveTaskCommand
             {
                 Id = request.TaskId,
+                NuovoStato = (TaskState)request.NuovoStato
+            });
+
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = request.TaskId });
+
+            // Notifica in tempo reale chiunque altro stia guardando questa stessa board
+            await _publisher.Publish(new TaskMovedEvent
+            {
+                IdGroup = task.BoardId,
+                TaskId = request.TaskId,
                 NuovoStato = (TaskState)request.NuovoStato
             });
 
