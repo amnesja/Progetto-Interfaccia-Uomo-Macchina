@@ -8,9 +8,19 @@
     <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
     <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
     <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
 <div class="ordo-projects-page ordo-projects-page-narrow">
+
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
+
     <a class="ordo-back-link" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId">
         <i class="fa-solid fa-arrow-left"></i> Torna a "@Model.BoardNome"
     </a>
@@ -91,3 +101,22 @@
         </form>
     </section>
 </div>
+
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script type="text/javascript">
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
+
+        // Se qualcun altro aggiunge un commento su QUESTO task mentre lo stai guardando,
+        // ricarica la pagina per mostrarlo
+        signalRManager.connection.on("CommentAdded", function (taskId, commentId) {
+            if (taskId === "@Model.Id") {
+                location.reload();
+            }
+        });
+
+        signalRManager.startConnection();
+    </script>
+}
