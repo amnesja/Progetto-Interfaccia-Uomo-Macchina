@@ -7,6 +7,7 @@
 @section styles {
     <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
     <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
 <a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId"
@@ -14,13 +15,20 @@
     <i class="fa-solid fa-arrow-left"></i> Torna al progetto
 </a>
 
-<!-- HEADER BOARD CON PULSANTE NUOVO TASK -->
+<div id="lostConnection" class="ordo-signalr-banner d-none">
+    <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+</div>
+<div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+    <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+    <a href="javascript:location.reload()">Ricarica la pagina</a>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="kanban-page-title mb-0">@Model.BoardName</h1>
-    <a class="ordo-btn-primary btn btn-primary" 
-       asp-area="Tasks" 
-       asp-controller="Tasks" 
-       asp-action="Edit" 
+    <a class="ordo-btn-primary btn btn-primary"
+       asp-area="Tasks"
+       asp-controller="Tasks"
+       asp-action="Edit"
        asp-route-boardId="@Model.BoardId">
         <i class="fa-solid fa-plus"></i> Nuovo task
     </a>
@@ -35,8 +43,7 @@
         <div class="kanban-column-body"
              @@dragover.prevent
              @@drop="onDrop(col.stato)">
-            
-            <!-- CARD DEL TASK CON CLICK PER APRIRE IL DETTAGLIO -->
+
             <div class="kanban-card"
                  v-for="task in tasksByStato(col.stato)"
                  :key="task.id"
@@ -44,7 +51,7 @@
                  @@dragstart="onDragStart(task)"
                  @@click="openTaskDetail(task.id)"
                  style="cursor: pointer;">
-                 
+
                 <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
                 <b>{{ task.titolo }}</b>
                 <div class="kanban-card-meta" v-if="task.scadenza">
@@ -60,6 +67,8 @@
 </div>
 
 <script src="/js/bundle-vue.js" asp-append-version="true"></script>
+<script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+<script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
 <script src="~/Areas/Kanban/Board.js" asp-append-version="true"></script>
 
 <script type="application/json" id="Seed_JSON">
@@ -68,5 +77,19 @@
 <script type="text/javascript">
     var seed = JSON.parse(document.getElementById("Seed_JSON").innerText);
     var kanbanApp = Ordo.Kanban.createBoardApp(seed, "@Url.Action("MoveTask")");
-    kanbanApp.mount("#pageId");
+    var kanbanVm = kanbanApp.mount("#pageId");
+
+    // Collegamento SignalR: entra nel gruppo della Board e ascolta gli eventi in tempo reale
+    var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
+    signalRManager.registerEvents();
+    signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato) {
+        Ordo.Kanban.applyRemoteMove(kanbanVm, taskId, nuovoStato);
+    });
+    signalRManager.connection.on("TaskCreated", function (taskId){
+        location.reload();
+    });
+    signalRManager.connection.on("UserAssigned", function (taskId, userId){
+        location.reload();
+    });
+    signalRManager.startConnection();
 </script>

@@ -18,16 +18,16 @@
 
         <nav class="ordo-dashboard-nav" aria-label="Navigazione principale">
             <a class="@(string.IsNullOrEmpty(area) && controller == "Dashboard" ? "active" : "")" 
-            asp-area="" 
-            asp-controller="Dashboard" 
-            asp-action="Index">
+               asp-area="" 
+               asp-controller="Dashboard" 
+               asp-action="Index">
                 <i class="fa-solid fa-table-cells-large"></i> Dashboard
             </a>
 
             <a class="@(area == "Progetti" ? "active" : "")" 
-            asp-area="Progetti" 
-            asp-controller="Progetti" 
-            asp-action="Index">
+               asp-area="Progetti" 
+               asp-controller="Progetti" 
+               asp-action="Index">
                 <i class="fa-regular fa-folder"></i> I miei progetti
             </a>
 
@@ -39,9 +39,9 @@
             </a>
 
             <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")" 
-            asp-area="" 
-            asp-controller="Profile" 
-            asp-action="Profile">
+               asp-area="" 
+               asp-controller="Profile" 
+               asp-action="Profile">
                 <i class="fa-regular fa-user"></i> Profilo
             </a>
         </nav>
@@ -58,3 +58,7 @@
         @RenderBody()
     </main>
 </div>
+
+@section scripts {
+    @RenderSection("scripts", required: false)
+}

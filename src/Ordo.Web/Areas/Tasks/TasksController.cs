@@ -7,6 +7,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Ordo.Services.Shared;
 using Ordo.Web.Infrastructure;
+using Ordo.Web.SignalR;
+using Ordo.Web.SignalR.Hubs.Events;
 
 namespace Ordo.Web.Areas.Tasks
 {
@@ -14,10 +16,12 @@ namespace Ordo.Web.Areas.Tasks
     public partial class TasksController : AuthenticatedBaseController
     {
         private readonly SharedService _sharedService;
+        private readonly IPublishDomainEvents _publisher;
 
-        public TasksController(SharedService sharedService)
+        public TasksController(SharedService sharedService, IPublishDomainEvents publisher)
         {
             _sharedService = sharedService;
+            _publisher = publisher;
         }
 
         private bool TryGetCurrentUserId(out Guid userId)
@@ -107,7 +111,31 @@ namespace Ordo.Web.Areas.Tasks
             {
                 try
                 {
-                    model.Id = await _sharedService.Handle(model.ToAddOrUpdateTaskCommand());
+                    // Teniamo traccia se è una creazione (id non ancora assegnato) PRIMA di salvare,
+                    // perché dopo Handle() model.Id sarà sempre valorizzato in entrambi i casi.
+                    var isNewTask = !model.Id.HasValue;
+                    var command = model.ToAddOrUpdateTaskCommand();
+
+                    model.Id = await _sharedService.Handle(command);
+
+                    if (isNewTask)
+                    {
+                        await _publisher.Publish(new TaskCreatedEvent
+                        {
+                            IdGroup = board.Id,
+                            TaskId = model.Id.Value
+                        });
+                    }
+
+                    if (command.AssignedUserId.HasValue)
+                    {
+                        await _publisher.Publish(new UserAssignedEvent
+                        {
+                            IdGroup = board.Id,
+                            TaskId = model.Id.Value,
+                            UserId = command.AssignedUserId.Value
+                        });
+                    }
 
                     Alerts.AddSuccess(this, "Task salvato correttamente");
 
@@ -214,11 +242,18 @@ namespace Ordo.Web.Areas.Tasks
             }
             else
             {
-                await _sharedService.Handle(new AddCommentCommand
+                var commentId = await _sharedService.Handle(new AddCommentCommand
                 {
                     Testo = model.Testo,
                     TaskId = model.TaskId,
                     UserId = currentUserId
+                });
+
+                await _publisher.Publish(new CommentAddedEvent
+                {
+                    IdGroup = board.Id,
+                    TaskId = model.TaskId,
+                    CommentId = commentId
                 });
             }
 

@@ -32,9 +32,24 @@ namespace Ordo.Web.SignalR
             }
         }
 
-        public Task When(NewMessageEvent e)
+        public Task When(TaskMovedEvent e)
         {
-            return GetOrdoGroup(e.IdGroup).NewMessage(e.IdUser, e.IdMessage);
+            return GetOrdoGroup(e.IdGroup).TaskMoved(e.TaskId, (int)e.NuovoStato);
+        }
+
+        public Task When(TaskCreatedEvent e)
+        {
+            return GetOrdoGroup(e.IdGroup).TaskCreated(e.TaskId);
+        }
+
+        public Task When(CommentAddedEvent e)
+        {
+            return GetOrdoGroup(e.IdGroup).CommentAdded(e.TaskId, e.CommentId);
+        }
+
+        public Task When(UserAssignedEvent e)
+        {
+            return GetOrdoGroup(e.IdGroup).UserAssigned(e.TaskId, e.UserId);
         }
     }
 }
