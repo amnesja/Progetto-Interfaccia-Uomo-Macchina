@@ -5,6 +5,24 @@
     color: #141c31;
 }
 
+.kanban-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.kanban-toolbar .kanban-page-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.kanban-toolbar .ordo-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(4, minmax(240px, 1fr));
@@ -69,6 +87,11 @@
     cursor: grab;
 }
 
+.kanban-card:focus-visible {
+    outline: 3px solid var(--ordo-orange, #fba007);
+    outline-offset: 2px;
+}
+
 .kanban-card:active {
     cursor: grabbing;
 }
@@ -108,6 +131,27 @@
     color: #4d5a6e;
 }
 
+.kanban-card-move {
+    display: none;
+}
+
+.kanban-card-move select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 10px;
+    color: #4d5a6e;
+    background: #fff;
+    border: 1px solid #dfe5ed;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 12px;
+}
+
+.kanban-card-move select:focus-visible {
+    outline: 3px solid var(--ordo-orange, #fba007);
+    outline-offset: 2px;
+}
+
 .kanban-page-title-row {
     display: flex;
     align-items: center;
@@ -116,4 +160,47 @@
 }
 .kanban-page-title-row .kanban-page-title {
     padding: 0;
+}
+
+@media (max-width: 640px) {
+    .kanban-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .kanban-toolbar .kanban-page-title {
+        padding: 0;
+    }
+
+    .kanban-toolbar .ordo-btn-primary {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .kanban-board {
+        grid-auto-columns: minmax(260px, 86vw);
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        gap: 12px;
+        padding: 0 0 16px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+    }
+
+    .kanban-back-link {
+        min-height: 44px;
+        margin: 0 0 16px;
+    }
+
+    .kanban-column {
+        min-height: 56vh;
+        scroll-snap-align: start;
+    }
+
+    .kanban-card-move {
+        display: block;
+        margin-top: 10px;
+    }
 }

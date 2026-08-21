@@ -111,10 +111,15 @@
 
         // Se qualcun altro aggiunge un commento su QUESTO task mentre lo stai guardando,
         // ricarica la pagina per mostrarlo
-        signalRManager.connection.on("CommentAdded", function (taskId, commentId) {
-            if (taskId === "@Model.Id") {
-                location.reload();
+        signalRManager.connection.on("CommentAdded", function (comment) {
+            if (comment.taskId === "@Model.Id") {
+                showSignalRMessage("Nuovo commento su \u00ab" + comment.titolo + "\u00bb.", 1200, function () {
+                    location.reload();
+                });
             }
+        });
+        window.addEventListener("ordo:signalr-reconnected", function () {
+            window.location.reload();
         });
 
         signalRManager.startConnection();

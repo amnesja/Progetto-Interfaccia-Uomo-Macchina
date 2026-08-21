@@ -57,6 +57,39 @@
     <main class="ordo-dashboard-main">
         @RenderBody()
     </main>
+
+    <nav class="ordo-mobile-nav" aria-label="Navigazione mobile">
+        <a class="@(string.IsNullOrEmpty(area) && controller == "Dashboard" ? "active" : "")"
+           asp-area="" asp-controller="Dashboard" asp-action="Index">
+            <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
+            <span>Home</span>
+        </a>
+
+        <a class="@(area == "Progetti" ? "active" : "")"
+           asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
+            <i class="fa-regular fa-folder" aria-hidden="true"></i>
+            <span>Progetti</span>
+        </a>
+
+        <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")"
+           asp-area="" asp-controller="Attivita" asp-action="Index">
+            <i class="fa-solid fa-list" aria-hidden="true"></i>
+            <span>Attività</span>
+        </a>
+
+        <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")"
+           asp-area="" asp-controller="Profile" asp-action="Profile">
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <span>Profilo</span>
+        </a>
+
+        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
+            <button type="submit" class="ordo-mobile-nav-logout">
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                <span>Esci</span>
+            </button>
+        </form>
+    </nav>
 </div>
 
 @section scripts {

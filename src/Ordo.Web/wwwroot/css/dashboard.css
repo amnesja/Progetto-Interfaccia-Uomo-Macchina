@@ -36,3 +36,87 @@ body { margin:0; color:var(--ordo-text); background:var(--ordo-bg); font-family:
 .ordo-activity-filters a { padding:7px 14px; color:#536177; background:#fff; border:1px solid var(--ordo-border); border-radius:999px; font-size:13px; font-weight:650; text-decoration:none; }
 .ordo-activity-filters a:hover { border-color:var(--ordo-blue); color:var(--ordo-blue); }
 .ordo-activity-filters a.active { color:#fff; background:var(--ordo-blue); border-color:var(--ordo-blue); }
+
+.ordo-mobile-nav { display: none; }
+
+.toastify.ordo-realtime-toast {
+    max-width: min(380px, calc(100vw - 32px));
+    padding: 12px 40px 12px 14px;
+    color: var(--ordo-text);
+    background: #fff;
+    border: 1px solid var(--ordo-border);
+    border-left: 4px solid var(--ordo-blue);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(16, 25, 46, .14);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.toastify.ordo-realtime-toast .toast-close {
+    color: var(--ordo-muted);
+    font-size: 18px;
+    line-height: 1;
+}
+
+@media (max-width: 640px) {
+    .ordo-dashboard-main { padding: 24px 16px 96px; }
+    .toastify.ordo-realtime-toast {
+        top: calc(16px + env(safe-area-inset-top));
+        right: 16px;
+    }
+    .ordo-mobile-nav {
+        position: fixed;
+        z-index: 100;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        min-height: 64px;
+        padding: 4px 6px env(safe-area-inset-bottom);
+        background: var(--ordo-navy);
+        border-top: 1px solid #2645a2;
+        box-shadow: 0 -4px 16px rgba(16, 25, 46, .18);
+    }
+    .ordo-mobile-nav form {
+        display: grid;
+    }
+    .ordo-mobile-nav a,
+    .ordo-mobile-nav button {
+        display: grid;
+        width: 100%;
+        min-height: 56px;
+        padding: 0;
+        place-content: center;
+        gap: 4px;
+        color: #9ba9bf;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 11px;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .ordo-mobile-nav i {
+        font-size: 18px;
+    }
+    .ordo-mobile-nav a.active {
+        color: #fff;
+        background: #2645a2;
+        font-weight: 700;
+    }
+    .ordo-mobile-nav .ordo-mobile-nav-logout {
+        color: var(--ordo-orange);
+        font-weight: 700;
+    }
+    .ordo-mobile-nav a:focus-visible,
+    .ordo-mobile-nav button:focus-visible,
+    .ordo-dashboard-nav a:focus-visible {
+        outline: 3px solid var(--ordo-orange);
+        outline-offset: -3px;
+    }
+}
