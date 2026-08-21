@@ -111,9 +111,15 @@ namespace Ordo.Web.Areas.Tasks
             {
                 try
                 {
-                    // Teniamo traccia se è una creazione (id non ancora assegnato) PRIMA di salvare,
-                    // perché dopo Handle() model.Id sarà sempre valorizzato in entrambi i casi.
                     var isNewTask = !model.Id.HasValue;
+
+                    Guid? oldAssignedUserId = null;
+                    if (!isNewTask)
+                    {
+                        var taskEsistente = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
+                        oldAssignedUserId = taskEsistente?.AssignedUserId;
+                    }
+
                     var command = model.ToAddOrUpdateTaskCommand();
 
                     model.Id = await _sharedService.Handle(command);
@@ -134,6 +140,51 @@ namespace Ordo.Web.Areas.Tasks
                             IdGroup = board.Id,
                             TaskId = model.Id.Value,
                             UserId = command.AssignedUserId.Value
+                        });
+                    }
+
+                    // Notifiche personali per Dashboard / "Le mie attività"
+                    var newAssignedUserId = command.AssignedUserId;
+
+                    if (oldAssignedUserId != newAssignedUserId)
+                    {
+                        if (oldAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = oldAssignedUserId.Value,
+                                Tipo = "Unassigned",
+                                Titolo = model.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,   
+                                BoardId = board.Id 
+                            });
+                        }
+
+                        if (newAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = newAssignedUserId.Value,
+                                Tipo = "Assigned",
+                                Titolo = model.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,   
+                                BoardId = board.Id 
+                            });
+                        }
+                    }
+                    else if (newAssignedUserId.HasValue)
+                    {
+                        // stesso assegnatario di prima: se ha cambiato titolo/stato/scadenza, aggiorniamo comunque la sua vista
+                        await _publisher.Publish(new TaskChangedForUserEvent
+                        {
+                            IdGroup = newAssignedUserId.Value,
+                            Tipo = "Updated",
+                            Titolo = model.Titolo,
+                            ProjectNome = progetto.Nome,
+                            ProjectId = board.ProjectId, 
+                            BoardId = board.Id 
                         });
                     }
 
@@ -161,10 +212,23 @@ namespace Ordo.Web.Areas.Tasks
             var board = await _sharedService.Query(new BoardDetailQuery { Id = boardId });
             if (board == null) return NotFound();
 
-            var (hasAccess, _, _) = await CheckAccess(board.ProjectId, currentUserId);
+            var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
 
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = id });
+
             await _sharedService.Handle(new DeleteTaskCommand { Id = id });
+
+            if (task?.AssignedUserId != null)
+            {
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = task.AssignedUserId.Value,
+                    Tipo = "Deleted",
+                    Titolo = task.Titolo,
+                    ProjectNome = progetto.Nome
+                });
+            }
 
             Alerts.AddSuccess(this, "Task eliminato");
 

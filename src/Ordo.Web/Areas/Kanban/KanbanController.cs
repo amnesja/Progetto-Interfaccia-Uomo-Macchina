@@ -59,13 +59,27 @@ namespace Ordo.Web.Areas.Kanban
 
             var task = await _sharedService.Query(new TaskDetailQuery { Id = request.TaskId });
 
-            // Notifica in tempo reale chiunque altro stia guardando questa stessa board
             await _publisher.Publish(new TaskMovedEvent
             {
                 IdGroup = task.BoardId,
                 TaskId = request.TaskId,
                 NuovoStato = (TaskState)request.NuovoStato
             });
+
+            if (task.AssignedUserId.HasValue)
+            {
+                var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
+
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = task.AssignedUserId.Value,
+                    Tipo = "Updated",
+                    Titolo = task.Titolo,
+                    ProjectNome = null,
+                    ProjectId = board?.ProjectId ?? Guid.Empty,
+                    BoardId = task.BoardId
+                });
+            }
 
             return Ok();
         }

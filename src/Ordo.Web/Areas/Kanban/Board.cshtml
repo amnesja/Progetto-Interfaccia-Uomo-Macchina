@@ -1,8 +1,11 @@
 @model Ordo.Web.Areas.Kanban.BoardViewModel
+@using System.Security.Claims
 @{
     Layout = "_DashboardLayout";
     ViewData["Title"] = "Board - " + Model.BoardName;
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
+
 
 @section styles {
     <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
@@ -91,5 +94,29 @@
     signalRManager.connection.on("UserAssigned", function (taskId, userId){
         location.reload();
     });
-    signalRManager.startConnection();
+
+    signalRManager.connection.on("BoardDeleted", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            window.location = "/Progetti/Dettaglio/@Model.ProjectId?notice=board-deleted";
+        }
+    });
+
+    signalRManager.connection.on("BoardUpdated", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            var titleEl = document.querySelector(".kanban-page-title");
+            if (titleEl) titleEl.textContent = nome;
+        }
+    });
+
+    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+        if (tipo !== "Assigned") return;
+        if (boardId === "@Model.BoardId") return; // sei già su questa board
+
+        Ordo.Toast.showAssigned(titolo, projectNome);
+    });
+
+    signalRManager.startConnection().then(function () {
+        signalRManager.connection.invoke("JoinGroup", "@currentUserId");
+    });
+    
 </script>
