@@ -1,0 +1,126 @@
+@model Ordo.Web.Features.Attivita.AttivitaViewModel
+@using Ordo.Services.Shared
+@using System.Security.Claims
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Le mie attività";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+@section styles {
+    <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-dashboard-page">
+    
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
+    <div id="ordoTaskToast"></div>
+
+    <header class="ordo-dashboard-heading">
+        <div>
+            <span class="ordo-eyebrow">Attività</span>
+            <h1>Le mie attività</h1>
+            <p>Tutti i task assegnati a te, in tutti i progetti a cui partecipi.</p>
+        </div>
+    </header>
+
+    <nav class="ordo-activity-filters" aria-label="Filtra per stato">
+        <a class="@(Model.Filtro == null ? "active" : "")" href="@Url.Action("Index")">Tutte</a>
+        <a class="@(Model.Filtro == TaskState.ToDo ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.ToDo })">Da fare</a>
+        <a class="@(Model.Filtro == TaskState.InProgress ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.InProgress })">In corso</a>
+        <a class="@(Model.Filtro == TaskState.Review ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.Review })">Review</a>
+        <a class="@(Model.Filtro == TaskState.Done ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.Done })">Completate</a>
+    </nav>
+
+    <section class="ordo-dashboard-section">
+        @if (!Model.Attivita.Any())
+        {
+            <div class="ordo-dashboard-empty">
+                Nessuna attività assegnata@(Model.Filtro.HasValue ? " in questo stato" : "").
+            </div>
+        }
+        else
+        {
+            <div class="ordo-dashboard-table-wrap">
+                <table class="ordo-dashboard-table">
+                    <thead>
+                    <tr>
+                        <th>Attività</th>
+                        <th>Progetto</th>
+                        <th>Priorità</th>
+                        <th>Stato</th>
+                        <th>Scadenza</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var task in Model.Attivita)
+                    {
+                        var stato = task.Stato switch
+                        {
+                            TaskState.ToDo => "Da fare",
+                            TaskState.InProgress => "In corso",
+                            TaskState.Review => "In revisione",
+                            _ => "Completata"
+                        };
+
+                        var priorita = task.Priorita switch
+                        {
+                            Priorita.Bassa => "Bassa",
+                            Priorita.Media => "Media",
+                            _ => "Alta"
+                        };
+
+                        var scaduta = task.Stato != TaskState.Done &&
+                                      task.Scadenza.HasValue &&
+                                      task.Scadenza.Value.Date < DateTime.Today;
+
+                        <tr>
+                            <td>
+                                <a class="ordo-task-link" asp-area="Tasks" asp-controller="Tasks" asp-action="Dettaglio" asp-route-id="@task.Id">
+                                    <strong>@task.Titolo</strong>
+                                </a>
+                            </td>
+                            <td>@task.Progetto <small>@task.Board</small></td>
+                            <td><span class="ordo-priority-badge priorita-@((int)task.Priorita)">@priorita</span></td>
+                            <td><span class="ordo-status stato-@task.Stato.ToString().ToLowerInvariant()">@stato</span></td>
+                            <td class="@(scaduta ? "is-overdue" : "")">
+                                @(task.Scadenza?.ToString("dd MMM yyyy") ?? "Nessuna scadenza")
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        
+        <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+        <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+        <script type="text/javascript">
+            var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+            signalRManager.registerEvents();
+        
+            signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+                if (tipo === "Assigned") {
+                    Ordo.Toast.showAssigned(titolo, projectNome);
+                    setTimeout(function () { location.reload(); }, 2500);
+                } else {
+                    location.reload();
+                }
+            });
+        
+            signalRManager.connection.on("ProjectUpdated", function (projectId, nome, descrizione) {
+                location.reload();
+            });
+        
+            signalRManager.startConnection();
+        </script>    
+        
+    </section>
+</div>

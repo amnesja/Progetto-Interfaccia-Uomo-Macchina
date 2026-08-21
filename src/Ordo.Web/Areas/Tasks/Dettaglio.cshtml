@@ -1,0 +1,122 @@
+@model Ordo.Web.Areas.Tasks.DettaglioViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.Titolo;
+}
+
+@section styles {
+    <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-projects-page ordo-projects-page-narrow">
+
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
+
+    <a class="ordo-back-link" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId">
+        <i class="fa-solid fa-arrow-left"></i> Torna a "@Model.BoardNome"
+    </a>
+
+    <header class="ordo-project-detail-heading">
+        <div>
+            <span class="ordo-eyebrow">Task</span>
+            <h1>@Model.Titolo</h1>
+            <span class="ordo-status stato-@Model.Stato.ToString().ToLower()">@Model.StatoLabel</span>
+            <span class="ordo-priority-badge priorita-@((int)Model.Priorita)">Priorità @Model.PrioritaLabel</span>
+        </div>
+        @if (Model.CanEdit)
+        {
+            <a class="ordo-btn-secondary" asp-action="Edit" asp-route-id="@Model.Id">
+                <i class="fa-solid fa-pen"></i> Modifica
+            </a>
+        }
+    </header>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title"><h2>Dettagli</h2></div>
+        <p class="ordo-task-description">@(string.IsNullOrWhiteSpace(Model.Descrizione) ? "Nessuna descrizione." : Model.Descrizione)</p>
+
+        <dl class="ordo-task-meta">
+            <div>
+                <dt>Scadenza</dt>
+                <dd>@(Model.Scadenza.HasValue ? Model.Scadenza.Value.ToString("dd/MM/yyyy") : "Nessuna scadenza")</dd>
+            </div>
+            <div>
+                <dt>Assegnato a</dt>
+                <dd>@(Model.AssignedUserNome ?? "Nessuna assegnazione")</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="ordo-dashboard-section">
+        <div class="ordo-section-title">
+            <h2>Commenti</h2>
+            <span>@Model.Commenti.Count() commenti</span>
+        </div>
+
+        @if (!Model.Commenti.Any())
+        {
+            <div class="ordo-dashboard-empty">Nessun commento. Scrivi il primo per discuterne con il team.</div>
+        }
+        else
+        {
+            <div class="ordo-comment-list">
+                @foreach (var commento in Model.Commenti)
+                {
+                    <div class="ordo-comment">
+                        <div class="ordo-member-avatar">@(string.IsNullOrWhiteSpace(commento.UserNickName) ? "?" : commento.UserNickName.Substring(0, 1).ToUpper())</div>
+                        <div class="ordo-comment-body">
+                            <div class="ordo-comment-header">
+                                <strong>@commento.UserNickName</strong>
+                                <small>@commento.DataCreazione.ToString("dd/MM/yyyy HH:mm")</small>
+                            </div>
+                            <p>@commento.Testo</p>
+                        </div>
+                        @if (commento.UserId == (Guid)ViewBag.CurrentUserId)
+                        {
+                            <form method="post" action="@Url.Action(MVC.Tasks.Tasks.CommentoElimina())"
+                                  onsubmit="return confirm('Eliminare questo commento?');">
+                                <input type="hidden" name="id" value="@commento.Id" />
+                                <input type="hidden" name="taskId" value="@Model.Id" />
+                                <button type="submit" class="ordo-link-danger" title="Elimina commento"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <form method="post" action="@Url.Action(MVC.Tasks.Tasks.CommentoAggiungi())" class="ordo-comment-form">
+            <input type="hidden" name="TaskId" value="@Model.Id" />
+            <textarea name="Testo" rows="2" placeholder="Scrivi un commento..." required></textarea>
+            <button type="submit"><i class="fa-solid fa-paper-plane"></i> Invia</button>
+        </form>
+    </section>
+</div>
+
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script type="text/javascript">
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
+
+        // Se qualcun altro aggiunge un commento su QUESTO task mentre lo stai guardando,
+        // ricarica la pagina per mostrarlo
+        signalRManager.connection.on("CommentAdded", function (taskId, commentId) {
+            if (taskId === "@Model.Id") {
+                location.reload();
+            }
+        });
+
+        signalRManager.startConnection();
+    </script>
+}

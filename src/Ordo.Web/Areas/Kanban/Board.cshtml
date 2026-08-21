@@ -1,0 +1,122 @@
+@model Ordo.Web.Areas.Kanban.BoardViewModel
+@using System.Security.Claims
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Board - " + Model.BoardName;
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+
+@section styles {
+    <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId"
+   class="kanban-back-link">
+    <i class="fa-solid fa-arrow-left"></i> Torna al progetto
+</a>
+
+<div id="lostConnection" class="ordo-signalr-banner d-none">
+    <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+</div>
+<div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+    <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+    <a href="javascript:location.reload()">Ricarica la pagina</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="kanban-page-title mb-0">@Model.BoardName</h1>
+    <a class="ordo-btn-primary btn btn-primary"
+       asp-area="Tasks"
+       asp-controller="Tasks"
+       asp-action="Edit"
+       asp-route-boardId="@Model.BoardId">
+        <i class="fa-solid fa-plus"></i> Nuovo task
+    </a>
+</div>
+
+<div id="pageId" class="kanban-board">
+    <div class="kanban-column" v-for="col in columns" :key="col.stato">
+        <div class="kanban-column-header">
+            <span>{{ col.titolo }}</span>
+            <span class="kanban-count">{{ tasksByStato(col.stato).length }}</span>
+        </div>
+        <div class="kanban-column-body"
+             @@dragover.prevent
+             @@drop="onDrop(col.stato)">
+
+            <div class="kanban-card"
+                 v-for="task in tasksByStato(col.stato)"
+                 :key="task.id"
+                 draggable="true"
+                 @@dragstart="onDragStart(task)"
+                 @@click="openTaskDetail(task.id)"
+                 style="cursor: pointer;">
+
+                <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
+                <b>{{ task.titolo }}</b>
+                <div class="kanban-card-meta" v-if="task.scadenza">
+                    <i class="fa-regular fa-clock"></i> {{ formatDate(task.scadenza) }}
+                </div>
+                <div class="kanban-card-assignee" v-if="task.assignedUserName">
+                    {{ task.assignedUserName }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="/js/bundle-vue.js" asp-append-version="true"></script>
+<script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+<script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+<script src="~/Areas/Kanban/Board.js" asp-append-version="true"></script>
+
+<script type="application/json" id="Seed_JSON">
+    @Html.Raw(Model.ToJson())
+</script>
+<script type="text/javascript">
+    var seed = JSON.parse(document.getElementById("Seed_JSON").innerText);
+    var kanbanApp = Ordo.Kanban.createBoardApp(seed, "@Url.Action("MoveTask")");
+    var kanbanVm = kanbanApp.mount("#pageId");
+
+    // Collegamento SignalR: entra nel gruppo della Board e ascolta gli eventi in tempo reale
+    var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
+    signalRManager.registerEvents();
+    signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato) {
+        Ordo.Kanban.applyRemoteMove(kanbanVm, taskId, nuovoStato);
+    });
+    signalRManager.connection.on("TaskCreated", function (taskId){
+        location.reload();
+    });
+    signalRManager.connection.on("UserAssigned", function (taskId, userId){
+        location.reload();
+    });
+
+    signalRManager.connection.on("BoardDeleted", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            window.location = "/Progetti/Dettaglio/@Model.ProjectId?notice=board-deleted";
+        }
+    });
+
+    signalRManager.connection.on("BoardUpdated", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            var titleEl = document.querySelector(".kanban-page-title");
+            if (titleEl) titleEl.textContent = nome;
+        }
+    });
+
+    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+        if (tipo !== "Assigned") return;
+        if (boardId === "@Model.BoardId") return; // sei già su questa board
+
+        Ordo.Toast.showAssigned(titolo, projectNome);
+    });
+
+    signalRManager.startConnection().then(function () {
+        signalRManager.connection.invoke("JoinGroup", "@currentUserId");
+    });
+    
+</script>

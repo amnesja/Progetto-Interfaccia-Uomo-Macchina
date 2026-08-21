@@ -1,0 +1,46 @@
+@model ProfileViewModel
+@using System.Security.Claims
+@{
+    Layout = "_ProfileLayout";
+    ViewData["Title"] = "Profilo";
+    var nomeVisualizzato = string.IsNullOrWhiteSpace(Model.NomeCompleto) ? Model.Email : Model.NomeCompleto;
+    var iniziali = string.Concat(nomeVisualizzato
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2)
+        .Select(parte => char.ToUpperInvariant(parte[0])));
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+<div class="ordo-profile-page">
+    <h1>Profilo</h1>
+
+    <section class="ordo-profile-card" aria-label="Dati profilo">
+        <div class="ordo-avatar" aria-hidden="true">@iniziali</div>
+        <div class="ordo-user-details">
+            <div class="ordo-user-name">@nomeVisualizzato</div>
+            @if (!string.IsNullOrWhiteSpace(Model.NickName))
+            {
+                <div>@@@Model.NickName</div>
+            }
+            <div><i class="fa-regular fa-envelope"></i> @Model.Email</div>
+        </div>
+        <a class="ordo-edit-profile" href="/Profile/Edit"><i class="fa-regular fa-pen-to-square"></i> Modifica profilo</a>
+        
+        <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+        <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+        <script type="text/javascript">
+            var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+            signalRManager.registerEvents();
+        
+            signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+                if (tipo === "Assigned") {
+                    Ordo.Toast.showAssigned(titolo, projectNome);
+                }
+            });
+        
+            signalRManager.startConnection();
+        </script>        
+        
+    </section>
+
+</div>

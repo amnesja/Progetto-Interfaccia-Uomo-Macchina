@@ -1,0 +1,43 @@
+@{
+    Layout = "_LayoutHtml";
+}
+
+@section metas {
+    <meta name="color-scheme" content="light" />
+}
+
+@section styles {
+    <link href="~/css/public.css" asp-append-version="true" rel="stylesheet" />
+    @RenderSection("styles", required: false)
+}
+
+<div class="ordo-public">
+    <header class="ordo-public-nav">
+        <div class="ordo-public-brand-nav">
+            <a class="ordo-brand ordo-brand-dark" href="/">
+                <span class="ordo-brand-mark">O</span><span>Ordo</span>
+            </a>
+            <nav class="ordo-public-links" aria-label="Navigazione principale">
+                <a href="#funzionalita">Funzionalità</a>
+                <a href="#come-funziona">Come funziona</a>
+            </nav>
+        </div>
+        <div class="ordo-public-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Dashboard" asp-action="Index" class="ordo-btn-cta">Vai alla dashboard</a>
+            }
+            else
+            {
+                <a asp-controller="Login" asp-action="Login" class="ordo-link-muted">Accedi</a>
+                <a asp-controller="Registrazione" asp-action="Registrazione" class="ordo-btn-cta">Crea un account</a>
+            }
+        </div>
+    </header>
+
+    @RenderBody()
+</div>
+
+@section scripts {
+    @RenderSection("scripts", required: false)
+}

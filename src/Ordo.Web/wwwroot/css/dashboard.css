@@ -1,0 +1,42 @@
+:root { --ordo-navy:#10192e; --ordo-blue:#24429d; --ordo-orange:#fba007; --ordo-bg:#f2f5f9; --ordo-border:#dfe5ed; --ordo-text:#141c31; --ordo-muted:#718096; }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ordo-text); background:var(--ordo-bg); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.ordo-dashboard-shell { display:flex; min-height:100vh; }
+.ordo-dashboard-sidebar { display:flex; flex:0 0 260px; flex-direction:column; min-height:100vh; padding:24px 16px; color:#a9b5ca; background:var(--ordo-navy); }
+.ordo-brand { display:flex; align-items:center; gap:9px; padding:0 8px; color:#fff; font-size:25px; font-weight:750; text-decoration:none; }
+.ordo-brand-mark { display:grid; width:32px; height:32px; place-items:center; color:var(--ordo-navy); background:var(--ordo-orange); border-radius:6px; font-size:18px; font-weight:850; }
+.ordo-dashboard-nav { display:grid; gap:6px; margin-top:44px; }
+.ordo-dashboard-nav a, .ordo-dashboard-nav .disabled { display:flex; align-items:center; gap:13px; padding:11px 13px; border-radius:8px; color:#9ba9bf; font-size:14px; text-decoration:none; }
+.ordo-dashboard-nav a:hover, .ordo-dashboard-nav a.active { color:#fff; background:#2645a2; }
+.ordo-dashboard-nav .disabled { opacity:.48; cursor:not-allowed; }
+.ordo-dashboard-nav i { width:17px; text-align:center; }
+.ordo-dashboard-sidebar form { margin-top:auto; }
+.ordo-dashboard-logout { display:flex; width:100%; align-items:center; gap:13px; padding:11px 13px; color:var(--ordo-navy); background:var(--ordo-orange); border:1px solid var(--ordo-orange); border-radius:8px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; text-align:left; transition:filter .15s ease, transform .15s ease; }
+.ordo-dashboard-logout:hover { filter:brightness(.95); transform:translateY(-1px); }
+.ordo-dashboard-main { width:calc(100% - 260px); padding:48px 40px 72px; }
+.ordo-dashboard-page { max-width:1100px; margin:0 auto; }
+.ordo-dashboard-heading { margin-bottom:32px; }
+.ordo-eyebrow { display:block; margin-bottom:8px; color:var(--ordo-blue); font-size:12px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
+.ordo-dashboard-heading h1 { margin:0 0 8px; font-size:32px; letter-spacing:-.035em; }
+.ordo-dashboard-heading p { margin:0; color:var(--ordo-muted); font-size:15px; }
+.ordo-dashboard-stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:32px; }
+.ordo-dashboard-stat { display:grid; gap:8px; min-height:108px; padding:18px; background:#fff; border:1px solid var(--ordo-border); border-radius:12px; }
+.ordo-dashboard-stat span { font-size:14px; font-weight:600; }.ordo-dashboard-stat strong { font-size:31px; line-height:1; }
+.ordo-dashboard-stat.todo { border-top:3px solid #94a3b8; }.ordo-dashboard-stat.progress { border-top:3px solid var(--ordo-blue); }.ordo-dashboard-stat.review { border-top:3px solid #f59e0b; }.ordo-dashboard-stat.overdue { border-top:3px solid #e12d35; }
+.ordo-dashboard-section { margin-top:30px; padding:24px; background:#fff; border:1px solid var(--ordo-border); border-radius:12px; }
+.ordo-section-title { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:20px; }.ordo-section-title h2 { margin:0; font-size:20px; letter-spacing:-.02em; }.ordo-section-title span { color:var(--ordo-muted); font-size:13px; }
+.ordo-dashboard-table-wrap { overflow-x:auto; border:1px solid var(--ordo-border); border-radius:8px; }.ordo-dashboard-table { width:100%; min-width:650px; border-collapse:collapse; font-size:14px; }.ordo-dashboard-table th { padding:11px 14px; color:#7b8799; background:#fafbfc; font-size:11px; letter-spacing:.04em; text-align:left; text-transform:uppercase; }.ordo-dashboard-table td { padding:14px; color:#536177; border-top:1px solid var(--ordo-border); }.ordo-dashboard-table td strong { color:var(--ordo-text); }.ordo-dashboard-table small { display:block; margin-top:3px; color:#98a5b7; font-size:11px; }.ordo-dashboard-table .is-overdue { color:#d62828; font-weight:650; }
+.ordo-status { display:inline-block; padding:3px 7px; border:1px solid currentColor; border-radius:5px; font-size:11px; font-weight:700; text-transform:uppercase; }.stato-todo { color:#768398; }.stato-inprogress { color:var(--ordo-blue); }.stato-review { color:#d97706; }.stato-done { color:#059669; }
+.ordo-dashboard-empty { padding:34px 20px; color:var(--ordo-muted); border:1px dashed var(--ordo-border); border-radius:8px; text-align:center; }
+.ordo-project-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; }.ordo-project-card { min-height:155px; padding:20px; background:#f8fafc; border:1px solid var(--ordo-border); border-radius:10px; }.ordo-project-card h3 { margin:0 0 8px; font-size:16px; }.ordo-project-card p { margin:0; color:var(--ordo-muted); font-size:14px; line-height:1.5; }.ordo-project-card footer { display:flex; gap:14px; margin-top:22px; color:#536177; font-size:12px; font-weight:650; }
+@media (max-width:900px) { .ordo-dashboard-sidebar { flex-basis:76px; padding:20px 12px; }.ordo-brand { justify-content:center; padding:0; }.ordo-brand > :last-child, .ordo-dashboard-nav span, .ordo-dashboard-nav a:not(.active) { display:none; }.ordo-dashboard-nav a { justify-content:center; padding:13px; }.ordo-dashboard-logout { justify-content:center; font-size:0; }.ordo-dashboard-logout i { font-size:15px; }.ordo-dashboard-main { width:calc(100% - 76px); padding:32px 24px; }.ordo-dashboard-stats { grid-template-columns:repeat(2, 1fr); } }
+@media (max-width:640px) { .ordo-dashboard-sidebar { display:none; }.ordo-dashboard-main { width:100%; padding:32px 16px; }.ordo-dashboard-heading h1 { font-size:27px; }.ordo-dashboard-stats { gap:10px; }.ordo-dashboard-stat { min-height:92px; padding:14px; }.ordo-dashboard-section { padding:16px; }.ordo-section-title { align-items:flex-start; flex-direction:column; gap:4px; }.ordo-project-grid { grid-template-columns:1fr; } }
+
+.ordo-activity-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+.ordo-activity-filters a { padding:7px 14px; color:#536177; background:#fff; border:1px solid var(--ordo-border); border-radius:999px; font-size:13px; font-weight:650; text-decoration:none; }
+.ordo-activity-filters a:hover { border-color:var(--ordo-blue); color:var(--ordo-blue); }
+.ordo-activity-filters a.active { color:#fff; background:var(--ordo-blue); border-color:var(--ordo-blue); }
+
+.ordo-realtime-notice-success { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:10px 14px; color:#0a6b4a; background:#e7f7f0; border:1px solid #b9e8d4; border-radius:8px; font-size:13.5px; font-weight:600; opacity:1; transition:opacity .4s ease; }
+
+.ordo-toast-success { position:fixed; top:20px; right:20px; z-index:9999; display:flex; align-items:center; gap:8px; padding:12px 16px; max-width:360px; color:#0a6b4a; background:#e7f7f0; border:1px solid #b9e8d4; border-radius:8px; font-size:13.5px; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,.12); opacity:1; transition:opacity .4s ease; }

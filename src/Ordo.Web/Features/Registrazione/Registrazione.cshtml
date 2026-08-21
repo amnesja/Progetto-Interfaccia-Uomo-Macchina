@@ -1,0 +1,100 @@
+@model Ordo.Web.Features.Registrazione.RegistrazioneViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Crea il tuo account";
+}
+
+@section sidepanel {
+    <div class="ordo-preview-card">
+        <span>Nuovo progetto <span class="ordo-preview-toggle"></span></span>
+        <div class="ordo-preview-columns">
+            <div>
+                <h4>In sospeso</h4>
+                <div class="card"><div class="bar"></div><b>Onboarding team</b><span><i class="fa-regular fa-clock"></i> 2h rimaste</span></div>
+                <div class="card"><div class="bar green"></div><b>Review copy landing</b><span><i class="fa-regular fa-clock"></i> A domani</span></div>
+            </div>
+            <div>
+                <h4>In corso</h4>
+                <div class="card"><div class="bar"></div><b>Sviluppo backend</b><span><i class="fa-regular fa-clock"></i> In sviluppo</span></div>
+            </div>
+        </div>
+    </div>
+}
+
+@section styles {
+    <style>.ordo-auth-form-wrap { max-width: 460px; }</style>
+}
+
+<h1>Crea il tuo account</h1>
+<p class="ordo-subtitle">Inizia a collaborare in pochi secondi.</p>
+
+@{
+    var registrazioneError = ViewData.ModelState[Ordo.Web.Features.Registrazione.RegistrazioneController.RegistrazioneErrorModelKey];
+}
+@if (registrazioneError != null && registrazioneError.Errors.Count > 0)
+{
+    <div class="ordo-form-error">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>@registrazioneError.Errors[0].ErrorMessage</span>
+    </div>
+}
+
+<form method="post" role="form" autocomplete="off">
+
+    <div class="ordo-two-col">
+        <div class="ordo-field">
+            <label asp-for="FirstName">Nome</label>
+            <input asp-for="FirstName" type="text" placeholder="Mario" />
+            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+        </div>
+        <div class="ordo-field">
+            <label asp-for="LastName">Cognome</label>
+            <input asp-for="LastName" type="text" placeholder="Rossi" />
+            <span asp-validation-for="LastName" class="field-validation-error"></span>
+        </div>
+    </div>
+
+    <div class="ordo-field">
+        <label asp-for="NickName">Nome utente</label>
+        <input asp-for="NickName" type="text" placeholder="mariorossi" />
+        <span asp-validation-for="NickName" class="field-validation-error"></span>
+    </div>
+
+    <div class="ordo-field">
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" type="text" placeholder="mario.rossi@azienda.it" />
+        <span asp-validation-for="Email" class="field-validation-error"></span>
+    </div>
+
+    <div class="ordo-field">
+        <label asp-for="Password">Password</label>
+        <div class="ordo-input-wrap">
+            <input asp-for="Password" type="password" id="pwd1" placeholder="Crea una password sicura" />
+            <button type="button" class="ordo-toggle-password" data-target="pwd1" aria-label="Mostra password">
+                <i class="fa-regular fa-eye"></i>
+            </button>
+        </div>
+        <div class="ordo-strength" data-password-strength="pwd1">
+            <div class="ordo-strength-bar"><span></span><span></span><span></span></div>
+            <span class="ordo-strength-label" aria-live="polite">Minimo 6 caratteri</span>
+        </div>
+        <span asp-validation-for="Password" class="field-validation-error"></span>
+    </div>
+
+    <div class="ordo-field">
+        <label asp-for="ConfermaPassword">Conferma password</label>
+        <div class="ordo-input-wrap">
+            <input asp-for="ConfermaPassword" type="password" id="pwd2" placeholder="Ripeti la password" />
+            <button type="button" class="ordo-toggle-password" data-target="pwd2" aria-label="Mostra password">
+                <i class="fa-regular fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="ConfermaPassword" class="field-validation-error"></span>
+    </div>
+
+    <button type="submit" class="ordo-submit-btn">Crea account</button>
+
+    <p class="ordo-switch-auth">
+        Hai già un account? <a asp-controller="Login" asp-action="Login" class="ordo-link">Accedi</a>
+    </p>
+</form>

@@ -1,0 +1,51 @@
+@model Ordo.Web.Areas.Progetti.EditViewModel
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = Model.Id.HasValue ? "Modifica progetto" : "Nuovo progetto";
+}
+
+@section styles {
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div class="ordo-projects-page ordo-projects-page-narrow">
+    <a class="ordo-back-link" href="@Url.Action(MVC.Progetti.Progetti.Index())">
+        <i class="fa-solid fa-arrow-left"></i> Torna ai progetti
+    </a>
+    <h1>@ViewData["Title"]</h1>
+
+    <form class="ordo-project-form" method="post" action="@Url.Action(MVC.Progetti.Progetti.Edit())">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="field-validation-error"></div>
+
+        <div class="ordo-field">
+            <label asp-for="Nome"></label>
+            <input asp-for="Nome" autocomplete="off" />
+            <span asp-validation-for="Nome" class="field-validation-error"></span>
+        </div>
+        <div class="ordo-field">
+            <label asp-for="Descrizione"></label>
+            <textarea asp-for="Descrizione" rows="4"></textarea>
+            <span asp-validation-for="Descrizione" class="field-validation-error"></span>
+        </div>
+
+        <div class="ordo-project-form-actions">
+            @if (Model.Id.HasValue)
+            {
+                <button type="button" class="ordo-link-danger" onclick="document.getElementById('delete-form').submit();">
+                    Elimina progetto
+                </button>
+            }
+            <a href="@Url.Action(MVC.Progetti.Progetti.Index())">Annulla</a>
+            <button type="submit">Salva</button>
+        </div>
+    </form>
+
+    @if (Model.Id.HasValue)
+    {
+        <form id="delete-form" hidden method="post" action="@Url.Action(MVC.Progetti.Progetti.Delete())"
+              onsubmit="return confirm('Eliminare definitivamente questo progetto e tutte le sue board?');">
+            <input type="hidden" name="id" value="@Model.Id" />
+        </form>
+    }
+</div>

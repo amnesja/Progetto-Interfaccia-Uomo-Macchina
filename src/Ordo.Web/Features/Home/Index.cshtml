@@ -1,0 +1,120 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Ordo — Organizza il lavoro. Collabora senza confusione.";
+}
+
+<section class="ordo-hero">
+    <div>
+        <h1>Organizza il lavoro.<br />Collabora senza confusione.</h1>
+        <p>Ordo unisce progetti, task, scadenze e conversazioni in un'unica piattaforma.</p>
+    </div>
+    <div class="ordo-hero-card">
+        <span>Area di lavoro <span class="ordo-hero-toggle"></span></span>
+        <div class="ordo-hero-columns">
+            <div>
+                <h4>Da fare</h4>
+                <div class="card"><div class="bar"></div><b>Q4 Roadmap draft</b><span><i class="fa-regular fa-clock"></i> 3h left</span></div>
+                <div class="card"><div class="bar"></div><b>Update design guidelines</b><span><i class="fa-regular fa-clock"></i> 1d left</span></div>
+            </div>
+            <div>
+                <h4>In corso</h4>
+                <div class="card"><div class="bar"></div><b>API integration</b><span><i class="fa-regular fa-clock"></i> In progress</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ordo-features" id="funzionalita">
+    <div class="ordo-section-heading">
+        <span class="ordo-eyebrow">Funzionalità</span>
+        <h2>Tutto quello che serve al tuo team, in un solo posto</h2>
+        <p>Dalla creazione del progetto alla consegna, Ordo tiene tutto sincronizzato.</p>
+    </div>
+    <div class="ordo-feature-grid">
+        <div class="ordo-feature">
+            <i class="fa-regular fa-copy"></i>
+            <h3>Un posto per ogni progetto</h3>
+            <p>Riunisci board, membri e obiettivi nello stesso spazio</p>
+        </div>
+        <div class="ordo-feature">
+            <i class="fa-regular fa-clipboard"></i>
+            <h3>Task sempre chiari</h3>
+            <p>Assegna responsabilità, priorità e scadenze</p>
+        </div>
+        <div class="ordo-feature">
+            <i class="fa-regular fa-bell"></i>
+            <h3>Aggiornamenti in tempo reale</h3>
+            <p>Le modifiche si sincronizzano subito con tutto il team</p>
+        </div>
+        <div class="ordo-feature">
+            <i class="fa-solid fa-table-columns"></i>
+            <h3>Board Kanban</h3>
+            <p>Sposta i task tra le colonne con un semplice trascinamento</p>
+        </div>
+        <div class="ordo-feature">
+            <i class="fa-regular fa-comments"></i>
+            <h3>Commenti sui task</h3>
+            <p>Discuti i dettagli senza uscire dalla scheda del task</p>
+        </div>
+        <div class="ordo-feature">
+            <i class="fa-solid fa-users"></i>
+            <h3>Collaborazione multi-utente</h3>
+            <p>Invita il team e lavorate insieme sullo stesso progetto</p>
+        </div>
+    </div>
+</section>
+
+<section class="ordo-how" id="come-funziona">
+    <div class="ordo-section-heading ordo-section-heading-light">
+        <span class="ordo-eyebrow">Come funziona</span>
+        <h2>Tre passaggi, zero confusione</h2>
+    </div>
+    <div class="ordo-how-steps">
+        <div class="ordo-how-step">
+            <span class="ordo-how-number">1</span>
+            <h3>Crea</h3>
+            <p>Apri un nuovo progetto e imposta la tua prima board in pochi secondi, senza configurazioni complicate.</p>
+        </div>
+        <i class="fa-solid fa-arrow-right ordo-how-arrow" aria-hidden="true"></i>
+        <div class="ordo-how-step">
+            <span class="ordo-how-number">2</span>
+            <h3>Organizza</h3>
+            <p>Suddividi il lavoro in task, assegna priorità e scadenze, tieni tutto ordinato in colonne chiare.</p>
+        </div>
+        <i class="fa-solid fa-arrow-right ordo-how-arrow" aria-hidden="true"></i>
+        <div class="ordo-how-step">
+            <span class="ordo-how-number">3</span>
+            <h3>Collabora</h3>
+            <p>Invita il team: ogni modifica si sincronizza subito, senza bisogno di ricaricare la pagina.</p>
+        </div>
+    </div>
+</section>
+
+<section class="ordo-cta-band">
+    <h2>Pronto a organizzare il tuo prossimo progetto?</h2>
+    <a asp-controller="Registrazione" asp-action="Registrazione" class="ordo-btn-cta">Crea un account gratis</a>
+</section>
+
+<footer class="ordo-footer">
+    <div class="ordo-footer-top">
+        <div class="ordo-footer-brand">
+            <a class="ordo-brand ordo-brand-dark" href="/">
+                <span class="ordo-brand-mark">O</span><span>Ordo</span>
+            </a>
+            <p>Organizza. Collabora. Cresci.</p>
+        </div>
+        <div class="ordo-footer-col">
+            <h4>Prodotto</h4>
+            <a href="#funzionalita">Funzionalità</a>
+            <a href="#come-funziona">Come funziona</a>
+        </div>
+        <div class="ordo-footer-col">
+            <h4>Account</h4>
+            <a asp-controller="Login" asp-action="Login">Accedi</a>
+            <a asp-controller="Registrazione" asp-action="Registrazione">Crea un account</a>
+        </div>
+    </div>
+    <div class="ordo-footer-bottom">
+        <span>&copy; @DateTime.Now.Year Ordo Technologies Inc. Tutti i diritti riservati.</span>
+    </div>
+</footer>

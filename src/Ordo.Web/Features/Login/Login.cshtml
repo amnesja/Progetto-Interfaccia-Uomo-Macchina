@@ -1,0 +1,73 @@
+﻿@model Ordo.Web.Features.Login.LoginViewModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = "Accedi";
+}
+
+@section sidepanel {
+    <div class="ordo-preview-card">
+        <span>Area di lavoro <span class="ordo-preview-toggle"></span></span>
+        <div class="ordo-preview-columns">
+            <div>
+                <h4>Da fare</h4>
+                <div class="card"><div class="bar"></div><b>Q4 Roadmap draft</b><span><i class="fa-regular fa-clock"></i> 3h left</span></div>
+                <div class="card"><div class="bar short"></div><b>Update design guidelines</b><span><i class="fa-regular fa-clock"></i> 1d left</span></div>
+            </div>
+            <div>
+                <h4>In corso</h4>
+                <div class="card"><div class="bar"></div><b>API integration</b><span><i class="fa-regular fa-clock"></i> In progress</span></div>
+            </div>
+        </div>
+    </div>
+}
+
+<h1>Bentornato in Ordo</h1>
+<p class="ordo-subtitle">Inserisci le tue credenziali per accedere al tuo spazio di lavoro.</p>
+
+@{
+    var loginError = ViewData.ModelState[Ordo.Web.Features.Login.LoginController.LoginErrorModelStateKey];
+}
+@if (loginError != null && loginError.Errors.Count > 0)
+{
+    <div class="ordo-form-error">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>@loginError.Errors[0].ErrorMessage</span>
+    </div>
+}
+
+<form method="post" role="form" autocomplete="off">
+    <input asp-for="ReturnUrl" type="hidden" />
+
+    <div class="ordo-field">
+        <label asp-for="Email">Indirizzo email</label>
+        <div class="ordo-input-wrap">
+            <input asp-for="Email" type="text" placeholder="utente@azienda.it" />
+        </div>
+        <span asp-validation-for="Email" class="field-validation-error"></span>
+    </div>
+
+    <div class="ordo-field">
+        <label asp-for="Password">Password</label>
+        <div class="ordo-input-wrap">
+            <input asp-for="Password" type="password" id="passwordInput" placeholder="••••••••••••" />
+            <button type="button" class="ordo-toggle-password" data-target="passwordInput" aria-label="Mostra password">
+                <i class="fa-regular fa-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="field-validation-error"></span>
+    </div>
+
+    <div class="ordo-row-between">
+        <label class="ordo-remember">
+            <input asp-for="RememberMe" type="checkbox" />
+            <span>Ricordami</span>
+        </label>
+        <a href="#" class="ordo-link">Password dimenticata?</a>
+    </div>
+
+    <button type="submit" class="ordo-submit-btn">Accedi</button>
+
+    <p class="ordo-switch-auth">
+        Non hai un account? <a asp-controller="Registrazione" asp-action="Registrazione" class="ordo-link">Registrati</a>
+    </p>
+</form>

@@ -1,0 +1,33 @@
+:root { --ordo-navy:#10192e; --ordo-blue:#24429d; --ordo-orange:#fba007; --ordo-bg:#f2f5f9; --ordo-border:#dfe5ed; --ordo-text:#141c31; --ordo-muted:#718096; }
+
+.ordo-field-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:640px) { .ordo-field-row { grid-template-columns:1fr; } }
+
+.ordo-project-form select { width:100%; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; outline:0; }
+.ordo-project-form select:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }
+
+.ordo-priority-badge { display:inline-block; margin-left:8px; padding:3px 8px; border-radius:5px; font-size:11px; font-weight:700; text-transform:uppercase; vertical-align:middle; }
+.priorita-0 { color:#768398; background:#eef1f4; }
+.priorita-1 { color:#b06a00; background:#fef2dc; }
+.priorita-2 { color:#c0292f; background:#fbe4e5; }
+
+.ordo-task-description { margin:0 0 18px; color:#39465b; font-size:14.5px; line-height:1.6; white-space:pre-wrap; }
+.ordo-task-meta { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0; }
+.ordo-task-meta dt { margin-bottom:4px; color:var(--ordo-muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+.ordo-task-meta dd { margin:0; color:var(--ordo-text); font-size:14px; font-weight:600; }
+@media (max-width:640px) { .ordo-task-meta { grid-template-columns:1fr; } }
+
+.ordo-comment-list { display:grid; gap:14px; margin-bottom:20px; }
+.ordo-comment { display:flex; gap:12px; align-items:flex-start; }
+.ordo-comment-body { flex:1; padding:12px 14px; background:#f8fafc; border:1px solid var(--ordo-border); border-radius:10px; }
+.ordo-comment-header { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+.ordo-comment-header strong { font-size:13.5px; }
+.ordo-comment-header small { color:var(--ordo-muted); font-size:11.5px; }
+.ordo-comment-body p { margin:0; color:#39465b; font-size:14px; line-height:1.5; white-space:pre-wrap; }
+.ordo-comment form { display:flex; align-items:flex-start; padding-top:10px; }
+.ordo-comment form button { padding:6px 8px; color:#c62828; background:none; border:0; cursor:pointer; }
+
+.ordo-comment-form { display:flex; gap:10px; align-items:flex-end; }
+.ordo-comment-form textarea { flex:1; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; font-size:14px; outline:0; resize:vertical; }
+.ordo-comment-form textarea:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }
+.ordo-comment-form button { padding:11px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:8px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }

@@ -1,0 +1,180 @@
+@model Ordo.Web.Areas.Progetti.IndexViewModel
+@using System.Security.Claims
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "I miei progetti";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+@section styles {
+    <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
+}
+
+<div id="lostConnection" class="ordo-signalr-banner d-none">
+    <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+</div>
+<div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+    <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+    <a href="javascript:location.reload()">Ricarica la pagina</a>
+</div>
+
+@if (Context.Request.Query["notice"] == "project-deleted")
+{
+    <div class="ordo-realtime-notice">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Il progetto che stavi visualizzando è stato eliminato dal proprietario.
+    </div>
+}
+
+@if (Context.Request.Query["notice"] == "removed-from-project")
+{
+    <div class="ordo-realtime-notice">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Sei stato rimosso da un progetto a cui partecipavi.
+    </div>
+}
+
+<div class="ordo-projects-page">
+    <header class="ordo-projects-heading">
+        <div>
+            <span class="ordo-eyebrow">Progetti</span>
+            <h1>I miei progetti</h1>
+            <p>Crea e gestisci gli spazi di lavoro dei tuoi progetti.</p>
+        </div>
+        <a class="ordo-btn-primary" href="@Url.Action(MVC.Progetti.Progetti.New())">
+            <i class="fa-solid fa-plus"></i> Nuovo progetto
+        </a>
+    </header>
+
+    <form class="ordo-projects-search" method="get">
+        <div class="ordo-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input asp-for="Filter" placeholder="Cerca per nome..." />
+        </div>
+        <button type="submit">Cerca</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Filter))
+        {
+            <a class="ordo-clear-search" href="@Url.Action(MVC.Progetti.Progetti.Index())">Azzera</a>
+        }
+    </form>
+
+    <div id="ordoProjectGrid">
+        @if (!Model.Progetti.Any())
+        {
+            <div class="ordo-dashboard-empty" id="ordoProjectsEmpty">
+                Nessun progetto trovato. Crea il tuo primo progetto per iniziare.
+            </div>
+        }
+        else
+        {
+            <div class="ordo-project-grid" id="ordoProjectGridInner">
+                @foreach (var progetto in Model.Progetti)
+                {
+                    <article class="ordo-project-card" data-project-id="@progetto.Id">
+                        <a class="ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(progetto.Id))">
+                            <h3>
+                                @progetto.Nome
+                                @if (!progetto.IsOwner)
+                                {
+                                    <span class="ordo-role-badge">Collaboratore</span>
+                                }
+                            </h3>
+                            <p>@(string.IsNullOrWhiteSpace(progetto.Descrizione) ? "Nessuna descrizione." : progetto.Descrizione)</p>
+                        </a>
+                        <footer>
+                            @if (progetto.IsOwner)
+                            {
+                                <a href="@Url.Action(MVC.Progetti.Progetti.Edit(progetto.Id))" title="Modifica progetto">
+                                    <i class="fa-solid fa-pen"></i> Modifica
+                                </a>
+                                <form method="post" action="@Url.Action(MVC.Progetti.Progetti.Delete())"
+                                      onsubmit="return confirm('Eliminare definitivamente questo progetto e tutte le sue board?');">
+                                    <input type="hidden" name="id" value="@progetto.Id" />
+                                    <button type="submit" class="ordo-link-danger"><i class="fa-solid fa-trash"></i> Elimina</button>
+                                </form>
+                            }
+                        </footer>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages() > 1)
+    {
+        <nav class="ordo-pagination">
+            <a class="@(Model.Page <= 1 ? "disabled" : "")" href="@Model.PrevPageUrl(Url)">&laquo; Precedente</a>
+            <span>Pagina @Model.Page di @Model.TotalPages()</span>
+            <a class="@(Model.Page >= Model.TotalPages() ? "disabled" : "")" href="@Model.NextPageUrl(Url)">Successiva &raquo;</a>
+        </nav>
+    }
+</div>
+
+<script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+<script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+<script type="text/javascript">
+    function escapeHtml(str) {
+        var div = document.createElement("div");
+        div.textContent = str || "";
+        return div.innerHTML;
+    }
+
+    var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+    signalRManager.registerEvents();
+
+    signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome, descrizione) {
+        if (document.querySelector('[data-project-id="' + projectId + '"]')) return;
+
+        var empty = document.getElementById("ordoProjectsEmpty");
+        if (empty) empty.remove();
+
+        var grid = document.getElementById("ordoProjectGridInner");
+        if (!grid) {
+            grid = document.createElement("div");
+            grid.className = "ordo-project-grid";
+            grid.id = "ordoProjectGridInner";
+            document.getElementById("ordoProjectGrid").appendChild(grid);
+        }
+
+        var article = document.createElement("article");
+        article.className = "ordo-project-card";
+        article.setAttribute("data-project-id", projectId);
+        article.innerHTML =
+            '<a class="ordo-project-card-link" href="/Progetti/Dettaglio/' + projectId + '">' +
+            '<h3>' + escapeHtml(nome) + ' <span class="ordo-role-badge">Collaboratore</span></h3>' +
+            '<p>' + escapeHtml(descrizione || "Nessuna descrizione.") + '</p>' +
+            '</a><footer></footer>';
+
+        grid.appendChild(article);
+    });
+
+    signalRManager.connection.on("ProjectUpdated", function (projectId, nome, descrizione) {
+        var card = document.querySelector('[data-project-id="' + projectId + '"]');
+        if (!card) return;
+
+        var titleEl = card.querySelector("h3");
+        if (titleEl) {
+            var badge = titleEl.querySelector(".ordo-role-badge");
+            titleEl.textContent = nome + " ";
+            if (badge) titleEl.appendChild(badge);
+        }
+
+        var descEl = card.querySelector("p");
+        if (descEl) descEl.textContent = descrizione || "Nessuna descrizione.";
+    });
+
+    signalRManager.connection.on("ProjectDeleted", function (projectId) {
+        var card = document.querySelector('[data-project-id="' + projectId + '"]');
+        if (card) card.remove();
+    });
+
+    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+        if (tipo === "Assigned") {
+            Ordo.Toast.showAssigned(titolo, projectNome);
+        }
+    });
+
+    signalRManager.startConnection();
+</script>
