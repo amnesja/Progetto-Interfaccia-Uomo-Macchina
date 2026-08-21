@@ -58,6 +58,7 @@ namespace Ordo.Web
 
             // SERVICES FOR AUTHENTICATION
             services.AddSession();
+            services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = "/Login/Login";

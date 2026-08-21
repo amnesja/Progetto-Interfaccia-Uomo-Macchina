@@ -101,6 +101,16 @@ namespace Ordo.Web.Areas.Tasks
             if (!TryGetCurrentUserId(out var currentUserId))
                 return Challenge();
 
+            TaskDetailDTO existingTask = null;
+            if (model.Id.HasValue)
+            {
+                existingTask = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
+                if (existingTask == null) return NotFound();
+
+                if (existingTask.BoardId != model.BoardId)
+                    return BadRequest();
+            }
+
             var board = await _sharedService.Query(new BoardDetailQuery { Id = model.BoardId });
             if (board == null) return NotFound();
 
@@ -113,27 +123,53 @@ namespace Ordo.Web.Areas.Tasks
                 {
                     // Teniamo traccia se è una creazione (id non ancora assegnato) PRIMA di salvare,
                     // perché dopo Handle() model.Id sarà sempre valorizzato in entrambi i casi.
-                    var isNewTask = !model.Id.HasValue;
+                    var isNewTask = existingTask == null;
                     var command = model.ToAddOrUpdateTaskCommand();
 
                     model.Id = await _sharedService.Handle(command);
+                    var savedTask = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
+
+                    string assignedUserName = null;
+                    if (command.AssignedUserId.HasValue)
+                    {
+                        var users = await GetUtentiAssegnabili(board.ProjectId, progetto);
+                        assignedUserName = users.FirstOrDefault(user => user.Value == command.AssignedUserId.Value.ToString())?.Text;
+                    }
+
+                    var taskEvent = new TaskCreatedEvent
+                    {
+                        IdGroup = board.Id,
+                        TaskId = model.Id.Value,
+                        Titolo = savedTask.Titolo,
+                        Priorita = (int)savedTask.Priorita,
+                        Stato = (int)savedTask.Stato,
+                        Scadenza = savedTask.Scadenza,
+                        AssignedUserId = savedTask.AssignedUserId,
+                        AssignedUserName = assignedUserName
+                    };
 
                     if (isNewTask)
                     {
-                        await _publisher.Publish(new TaskCreatedEvent
+                        await _publisher.Publish(taskEvent);
+                    }
+                    else
+                    {
+                        await _publisher.Publish(new TaskUpdatedEvent
                         {
-                            IdGroup = board.Id,
-                            TaskId = model.Id.Value
+                            Task = taskEvent,
+                            IsAssignmentChanged = existingTask.AssignedUserId != savedTask.AssignedUserId
                         });
                     }
 
-                    if (command.AssignedUserId.HasValue)
+                    if (!isNewTask && existingTask.AssignedUserId != savedTask.AssignedUserId)
                     {
                         await _publisher.Publish(new UserAssignedEvent
                         {
                             IdGroup = board.Id,
                             TaskId = model.Id.Value,
-                            UserId = command.AssignedUserId.Value
+                            UserId = savedTask.AssignedUserId,
+                            AssignedUserName = assignedUserName,
+                            Titolo = savedTask.Titolo
                         });
                     }
 
@@ -158,13 +194,26 @@ namespace Ordo.Web.Areas.Tasks
             if (!TryGetCurrentUserId(out var currentUserId))
                 return Challenge();
 
-            var board = await _sharedService.Query(new BoardDetailQuery { Id = boardId });
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = id });
+            if (task == null) return NotFound();
+
+            if (task.BoardId != boardId)
+                return BadRequest();
+
+            var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
             if (board == null) return NotFound();
 
             var (hasAccess, _, _) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
 
             await _sharedService.Handle(new DeleteTaskCommand { Id = id });
+
+            await _publisher.Publish(new TaskDeletedEvent
+            {
+                IdGroup = board.Id,
+                TaskId = task.Id,
+                Titolo = task.Titolo
+            });
 
             Alerts.AddSuccess(this, "Task eliminato");
 
@@ -253,7 +302,8 @@ namespace Ordo.Web.Areas.Tasks
                 {
                     IdGroup = board.Id,
                     TaskId = model.TaskId,
-                    CommentId = commentId
+                    CommentId = commentId,
+                    Titolo = task.Titolo
                 });
             }
 
