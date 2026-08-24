@@ -14,12 +14,10 @@ function showSignalRMessage(message, duration = 4000, callback) {
 }
 class SignalRConnectionManager {
     constructor(connectionUrl, joinGroupParamethers, joinGroupMethod, leaveGroupMethod) {
+        this.additionalGroupParameters = [];
         this.joinGroupMethod = joinGroupMethod;
         this.joinGroupParamethers = joinGroupParamethers;
         this.leaveGroupMethod = leaveGroupMethod;
-        this.additionalGroupParameters = [];
-        this.reconnectNoticeTimer = undefined;
-        this.initialRetryTimer = undefined;
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(connectionUrl)
             .withAutomaticReconnect({
@@ -65,11 +63,12 @@ class SignalRConnectionManager {
         });
     }
     setConnectionBanner(isReconnecting, showManualRetry = false) {
+        var _a, _b;
         if (this.reconnectNoticeTimer)
             window.clearTimeout(this.reconnectNoticeTimer);
         this.reconnectNoticeTimer = undefined;
-        document.getElementById('lostConnection')?.classList.toggle('d-none', !isReconnecting);
-        document.getElementById('lostConnectionManualRetry')?.classList.toggle('d-none', !showManualRetry);
+        (_a = document.getElementById('lostConnection')) === null || _a === void 0 ? void 0 : _a.classList.toggle('d-none', !isReconnecting);
+        (_b = document.getElementById('lostConnectionManualRetry')) === null || _b === void 0 ? void 0 : _b.classList.toggle('d-none', !showManualRetry);
     }
     addAdditionalGroup(groupParameter) {
         if (groupParameter && groupParameter !== this.joinGroupParamethers && !this.additionalGroupParameters.includes(groupParameter)) {
