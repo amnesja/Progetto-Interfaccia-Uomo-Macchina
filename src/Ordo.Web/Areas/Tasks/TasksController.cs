@@ -30,8 +30,6 @@ namespace Ordo.Web.Areas.Tasks
             return Guid.TryParse(value, out userId);
         }
 
-        // Verifica se l'utente corrente può vedere/modificare i task di questo progetto
-        // (stessa regola usata in ProgettiController: proprietario o collaboratore)
         private async Task<(bool hasAccess, bool isOwner, ProjectDetailDTO progetto)> CheckAccess(Guid projectId, Guid currentUserId)
         {
             var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = projectId });
@@ -101,6 +99,16 @@ namespace Ordo.Web.Areas.Tasks
             if (!TryGetCurrentUserId(out var currentUserId))
                 return Challenge();
 
+            TaskDetailDTO existingTask = null;
+            if (model.Id.HasValue)
+            {
+                existingTask = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
+                if (existingTask == null) return NotFound();
+
+                if (existingTask.BoardId != model.BoardId)
+                    return BadRequest();
+            }
+
             var board = await _sharedService.Query(new BoardDetailQuery { Id = model.BoardId });
             if (board == null) return NotFound();
 
@@ -111,35 +119,125 @@ namespace Ordo.Web.Areas.Tasks
             {
                 try
                 {
-                    var isNewTask = !model.Id.HasValue;
-
-                    Guid? oldAssignedUserId = null;
-                    if (!isNewTask)
-                    {
-                        var taskEsistente = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
-                        oldAssignedUserId = taskEsistente?.AssignedUserId;
-                    }
-
+                    // Teniamo traccia se è una creazione (id non ancora assegnato) PRIMA di salvare,
+                    // perché dopo Handle() model.Id sarà sempre valorizzato in entrambi i casi.
+                    var isNewTask = existingTask == null;
+                    var oldAssignedUserId = existingTask?.AssignedUserId;
                     var command = model.ToAddOrUpdateTaskCommand();
 
                     model.Id = await _sharedService.Handle(command);
+                    var savedTask = await _sharedService.Query(new TaskDetailQuery { Id = model.Id.Value });
 
+                    string assignedUserName = null;
+                    if (command.AssignedUserId.HasValue)
+                    {
+                        var users = await GetUtentiAssegnabili(board.ProjectId, progetto);
+                        assignedUserName = users.FirstOrDefault(user => user.Value == command.AssignedUserId.Value.ToString())?.Text;
+                    }
+
+                    var taskEvent = new TaskCreatedEvent
+                    {
+                        IdGroup = board.Id,
+                        TaskId = model.Id.Value,
+                        Titolo = savedTask.Titolo,
+                        Priorita = (int)savedTask.Priorita,
+                        Stato = (int)savedTask.Stato,
+                        Scadenza = savedTask.Scadenza,
+                        AssignedUserId = savedTask.AssignedUserId,
+                        AssignedUserName = assignedUserName
+                    };
+
+                    var isAssignmentChanged = !isNewTask && oldAssignedUserId != savedTask.AssignedUserId;
+
+                    // --- Eventi per chi sta guardando la Kanban board in questo momento ---
                     if (isNewTask)
                     {
-                        await _publisher.Publish(new TaskCreatedEvent
+                        await _publisher.Publish(taskEvent);
+                    }
+                    else
+                    {
+                        await _publisher.Publish(new TaskUpdatedEvent
                         {
-                            IdGroup = board.Id,
-                            TaskId = model.Id.Value
+                            Task = taskEvent,
+                            IsAssignmentChanged = isAssignmentChanged
                         });
                     }
 
-                    if (command.AssignedUserId.HasValue)
+                    if (isAssignmentChanged)
                     {
                         await _publisher.Publish(new UserAssignedEvent
                         {
                             IdGroup = board.Id,
                             TaskId = model.Id.Value,
-                            UserId = command.AssignedUserId.Value
+                            UserId = savedTask.AssignedUserId,
+                            AssignedUserName = assignedUserName,
+                            Titolo = savedTask.Titolo
+                        });
+                    }
+
+                    // --- Notifiche personali per Dashboard / "Le mie attività", anche a chi
+                    //     non sta guardando questa board in questo momento ---
+                    var newAssignedUserId = savedTask.AssignedUserId;
+
+                    if (isNewTask)
+                    {
+                        // task nuovo con assegnatario già impostato in creazione: notifica subito
+                        if (newAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = newAssignedUserId.Value,
+                                Tipo = "Assigned",
+                                Titolo = savedTask.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
+                            });
+                        }
+                    }
+                    else if (oldAssignedUserId != newAssignedUserId)
+                    {
+                        if (oldAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = oldAssignedUserId.Value,
+                                Tipo = "Unassigned",
+                                Titolo = savedTask.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
+                            });
+                        }
+
+                        if (newAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = newAssignedUserId.Value,
+                                Tipo = "Assigned",
+                                Titolo = savedTask.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
+                            });
+                        }
+                    }
+                    else if (newAssignedUserId.HasValue)
+                    {
+                        // stesso assegnatario di prima: se ha cambiato titolo/stato/scadenza, aggiorniamo comunque la sua vista
+                        await _publisher.Publish(new TaskChangedForUserEvent
+                        {
+                            IdGroup = newAssignedUserId.Value,
+                            Tipo = "Updated",
+                            Titolo = savedTask.Titolo,
+                            ProjectNome = progetto.Nome,
+                            ProjectId = board.ProjectId,
+                            BoardId = board.Id,
+                            TaskId = savedTask.Id
                         });
                     }
 
@@ -209,7 +307,13 @@ namespace Ordo.Web.Areas.Tasks
             if (!TryGetCurrentUserId(out var currentUserId))
                 return Challenge();
 
-            var board = await _sharedService.Query(new BoardDetailQuery { Id = boardId });
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = id });
+            if (task == null) return NotFound();
+
+            if (task.BoardId != boardId)
+                return BadRequest();
+
+            var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
             if (board == null) return NotFound();
 
             var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
@@ -219,14 +323,24 @@ namespace Ordo.Web.Areas.Tasks
 
             await _sharedService.Handle(new DeleteTaskCommand { Id = id });
 
-            if (task?.AssignedUserId != null)
+            await _publisher.Publish(new TaskDeletedEvent
+            {
+                IdGroup = board.Id,
+                TaskId = task.Id,
+                Titolo = task.Titolo
+            });
+
+            if (task.AssignedUserId.HasValue)
             {
                 await _publisher.Publish(new TaskChangedForUserEvent
                 {
                     IdGroup = task.AssignedUserId.Value,
                     Tipo = "Deleted",
                     Titolo = task.Titolo,
-                    ProjectNome = progetto.Nome
+                    ProjectNome = progetto.Nome,
+                    ProjectId = board.ProjectId,
+                    BoardId = board.Id,
+                    TaskId = task.Id
                 });
             }
 
@@ -297,7 +411,7 @@ namespace Ordo.Web.Areas.Tasks
             if (task == null) return NotFound();
 
             var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
-            var (hasAccess, _, _) = await CheckAccess(board.ProjectId, currentUserId);
+            var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
 
             if (string.IsNullOrWhiteSpace(model.Testo))
@@ -317,8 +431,23 @@ namespace Ordo.Web.Areas.Tasks
                 {
                     IdGroup = board.Id,
                     TaskId = model.TaskId,
-                    CommentId = commentId
+                    CommentId = commentId,
+                    Titolo = task.Titolo
                 });
+
+                if (task.AssignedUserId.HasValue && task.AssignedUserId != currentUserId)
+                {
+                    await _publisher.Publish(new TaskChangedForUserEvent
+                    {
+                        IdGroup = task.AssignedUserId.Value,
+                        Tipo = "Commented",
+                        Titolo = task.Titolo,
+                        ProjectNome = progetto.Nome,
+                        ProjectId = board.ProjectId,
+                        BoardId = board.Id,
+                        TaskId = task.Id
+                    });
+                }
             }
 
             return RedirectToAction(Actions.Dettaglio(model.TaskId));
@@ -333,11 +462,40 @@ namespace Ordo.Web.Areas.Tasks
             var commenti = await _sharedService.Query(new CommentsByTaskQuery { TaskId = taskId });
             var commento = commenti.Comments.FirstOrDefault(c => c.Id == id);
 
-            // solo l'autore del commento può eliminarlo
             if (commento == null || commento.UserId != currentUserId)
                 return Forbid();
 
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = taskId });
+            if (task == null) return NotFound();
+
+            var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
+            if (board == null) return NotFound();
+
+            var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
+            if (!hasAccess) return Forbid();
+
             await _sharedService.Handle(new DeleteCommentCommand { Id = id });
+            await _publisher.Publish(new CommentDeletedEvent
+            {
+                IdGroup = board.Id,
+                TaskId = taskId,
+                CommentId = id,
+                Titolo = task.Titolo
+            });
+
+            if (task.AssignedUserId.HasValue && task.AssignedUserId != currentUserId)
+            {
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = task.AssignedUserId.Value,
+                    Tipo = "CommentDeleted",
+                    Titolo = task.Titolo,
+                    ProjectNome = progetto.Nome,
+                    ProjectId = board.ProjectId,
+                    BoardId = board.Id,
+                    TaskId = task.Id
+                });
+            }
 
             return RedirectToAction(Actions.Dettaglio(taskId));
         }

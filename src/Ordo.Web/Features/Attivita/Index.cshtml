@@ -13,7 +13,6 @@
 }
 
 <div class="ordo-dashboard-page">
-    
     <div id="lostConnection" class="ordo-signalr-banner d-none">
         <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
     </div>
@@ -21,8 +20,6 @@
         <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
         <a href="javascript:location.reload()">Ricarica la pagina</a>
     </div>
-    <div id="ordoTaskToast"></div>
-
     <header class="ordo-dashboard-heading">
         <div>
             <span class="ordo-eyebrow">Attività</span>
@@ -124,3 +121,21 @@
         
     </section>
 </div>
+
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script>
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
+
+        signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome) {
+            var message = tipo === "Assigned"
+                ? "Ti è stata assegnata l'attività «" + titolo + "» in " + projectNome + "."
+                : "L'attività «" + titolo + "» è stata aggiornata.";
+            showSignalRMessage(message, 1200, function () { location.reload(); });
+        });
+        window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
+        signalRManager.startConnection();
+    </script>
+}

@@ -37,6 +37,101 @@ body { margin:0; color:var(--ordo-text); background:var(--ordo-bg); font-family:
 .ordo-activity-filters a:hover { border-color:var(--ordo-blue); color:var(--ordo-blue); }
 .ordo-activity-filters a.active { color:#fff; background:var(--ordo-blue); border-color:var(--ordo-blue); }
 
-.ordo-realtime-notice-success { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:10px 14px; color:#0a6b4a; background:#e7f7f0; border:1px solid #b9e8d4; border-radius:8px; font-size:13.5px; font-weight:600; opacity:1; transition:opacity .4s ease; }
+.ordo-mobile-nav { display: none; }
 
+.toastify.ordo-realtime-toast {
+    max-width: min(380px, calc(100vw - 32px));
+    padding: 12px 40px 12px 14px;
+    color: var(--ordo-text);
+    background: #fff;
+    border: 1px solid var(--ordo-border);
+    border-left: 4px solid var(--ordo-blue);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(16, 25, 46, .14);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.toastify.ordo-realtime-toast .toast-close {
+    color: var(--ordo-muted);
+    font-size: 18px;
+    line-height: 1;
+}
+
+@media (max-width: 640px) {
+    .ordo-dashboard-main { padding: 24px 16px 96px; }
+    .toastify.ordo-realtime-toast {
+        top: calc(16px + env(safe-area-inset-top));
+        right: 16px;
+    }
+    .ordo-mobile-nav {
+        position: fixed;
+        z-index: 100;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        min-height: 64px;
+        padding: 4px 6px env(safe-area-inset-bottom);
+        background: var(--ordo-navy);
+        border-top: 1px solid #2645a2;
+        box-shadow: 0 -4px 16px rgba(16, 25, 46, .18);
+    }
+    .ordo-mobile-nav form {
+        display: grid;
+    }
+    .ordo-mobile-nav a,
+    .ordo-mobile-nav button {
+        display: grid;
+        width: 100%;
+        min-height: 56px;
+        padding: 0;
+        place-content: center;
+        gap: 4px;
+        color: #9ba9bf;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 11px;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .ordo-mobile-nav i {
+        font-size: 18px;
+    }
+    .ordo-mobile-nav a.active {
+        color: #fff;
+        background: #2645a2;
+        font-weight: 700;
+    }
+    .ordo-mobile-nav .ordo-mobile-nav-logout {
+        color: var(--ordo-orange);
+        font-weight: 700;
+    }
+    .ordo-mobile-nav a:focus-visible,
+    .ordo-mobile-nav button:focus-visible,
+    .ordo-dashboard-nav a:focus-visible {
+        outline: 3px solid var(--ordo-orange);
+        outline-offset: -3px;
+    }
+}
+
+.ordo-realtime-notice-success { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:10px 14px; color:#0a6b4a; background:#e7f7f0; border:1px solid #b9e8d4; border-radius:8px; font-size:13.5px; font-weight:600; opacity:1; transition:opacity .4s ease; }
 .ordo-toast-success { position:fixed; top:20px; right:20px; z-index:9999; display:flex; align-items:center; gap:8px; padding:12px 16px; max-width:360px; color:#0a6b4a; background:#e7f7f0; border:1px solid #b9e8d4; border-radius:8px; font-size:13.5px; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,.12); opacity:1; transition:opacity .4s ease; }
+.ordo-notification-center { position:fixed; top:16px; right:18px; z-index:1100; }
+.ordo-notification-bell { position:relative; display:grid; place-items:center; width:38px; height:38px; color:var(--ordo-navy); background:#fff; border:1px solid var(--ordo-border); border-radius:50%; box-shadow:0 2px 8px rgba(16,25,46,.12); cursor:pointer; }
+.ordo-notification-bell:hover { color:var(--ordo-blue); border-color:var(--ordo-blue); }
+.ordo-notification-bell span { position:absolute; top:-5px; right:-6px; min-width:18px; padding:1px 5px; color:#fff; background:#c62828; border-radius:10px; font-size:11px; font-weight:700; }
+.ordo-notification-panel { position:absolute; top:46px; right:0; width:min(340px, calc(100vw - 36px)); max-height:420px; overflow:auto; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:10px; box-shadow:0 12px 28px rgba(16,25,46,.18); }
+.ordo-notification-panel header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--ordo-border); }
+.ordo-notification-panel header button { padding:0; color:var(--ordo-blue); background:none; border:0; font:inherit; font-size:12px; cursor:pointer; }
+.ordo-notification-panel > div > p { margin:0; padding:14px; color:var(--ordo-muted); font-size:13px; }
+.ordo-notification-item { display:grid; grid-template-columns:18px 1fr; gap:4px 8px; padding:11px 14px; color:inherit; border-bottom:1px solid #edf0f4; font-size:13px; text-decoration:none; }
+.ordo-notification-item i { grid-row:span 2; align-self:center; color:var(--ordo-blue); }
+.ordo-notification-item[href]:hover { background:#f4f7fb; color:var(--ordo-blue); }
+.ordo-notification-item time { color:var(--ordo-muted); font-size:11px; }

@@ -12,31 +12,14 @@
     <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
-<div id="lostConnection" class="ordo-signalr-banner d-none">
-    <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
-</div>
-<div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
-    <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
-    <a href="javascript:location.reload()">Ricarica la pagina</a>
-</div>
-
-@if (Context.Request.Query["notice"] == "project-deleted")
-{
-    <div class="ordo-realtime-notice">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        Il progetto che stavi visualizzando è stato eliminato dal proprietario.
-    </div>
-}
-
-@if (Context.Request.Query["notice"] == "removed-from-project")
-{
-    <div class="ordo-realtime-notice">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        Sei stato rimosso da un progetto a cui partecipavi.
-    </div>
-}
-
 <div class="ordo-projects-page">
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
     <header class="ordo-projects-heading">
         <div>
             <span class="ordo-eyebrow">Progetti</span>
@@ -112,69 +95,23 @@
     }
 </div>
 
-<script src="/js/bundle-signalr.js" asp-append-version="true"></script>
-<script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
-<script type="text/javascript">
-    function escapeHtml(str) {
-        var div = document.createElement("div");
-        div.textContent = str || "";
-        return div.innerHTML;
-    }
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script>
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
 
-    var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
-    signalRManager.registerEvents();
-
-    signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome, descrizione) {
-        if (document.querySelector('[data-project-id="' + projectId + '"]')) return;
-
-        var empty = document.getElementById("ordoProjectsEmpty");
-        if (empty) empty.remove();
-
-        var grid = document.getElementById("ordoProjectGridInner");
-        if (!grid) {
-            grid = document.createElement("div");
-            grid.className = "ordo-project-grid";
-            grid.id = "ordoProjectGridInner";
-            document.getElementById("ordoProjectGrid").appendChild(grid);
-        }
-
-        var article = document.createElement("article");
-        article.className = "ordo-project-card";
-        article.setAttribute("data-project-id", projectId);
-        article.innerHTML =
-            '<a class="ordo-project-card-link" href="/Progetti/Dettaglio/' + projectId + '">' +
-            '<h3>' + escapeHtml(nome) + ' <span class="ordo-role-badge">Collaboratore</span></h3>' +
-            '<p>' + escapeHtml(descrizione || "Nessuna descrizione.") + '</p>' +
-            '</a><footer></footer>';
-
-        grid.appendChild(article);
-    });
-
-    signalRManager.connection.on("ProjectUpdated", function (projectId, nome, descrizione) {
-        var card = document.querySelector('[data-project-id="' + projectId + '"]');
-        if (!card) return;
-
-        var titleEl = card.querySelector("h3");
-        if (titleEl) {
-            var badge = titleEl.querySelector(".ordo-role-badge");
-            titleEl.textContent = nome + " ";
-            if (badge) titleEl.appendChild(badge);
-        }
-
-        var descEl = card.querySelector("p");
-        if (descEl) descEl.textContent = descrizione || "Nessuna descrizione.";
-    });
-
-    signalRManager.connection.on("ProjectDeleted", function (projectId) {
-        var card = document.querySelector('[data-project-id="' + projectId + '"]');
-        if (card) card.remove();
-    });
-
-    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
-        if (tipo === "Assigned") {
-            Ordo.Toast.showAssigned(titolo, projectNome);
-        }
-    });
-
-    signalRManager.startConnection();
-</script>
+        signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome) {
+            showSignalRMessage("Sei stato aggiunto al progetto «" + nome + "».", 1200, function () { location.reload(); });
+        });
+        signalRManager.connection.on("ProjectDeleted", function (projectId) {
+            showSignalRMessage("Un progetto non è più disponibile.", 1200, function () { location.reload(); });
+        });
+        signalRManager.connection.on("ProjectUpdated", function (projectId, nome) {
+            showSignalRMessage("Il progetto «" + nome + "» è stato aggiornato.", 1200, function () { location.reload(); });
+        });
+        window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
+        signalRManager.startConnection();
+    </script>
+}

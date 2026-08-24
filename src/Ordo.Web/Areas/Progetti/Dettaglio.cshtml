@@ -12,23 +12,14 @@
     <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
-<div id="lostConnection" class="ordo-signalr-banner d-none">
-    <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
-</div>
-<div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
-    <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
-    <a href="javascript:location.reload()">Ricarica la pagina</a>
-</div>
-
-@if (Context.Request.Query["notice"] == "board-deleted")
-{
-    <div class="ordo-realtime-notice">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        La board che stavi visualizzando è stata eliminata.
-    </div>
-}
-
 <div class="ordo-projects-page">
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
     <a class="ordo-back-link" href="@Url.Action(MVC.Progetti.Progetti.Index())">
         <i class="fa-solid fa-arrow-left"></i> Torna ai progetti
     </a>
@@ -46,6 +37,9 @@
                 <i class="fa-solid fa-pen"></i> Modifica progetto
             </a>
         }
+        <a class="ordo-btn-secondary" asp-action="Chat" asp-route-id="@Model.Id">
+            <i class="fa-solid fa-comments"></i> Apri chat
+        </a>
     </header>
 
     <section class="ordo-dashboard-section" id="ordoBoardsSection">
@@ -274,3 +268,44 @@
     </section>
 
 </div>
+
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script>
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.Id", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
+
+        function refreshProject(message) {
+            showSignalRMessage(message, 1200, function () { location.reload(); });
+        }
+
+        signalRManager.connection.on("ProjectUpdated", function (projectId, nome) {
+            refreshProject("Il progetto «" + nome + "» è stato aggiornato.");
+        });
+        signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome) {
+            refreshProject("È stato aggiunto un collaboratore al progetto.");
+        });
+        signalRManager.connection.on("BoardCreated", function (projectId, boardId, nome) {
+            refreshProject("È stata aggiunta la board «" + nome + "».");
+        });
+        signalRManager.connection.on("BoardUpdated", function (projectId, boardId, nome) {
+            refreshProject("La board «" + nome + "» è stata aggiornata.");
+        });
+        signalRManager.connection.on("BoardDeleted", function (projectId, boardId, nome) {
+            refreshProject("La board «" + nome + "» è stata eliminata.");
+        });
+        signalRManager.connection.on("ProjectDeleted", function () {
+            window.location = "@Url.Action(MVC.Progetti.Progetti.Index())";
+        });
+        signalRManager.connection.on("MemberRemoved", function (projectId, userId) {
+            if (userId === "@currentUserId") {
+                window.location = "@Url.Action(MVC.Progetti.Progetti.Index())";
+                return;
+            }
+            refreshProject("Un collaboratore è stato rimosso dal progetto.");
+        });
+        window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
+        signalRManager.startConnection();
+    </script>
+}

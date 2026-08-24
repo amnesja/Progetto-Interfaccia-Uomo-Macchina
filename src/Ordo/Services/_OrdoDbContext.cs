@@ -21,6 +21,7 @@ namespace Ordo.Services
         public DbSet<TaskItem> Tasks { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; } 
+        public DbSet<ProjectChatMessage> ProjectChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,6 +52,21 @@ namespace Ordo.Services
                 .WithMany(p => p.Boards)
                 .HasForeignKey(b => b.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectChatMessage>()
+                .HasOne(message => message.Project)
+                .WithMany()
+                .HasForeignKey(message => message.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectChatMessage>()
+                .HasOne(message => message.User)
+                .WithMany()
+                .HasForeignKey(message => message.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectChatMessage>()
+                .HasIndex(message => new { message.ProjectId, message.DataCreazione });
 
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.Board)
