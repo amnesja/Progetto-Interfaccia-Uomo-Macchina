@@ -85,33 +85,6 @@ namespace Ordo.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("Ordo.Services.Shared.ProjectChatMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DataCreazione")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Testo")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ProjectId", "DataCreazione");
-
-                    b.ToTable("ProjectChatMessages");
-                });
-
             modelBuilder.Entity("Ordo.Services.Shared.ProjectMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -238,25 +211,6 @@ namespace Ordo.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("Ordo.Services.Shared.ProjectChatMessage", b =>
-                {
-                    b.HasOne("Ordo.Services.Shared.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Ordo.Services.Shared.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Ordo.Services.Shared.ProjectMember", b =>

@@ -1,10 +1,7 @@
 :root { --ordo-navy:#10192e; --ordo-blue:#24429d; --ordo-orange:#fba007; --ordo-bg:#f2f5f9; --ordo-border:#dfe5ed; --ordo-text:#141c31; --ordo-muted:#718096; }
 
 .ordo-field-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-@media (max-width:640px) {
-    .ordo-field-row { grid-template-columns:1fr; }
-    .ordo-project-form input[type="date"] { min-height:44px; cursor:pointer; }
-}
+@media (max-width:640px) { .ordo-field-row { grid-template-columns:1fr; } }
 
 .ordo-project-form select { width:100%; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; outline:0; }
 .ordo-project-form select:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }

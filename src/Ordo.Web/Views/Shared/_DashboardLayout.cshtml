@@ -1,9 +1,7 @@
-@using System.Security.Claims
 @{
     Layout = "_LayoutHtml";
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var area = ViewContext.RouteData.Values["area"]?.ToString();
-    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 @section styles {
@@ -59,145 +57,10 @@
     </aside>
 
     <main class="ordo-dashboard-main">
-        <div class="ordo-notification-center">
-            <button id="notificationBell" class="ordo-notification-bell" type="button" aria-label="Apri notifiche" aria-expanded="false">
-                <i class="fa-regular fa-bell"></i><span id="notificationBadge" class="d-none">0</span>
-            </button>
-            <div id="notificationPanel" class="ordo-notification-panel d-none" role="status" aria-live="polite">
-                <header><strong>Notifiche</strong><button id="clearNotifications" type="button">Segna come lette</button></header>
-                <div id="notificationList"><p>Nessuna notifica.</p></div>
-            </div>
-        </div>
         @RenderBody()
     </main>
-
-    <nav class="ordo-mobile-nav" aria-label="Navigazione mobile">
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Dashboard" ? "active" : "")"
-           asp-area="" asp-controller="Dashboard" asp-action="Index">
-            <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
-            <span>Home</span>
-        </a>
-
-        <a class="@(area == "Progetti" ? "active" : "")"
-           asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
-            <i class="fa-regular fa-folder" aria-hidden="true"></i>
-            <span>Progetti</span>
-        </a>
-
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")"
-           asp-area="" asp-controller="Attivita" asp-action="Index">
-            <i class="fa-solid fa-list" aria-hidden="true"></i>
-            <span>Attività</span>
-        </a>
-
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")"
-           asp-area="" asp-controller="Profile" asp-action="Profile">
-            <i class="fa-regular fa-user" aria-hidden="true"></i>
-            <span>Profilo</span>
-        </a>
-
-        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
-            <button type="submit" class="ordo-mobile-nav-logout">
-                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                <span>Esci</span>
-            </button>
-        </form>
-    </nav>
 </div>
 
 @section scripts {
-    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
-    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
-    <script>
-        (function () {
-            var storageKey = "ordo:notifications";
-            var notifications = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
-            var bell = document.getElementById("notificationBell");
-            var badge = document.getElementById("notificationBadge");
-            var panel = document.getElementById("notificationPanel");
-            var list = document.getElementById("notificationList");
-
-            function renderNotifications() {
-                list.replaceChildren();
-                if (!notifications.length) {
-                    var empty = document.createElement("p");
-                    empty.textContent = "Nessuna notifica.";
-                    list.appendChild(empty);
-                } else {
-                    notifications.forEach(function (notification) {
-                        var item = document.createElement(notification.url ? "a" : "article");
-                        item.className = "ordo-notification-item";
-                        if (notification.url) item.href = notification.url;
-                        var icon = document.createElement("i");
-                        icon.className = notification.icon === "chat" ? "fa-regular fa-comments" :
-                            notification.icon === "project" ? "fa-regular fa-folder" :
-                            notification.icon === "board" ? "fa-solid fa-table-columns" : "fa-solid fa-list-check";
-                        var text = document.createElement("span");
-                        text.textContent = notification.text;
-                        var time = document.createElement("time");
-                        time.textContent = notification.time;
-                        item.append(icon, text, time);
-                        list.appendChild(item);
-                    });
-                }
-                badge.textContent = notifications.length;
-                badge.classList.toggle("d-none", notifications.length === 0);
-                sessionStorage.setItem(storageKey, JSON.stringify(notifications));
-            }
-
-            function addNotification(text, url, icon) {
-                notifications.unshift({ text: text, url: url, icon: icon, time: new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) });
-                notifications = notifications.slice(0, 20);
-                renderNotifications();
-            }
-
-            bell.addEventListener("click", function () {
-                var isHidden = panel.classList.toggle("d-none");
-                bell.setAttribute("aria-expanded", (!isHidden).toString());
-            });
-            document.getElementById("clearNotifications").addEventListener("click", function () {
-                notifications = [];
-                renderNotifications();
-            });
-            renderNotifications();
-
-            var globalSignalR = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
-            globalSignalR.registerEvents();
-            globalSignalR.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
-                var actions = {
-                    Assigned: "Ti è stata assegnata l'attività",
-                    Unassigned: "Non sei più assegnato all'attività",
-                    Updated: "Attività aggiornata",
-                    Deleted: "Attività eliminata",
-                    Commented: "Nuovo commento sull'attività",
-                    CommentDeleted: "Commento eliminato dall'attività"
-                };
-                var url = tipo === "Deleted" ? "/Kanban/Board/" + boardId : "/Tasks/Dettaglio/" + taskId;
-                addNotification((actions[tipo] || "Attività aggiornata") + ": «" + titolo + "»" + (projectNome ? " · " + projectNome : ""), url, "task");
-            });
-            globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) {
-                addNotification("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project");
-            });
-            globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) {
-                addNotification("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project");
-            });
-            globalSignalR.connection.on("ProjectDeleted", function () {
-                addNotification("Un progetto non è più disponibile.");
-            });
-            globalSignalR.connection.on("ProjectChatMessageAdded", function (message) {
-                addNotification("Nuovo messaggio da " + message.userName + ".", "/Progetti/Chat/" + message.idGroup, "chat");
-            });
-            globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) {
-                addNotification("È stata creata la board «" + nome + "».", "/Kanban/Board/" + boardId, "board");
-            });
-            globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) {
-                addNotification("La board «" + nome + "» è stata aggiornata.", "/Kanban/Board/" + boardId, "board");
-            });
-            globalSignalR.connection.on("BoardDeleted", function (projectId, boardId, nome) {
-                addNotification("La board «" + nome + "» è stata eliminata.", "/Progetti/Dettaglio/" + projectId, "board");
-            });
-            globalSignalR.startConnection();
-        })();
-    </script>
     @RenderSection("scripts", required: false)
 }

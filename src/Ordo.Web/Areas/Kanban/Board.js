@@ -27,44 +27,6 @@ var Ordo;
                         const d = new Date(dateStr);
                         return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
                     },
-                    addTask(taskEvent) {
-                        if (this.tasks.some(task => task.id === taskEvent.taskId))
-                            return;
-                        this.tasks.push({
-                            id: taskEvent.taskId,
-                            titolo: taskEvent.titolo,
-                            priorita: taskEvent.priorita,
-                            stato: taskEvent.stato,
-                            scadenza: taskEvent.scadenza,
-                            assignedUserId: taskEvent.assignedUserId,
-                            assignedUserName: taskEvent.assignedUserName
-                        });
-                    },
-                    updateTask(taskEvent) {
-                        const task = this.tasks.find(task => task.id === taskEvent.taskId);
-                        if (!task) {
-                            this.addTask(taskEvent);
-                            return;
-                        }
-                        task.titolo = taskEvent.titolo;
-                        task.priorita = taskEvent.priorita;
-                        task.stato = taskEvent.stato;
-                        task.scadenza = taskEvent.scadenza;
-                        task.assignedUserId = taskEvent.assignedUserId;
-                        task.assignedUserName = taskEvent.assignedUserName;
-                    },
-                    removeTask(taskId) {
-                        const index = this.tasks.findIndex(task => task.id === taskId);
-                        if (index >= 0)
-                            this.tasks.splice(index, 1);
-                    },
-                    updateTaskAssignee(taskId, assignedUserId, assignedUserName) {
-                        const task = this.tasks.find(task => task.id === taskId);
-                        if (!task)
-                            return;
-                        task.assignedUserId = assignedUserId;
-                        task.assignedUserName = assignedUserName;
-                    },
                     onDragStart(task) {
                         this.draggedTask = task;
                     },
@@ -73,26 +35,14 @@ var Ordo;
                             return;
                         const task = this.draggedTask;
                         this.draggedTask = null;
-                        await this.moveTask(task, nuovoStato);
-                    },
-                    async moveTaskFromSelect(task, event) {
-                        const select = event.target;
-                        await this.moveTask(task, Number(select.value));
-                    },
-                    async moveTask(task, nuovoStato) {
-                        var _a;
                         if (task.stato === nuovoStato)
                             return;
                         const statoPrecedente = task.stato;
                         task.stato = nuovoStato; // aggiornamento ottimistico
                         try {
-                            const antiforgeryToken = (_a = document.querySelector("input[name='__RequestVerificationToken']")) === null || _a === void 0 ? void 0 : _a.value;
                             const response = await fetch(moveTaskUrl, {
                                 method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "RequestVerificationToken": antiforgeryToken !== null && antiforgeryToken !== void 0 ? antiforgeryToken : ""
-                                },
+                                headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ taskId: task.id, nuovoStato: nuovoStato })
                             });
                             if (!response.ok) {

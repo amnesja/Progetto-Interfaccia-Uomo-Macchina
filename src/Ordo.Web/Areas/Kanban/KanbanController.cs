@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Ordo.Services.Shared;
 using Ordo.Web.SignalR;
@@ -21,36 +20,11 @@ namespace Ordo.Web.Areas.Kanban
             _publisher = publisher;
         }
 
-        private bool TryGetCurrentUserId(out Guid userId)
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return Guid.TryParse(value, out userId);
-        }
-
-        private async Task<bool> HasProjectAccess(Guid projectId, Guid userId)
-        {
-            var project = await _sharedService.Query(new ProjectDetailQuery { Id = projectId });
-            if (project == null)
-                return false;
-
-            if (project.OwnerId == userId)
-                return true;
-
-            var members = await _sharedService.Query(new ProjectMembersQuery { ProjectId = projectId });
-            return members.Members.Any(member => member.UserId == userId);
-        }
-
         [HttpGet]
         public virtual async Task<IActionResult> Board(Guid id)
         {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
             var boardDetail = await _sharedService.Query(new BoardDetailQuery { Id = id });
             if (boardDetail == null) return NotFound();
-
-            if (!await HasProjectAccess(boardDetail.ProjectId, currentUserId))
-                return Forbid();
 
             var tasks = await _sharedService.Query(new TasksByBoardQuery { BoardId = id });
 
@@ -75,53 +49,35 @@ namespace Ordo.Web.Areas.Kanban
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public virtual async Task<IActionResult> MoveTask([FromBody] MoveTaskRequest request)
         {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            if (!Enum.IsDefined(typeof(TaskState), request.NuovoStato))
-                return BadRequest();
-
-            var task = await _sharedService.Query(new TaskDetailQuery { Id = request.TaskId });
-            if (task == null) return NotFound();
-
-            var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
-            if (board == null) return NotFound();
-
-            if (!await HasProjectAccess(board.ProjectId, currentUserId))
-                return Forbid();
-
             await _sharedService.Handle(new MoveTaskCommand
             {
                 Id = request.TaskId,
                 NuovoStato = (TaskState)request.NuovoStato
             });
 
-            // Notifica in tempo reale chiunque altro stia guardando questa stessa board
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = request.TaskId });
+
             await _publisher.Publish(new TaskMovedEvent
             {
-                IdGroup = board.Id,
+                IdGroup = task.BoardId,
                 TaskId = request.TaskId,
-                NuovoStato = (TaskState)request.NuovoStato,
-                Titolo = task.Titolo
+                NuovoStato = (TaskState)request.NuovoStato
             });
 
-            // Notifica personale a chi è assegnato al task, anche se non sta guardando questa board
             if (task.AssignedUserId.HasValue)
             {
-                var project = await _sharedService.Query(new ProjectDetailQuery { Id = board.ProjectId });
+                var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
 
                 await _publisher.Publish(new TaskChangedForUserEvent
                 {
                     IdGroup = task.AssignedUserId.Value,
                     Tipo = "Updated",
                     Titolo = task.Titolo,
-                    ProjectNome = project?.Nome,
-                    ProjectId = board.ProjectId,
-                    BoardId = task.BoardId,
-                    TaskId = task.Id
+                    ProjectNome = null,
+                    ProjectId = board?.ProjectId ?? Guid.Empty,
+                    BoardId = task.BoardId
                 });
             }
 

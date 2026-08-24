@@ -4,8 +4,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Ordo.Services.Shared;
 using Ordo.Web.Infrastructure;
-using Ordo.Web.SignalR;
-using Ordo.Web.SignalR.Hubs.Events;
 using System.Linq;
 using Ordo.Web.SignalR;
 using Ordo.Web.SignalR.Hubs.Events;
@@ -19,11 +17,13 @@ namespace Ordo.Web.Areas.Progetti
     {
         private readonly SharedService _sharedService;
         private readonly IPublishDomainEvents _publisher;
+        private readonly OrdoDbContext _dbContext;
 
-        public ProgettiController(SharedService sharedService, IPublishDomainEvents publisher)
+        public ProgettiController(SharedService sharedService, IPublishDomainEvents publisher, OrdoDbContext dbContext)
         {
             _sharedService = sharedService;
             _publisher = publisher;
+            _dbContext = dbContext;
 
             ModelUnbinderHelpers.ModelUnbinders.Add(typeof(IndexViewModel), new SimplePropertyModelUnbinder());
         }
@@ -32,15 +32,6 @@ namespace Ordo.Web.Areas.Progetti
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return Guid.TryParse(value, out userId);
-        }
-
-        private async Task<Guid[]> GetInvolvedUserIds(Guid projectId, Guid ownerId)
-        {
-            var members = await _sharedService.Query(new ProjectMembersQuery { ProjectId = projectId });
-            return members.Members.Select(member => member.UserId)
-                .Append(ownerId)
-                .Distinct()
-                .ToArray();
         }
 
         [HttpGet]
@@ -101,17 +92,21 @@ namespace Ordo.Web.Areas.Progetti
             {
                 try
                 {
-                    var isUpdate = model.Id.HasValue;
                     model.Id = await _sharedService.Handle(model.ToAddOrUpdateProjectCommand(currentUserId));
 
-                    if (isUpdate)
+                    if (isEditingExisting)
                     {
+                        var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = model.Id.Value });
+                        var utentiCoinvolti = membri.Members.Select(m => m.UserId)
+                            .Append(currentUserId)
+                            .ToArray();
+
                         await _publisher.Publish(new ProjectUpdatedEvent
                         {
                             ProjectId = model.Id.Value,
                             Nome = model.Nome,
                             Descrizione = model.Descrizione,
-                            UtentiCoinvolti = await GetInvolvedUserIds(model.Id.Value, currentUserId)
+                            UtentiCoinvolti = utentiCoinvolti
                         });
                     }
 
@@ -143,9 +138,14 @@ namespace Ordo.Web.Areas.Progetti
             if (progetto == null || progetto.OwnerId != currentUserId)
                 return Forbid();
 
-            var utentiCoinvolti = await GetInvolvedUserIds(id, progetto.OwnerId);
+            // Raccogliamo PRIMA della cancellazione chi va notificato:
+            // dopo la Delete, i ProjectMembers vengono eliminati in cascata
+            var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = id });
+            var utentiCoinvolti = membri.Members.Select(m => m.UserId)
+                .Append(progetto.OwnerId)
+                .ToArray();
+
             await _sharedService.Handle(new DeleteProjectCommand { Id = id });
-            await _publisher.Publish(new ProjectDeletedEvent { ProjectId = id, UtentiCoinvolti = utentiCoinvolti });
 
             await _publisher.Publish(new ProjectDeletedEvent
             {
@@ -185,79 +185,6 @@ namespace Ordo.Web.Areas.Progetti
             return View(model);
         }
 
-        [HttpGet]
-        public virtual async Task<IActionResult> Chat(Guid id)
-        {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = id });
-            if (progetto == null)
-                return NotFound();
-
-            var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = id });
-            if (progetto.OwnerId != currentUserId && !membri.Members.Any(member => member.UserId == currentUserId))
-                return Forbid();
-
-            var messages = await _sharedService.Query(new ProjectChatMessagesQuery { ProjectId = id });
-            return View(new ChatViewModel
-            {
-                ProjectId = id,
-                ProjectNome = progetto.Nome,
-                Messages = messages.Messages.Select(message => new ChatMessageViewModel
-                {
-                    Id = message.Id,
-                    UserId = message.UserId,
-                    UserName = message.UserName,
-                    Testo = message.Testo,
-                    DataCreazione = message.DataCreazione
-                })
-            });
-        }
-
-        [HttpPost]
-        public virtual async Task<IActionResult> ChatInvia(ChatMessageFormViewModel model)
-        {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = model.ProjectId });
-            if (progetto == null)
-                return NotFound();
-
-            var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = model.ProjectId });
-            if (progetto.OwnerId != currentUserId && !membri.Members.Any(member => member.UserId == currentUserId))
-                return Forbid();
-
-            if (!ModelState.IsValid)
-            {
-                Alerts.AddError(this, "Messaggio non valido");
-                return RedirectToAction(nameof(Chat), new { id = model.ProjectId });
-            }
-
-            var message = await _sharedService.Handle(new AddProjectChatMessageCommand
-            {
-                ProjectId = model.ProjectId,
-                UserId = currentUserId,
-                Testo = model.Testo
-            });
-            var user = await _sharedService.Query(new UserDetailQuery { Id = currentUserId });
-            var userName = string.IsNullOrWhiteSpace(user?.NickName) ? user?.Email : user.NickName;
-
-            await _publisher.Publish(new ProjectChatMessageEvent
-            {
-                IdGroup = model.ProjectId,
-                MessageId = message.Id,
-                UserId = currentUserId,
-                UserName = userName,
-                Testo = message.Testo,
-                DataCreazione = message.DataCreazione,
-                UtentiCoinvolti = await GetInvolvedUserIds(model.ProjectId, progetto.OwnerId)
-            });
-
-            return RedirectToAction(nameof(Chat), new { id = model.ProjectId });
-        }
-
         [HttpPost]
         public virtual async Task<IActionResult> BoardSalva(BoardFormViewModel model)
         {
@@ -275,18 +202,28 @@ namespace Ordo.Web.Areas.Progetti
             }
             else
             {
-                if (model.Id.HasValue)
+                var isNewBoard = !model.Id.HasValue;
+                var boardId = await _sharedService.Handle(model.ToAddOrUpdateBoardCommand());
+
+                if (isNewBoard)
                 {
-                    var boardEsistente = await _sharedService.Query(new BoardDetailQuery { Id = model.Id.Value });
-                    if (boardEsistente == null || boardEsistente.ProjectId != model.ProjectId)
-                        return NotFound();
+                    await _publisher.Publish(new BoardCreatedEvent
+                    {
+                        ProjectId = model.ProjectId,
+                        BoardId = boardId,
+                        BoardNome = model.Nome
+                    });
+                }
+                else
+                {
+                    await _publisher.Publish(new BoardUpdatedEvent
+                    {
+                        ProjectId = model.ProjectId,
+                        BoardId = boardId,
+                        BoardNome = model.Nome
+                    });
                 }
 
-                var boardId = await _sharedService.Handle(model.ToAddOrUpdateBoardCommand());
-                if (model.Id.HasValue)
-                    await _publisher.Publish(new BoardUpdatedEvent { ProjectId = model.ProjectId, BoardId = boardId, BoardNome = model.Nome, UtentiCoinvolti = await GetInvolvedUserIds(model.ProjectId, progetto.OwnerId) });
-                else
-                    await _publisher.Publish(new BoardCreatedEvent { ProjectId = model.ProjectId, BoardId = boardId, BoardNome = model.Nome, UtentiCoinvolti = await GetInvolvedUserIds(model.ProjectId, progetto.OwnerId) });
                 Alerts.AddSuccess(this, "Board salvata correttamente");
             }
 
@@ -305,11 +242,8 @@ namespace Ordo.Web.Areas.Progetti
                 return Forbid();
 
             var board = await _sharedService.Query(new BoardDetailQuery { Id = id });
-            if (board == null || board.ProjectId != projectId)
-                return NotFound();
 
             await _sharedService.Handle(new DeleteBoardCommand { Id = id });
-            await _publisher.Publish(new BoardDeletedEvent { ProjectId = projectId, BoardId = id, BoardNome = board.Nome, UtentiCoinvolti = await GetInvolvedUserIds(projectId, progetto.OwnerId) });
 
             if (board != null)
             {
@@ -356,20 +290,15 @@ namespace Ordo.Web.Areas.Progetti
             else
             {
                 await _sharedService.Handle(new AddProjectMemberCommand { ProjectId = model.ProjectId, UserId = utente.Id });
+
                 await _publisher.Publish(new MemberAddedEvent
                 {
                     IdGroup = utente.Id,
-                    ProjectId = model.ProjectId,
+                    ProjectId = progetto.Id,
                     ProjectNome = progetto.Nome,
                     ProjectDescrizione = progetto.Descrizione
                 });
-                await _publisher.Publish(new MemberAddedEvent
-                {
-                    IdGroup = model.ProjectId,
-                    ProjectId = model.ProjectId,
-                    ProjectNome = progetto.Nome,
-                    ProjectDescrizione = progetto.Descrizione
-                });
+
                 Alerts.AddSuccess(this, "Collaboratore aggiunto al progetto");
             }
 
@@ -394,7 +323,6 @@ namespace Ordo.Web.Areas.Progetti
                 .ToListAsync();
 
             await _sharedService.Handle(new RemoveProjectMemberCommand { ProjectId = projectId, UserId = userId });
-            await _publisher.Publish(new MemberRemovedEvent { ProjectId = projectId, UserId = userId });
 
             await _publisher.Publish(new MemberRemovedEvent
             {

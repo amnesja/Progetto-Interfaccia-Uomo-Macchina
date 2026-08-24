@@ -10,7 +10,7 @@ namespace Ordo.Kanban {
         stato: number;
         scadenza: string | null;
         assignedUserId: string | null;
-        assignedUserName: string | null;
+        assignedUserNickName: string | null;
     }
 
     interface BoardSeed {
@@ -55,60 +55,6 @@ namespace Ordo.Kanban {
                     const d = new Date(dateStr);
                     return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
                 },
-                addTask(taskEvent: {
-                    taskId: string;
-                    titolo: string;
-                    priorita: number;
-                    stato: number;
-                    scadenza: string | null;
-                    assignedUserId: string | null;
-                    assignedUserName: string | null;
-                }) {
-                    if (this.tasks.some(task => task.id === taskEvent.taskId)) return;
-
-                    this.tasks.push({
-                        id: taskEvent.taskId,
-                        titolo: taskEvent.titolo,
-                        priorita: taskEvent.priorita,
-                        stato: taskEvent.stato,
-                        scadenza: taskEvent.scadenza,
-                        assignedUserId: taskEvent.assignedUserId,
-                        assignedUserName: taskEvent.assignedUserName
-                    });
-                },
-                updateTask(taskEvent: {
-                    taskId: string;
-                    titolo: string;
-                    priorita: number;
-                    stato: number;
-                    scadenza: string | null;
-                    assignedUserId: string | null;
-                    assignedUserName: string | null;
-                }) {
-                    const task = this.tasks.find(task => task.id === taskEvent.taskId);
-                    if (!task) {
-                        this.addTask(taskEvent);
-                        return;
-                    }
-
-                    task.titolo = taskEvent.titolo;
-                    task.priorita = taskEvent.priorita;
-                    task.stato = taskEvent.stato;
-                    task.scadenza = taskEvent.scadenza;
-                    task.assignedUserId = taskEvent.assignedUserId;
-                    task.assignedUserName = taskEvent.assignedUserName;
-                },
-                removeTask(taskId: string) {
-                    const index = this.tasks.findIndex(task => task.id === taskId);
-                    if (index >= 0) this.tasks.splice(index, 1);
-                },
-                updateTaskAssignee(taskId: string, assignedUserId: string | null, assignedUserName: string | null) {
-                    const task = this.tasks.find(task => task.id === taskId);
-                    if (!task) return;
-
-                    task.assignedUserId = assignedUserId;
-                    task.assignedUserName = assignedUserName;
-                },
                 onDragStart(task: TaskCard) {
                     this.draggedTask = task;
                 },
@@ -117,27 +63,15 @@ namespace Ordo.Kanban {
                     const task = this.draggedTask;
                     this.draggedTask = null;
 
-                    await this.moveTask(task, nuovoStato);
-                },
-                async moveTaskFromSelect(task: TaskCard, event: Event) {
-                    const select = event.target as HTMLSelectElement;
-                    await this.moveTask(task, Number(select.value));
-                },
-                async moveTask(task: TaskCard, nuovoStato: number) {
-
                     if (task.stato === nuovoStato) return;
 
                     const statoPrecedente = task.stato;
                     task.stato = nuovoStato; // aggiornamento ottimistico
 
                     try {
-                        const antiforgeryToken = document.querySelector<HTMLInputElement>("input[name='__RequestVerificationToken']")?.value;
                         const response = await fetch(moveTaskUrl, {
                             method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "RequestVerificationToken": antiforgeryToken ?? ""
-                            },
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ taskId: task.id, nuovoStato: nuovoStato })
                         });
 
