@@ -4,6 +4,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Ordo.Services.Shared;
 using Ordo.Web.Infrastructure;
+using Ordo.Web.SignalR;
+using Ordo.Web.SignalR.Hubs.Events;
 using System.Linq;
 
 namespace Ordo.Web.Areas.Progetti
@@ -12,10 +14,12 @@ namespace Ordo.Web.Areas.Progetti
     public partial class ProgettiController : AuthenticatedBaseController
     {
         private readonly SharedService _sharedService;
+        private readonly IPublishDomainEvents _publisher;
 
-        public ProgettiController(SharedService sharedService)
+        public ProgettiController(SharedService sharedService, IPublishDomainEvents publisher)
         {
             _sharedService = sharedService;
+            _publisher = publisher;
 
             ModelUnbinderHelpers.ModelUnbinders.Add(typeof(IndexViewModel), new SimplePropertyModelUnbinder());
         }
@@ -24,6 +28,15 @@ namespace Ordo.Web.Areas.Progetti
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return Guid.TryParse(value, out userId);
+        }
+
+        private async Task<Guid[]> GetInvolvedUserIds(Guid projectId, Guid ownerId)
+        {
+            var members = await _sharedService.Query(new ProjectMembersQuery { ProjectId = projectId });
+            return members.Members.Select(member => member.UserId)
+                .Append(ownerId)
+                .Distinct()
+                .ToArray();
         }
 
         [HttpGet]
@@ -82,7 +95,19 @@ namespace Ordo.Web.Areas.Progetti
             {
                 try
                 {
+                    var isUpdate = model.Id.HasValue;
                     model.Id = await _sharedService.Handle(model.ToAddOrUpdateProjectCommand(currentUserId));
+
+                    if (isUpdate)
+                    {
+                        await _publisher.Publish(new ProjectUpdatedEvent
+                        {
+                            ProjectId = model.Id.Value,
+                            Nome = model.Nome,
+                            Descrizione = model.Descrizione,
+                            UtentiCoinvolti = await GetInvolvedUserIds(model.Id.Value, currentUserId)
+                        });
+                    }
 
                     Alerts.AddSuccess(this, "Progetto salvato correttamente");
                 }
@@ -112,7 +137,9 @@ namespace Ordo.Web.Areas.Progetti
             if (progetto == null || progetto.OwnerId != currentUserId)
                 return Forbid();
 
+            var utentiCoinvolti = await GetInvolvedUserIds(id, progetto.OwnerId);
             await _sharedService.Handle(new DeleteProjectCommand { Id = id });
+            await _publisher.Publish(new ProjectDeletedEvent { ProjectId = id, UtentiCoinvolti = utentiCoinvolti });
 
             Alerts.AddSuccess(this, "Progetto eliminato");
 
@@ -163,7 +190,18 @@ namespace Ordo.Web.Areas.Progetti
             }
             else
             {
-                await _sharedService.Handle(model.ToAddOrUpdateBoardCommand());
+                if (model.Id.HasValue)
+                {
+                    var boardEsistente = await _sharedService.Query(new BoardDetailQuery { Id = model.Id.Value });
+                    if (boardEsistente == null || boardEsistente.ProjectId != model.ProjectId)
+                        return NotFound();
+                }
+
+                var boardId = await _sharedService.Handle(model.ToAddOrUpdateBoardCommand());
+                if (model.Id.HasValue)
+                    await _publisher.Publish(new BoardUpdatedEvent { ProjectId = model.ProjectId, BoardId = boardId, BoardNome = model.Nome });
+                else
+                    await _publisher.Publish(new BoardCreatedEvent { ProjectId = model.ProjectId, BoardId = boardId, BoardNome = model.Nome });
                 Alerts.AddSuccess(this, "Board salvata correttamente");
             }
 
@@ -181,7 +219,12 @@ namespace Ordo.Web.Areas.Progetti
             if (progetto == null || progetto.OwnerId != currentUserId)
                 return Forbid();
 
+            var board = await _sharedService.Query(new BoardDetailQuery { Id = id });
+            if (board == null || board.ProjectId != projectId)
+                return NotFound();
+
             await _sharedService.Handle(new DeleteBoardCommand { Id = id });
+            await _publisher.Publish(new BoardDeletedEvent { ProjectId = projectId, BoardId = id, BoardNome = board.Nome });
 
             Alerts.AddSuccess(this, "Board eliminata");
 
@@ -218,6 +261,13 @@ namespace Ordo.Web.Areas.Progetti
             else
             {
                 await _sharedService.Handle(new AddProjectMemberCommand { ProjectId = model.ProjectId, UserId = utente.Id });
+                await _publisher.Publish(new MemberAddedEvent
+                {
+                    IdGroup = utente.Id,
+                    ProjectId = model.ProjectId,
+                    ProjectNome = progetto.Nome,
+                    ProjectDescrizione = progetto.Descrizione
+                });
                 Alerts.AddSuccess(this, "Collaboratore aggiunto al progetto");
             }
 
@@ -235,6 +285,7 @@ namespace Ordo.Web.Areas.Progetti
                 return Forbid();
 
             await _sharedService.Handle(new RemoveProjectMemberCommand { ProjectId = projectId, UserId = userId });
+            await _publisher.Publish(new MemberRemovedEvent { ProjectId = projectId, UserId = userId });
 
             Alerts.AddSuccess(this, "Collaboratore rimosso dal progetto");
 

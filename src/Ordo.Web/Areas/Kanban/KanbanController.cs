@@ -108,6 +108,22 @@ namespace Ordo.Web.Areas.Kanban
                 Titolo = task.Titolo
             });
 
+            // Notifica personale a chi è assegnato al task, anche se non sta guardando questa board
+            if (task.AssignedUserId.HasValue)
+            {
+                var project = await _sharedService.Query(new ProjectDetailQuery { Id = board.ProjectId });
+
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = task.AssignedUserId.Value,
+                    Tipo = "Updated",
+                    Titolo = task.Titolo,
+                    ProjectNome = project?.Nome,
+                    ProjectId = board.ProjectId,
+                    BoardId = task.BoardId
+                });
+            }
+
             return Ok();
         }
     }

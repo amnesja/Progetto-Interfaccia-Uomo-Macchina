@@ -1,15 +1,25 @@
 @model Ordo.Web.Areas.Progetti.IndexViewModel
+@using System.Security.Claims
 @{
     Layout = "_DashboardLayout";
     ViewData["Title"] = "I miei progetti";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 @section styles {
     <link href="~/css/dashboard.css" asp-append-version="true" rel="stylesheet" />
     <link href="~/css/progetti.css" asp-append-version="true" rel="stylesheet" />
+    <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
 <div class="ordo-projects-page">
+    <div id="lostConnection" class="ordo-signalr-banner d-none">
+        <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+    </div>
+    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+        <a href="javascript:location.reload()">Ricarica la pagina</a>
+    </div>
     <header class="ordo-projects-heading">
         <div>
             <span class="ordo-eyebrow">Progetti</span>
@@ -82,3 +92,24 @@
         }
     }
 </div>
+
+@section scripts {
+    <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+    <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+    <script>
+        var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+        signalRManager.registerEvents();
+
+        signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome) {
+            showSignalRMessage("Sei stato aggiunto al progetto «" + nome + "».", 1200, function () { location.reload(); });
+        });
+        signalRManager.connection.on("ProjectDeleted", function (projectId) {
+            showSignalRMessage("Un progetto non è più disponibile.", 1200, function () { location.reload(); });
+        });
+        signalRManager.connection.on("ProjectUpdated", function (projectId, nome) {
+            showSignalRMessage("Il progetto «" + nome + "» è stato aggiornato.", 1200, function () { location.reload(); });
+        });
+        window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
+        signalRManager.startConnection();
+    </script>
+}

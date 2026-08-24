@@ -1,7 +1,9 @@
 @model Ordo.Web.Areas.Kanban.BoardViewModel
+@using System.Security.Claims
 @{
     Layout = "_DashboardLayout";
     ViewData["Title"] = "Board - " + Model.BoardName;
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 @section styles {
@@ -100,6 +102,7 @@
     var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
     signalRManager.registerEvents();
     var stateLabels = ["Da fare", "In corso", "Review", "Done"];
+
     signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato, titolo) {
         Ordo.Kanban.applyRemoteMove(kanbanVm, taskId, nuovoStato);
         showSignalRMessage("\u00ab" + titolo + "\u00bb è stato spostato in " + (stateLabels[nuovoStato] || "un'altra colonna") + ".");
@@ -124,8 +127,34 @@
             ? "\u00ab" + titolo + "\u00bb è stato assegnato a " + assignedUserName + "."
             : "L'assegnazione di \u00ab" + titolo + "\u00bb è stata rimossa.");
     });
+
+    // La board stessa può essere rinominata o cancellata da un altro utente mentre la guardi
+    signalRManager.connection.on("BoardDeleted", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            window.location = "/Progetti/Dettaglio/@Model.ProjectId?notice=board-deleted";
+        }
+    });
+    signalRManager.connection.on("BoardUpdated", function (projectId, boardId, nome) {
+        if (boardId === "@Model.BoardId") {
+            var titleEl = document.querySelector(".kanban-page-title");
+            if (titleEl) titleEl.textContent = nome;
+        }
+    });
+
+    // Notifica personale: ti hanno assegnato un task su un'ALTRA board (non questa che stai guardando)
+    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+        if (tipo !== "Assigned") return;
+        if (boardId === "@Model.BoardId") return; // sei già su questa board, TaskMoved/UserAssigned bastano
+
+        Ordo.Toast.showAssigned(titolo, projectNome);
+    });
+
     window.addEventListener("ordo:signalr-reconnected", function () {
         window.location.reload();
     });
+
+    // Entra sia nel gruppo della Board (aggiornamenti sulla board) sia nel proprio canale
+    // personale (notifiche individuali anche quando non sei su questa pagina)
+    signalRManager.addAdditionalGroup("@currentUserId");
     signalRManager.startConnection();
 </script>

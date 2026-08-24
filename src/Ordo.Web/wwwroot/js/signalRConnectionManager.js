@@ -17,6 +17,7 @@ class SignalRConnectionManager {
         this.joinGroupMethod = joinGroupMethod;
         this.joinGroupParamethers = joinGroupParamethers;
         this.leaveGroupMethod = leaveGroupMethod;
+        this.additionalGroupParameters = [];
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(connectionUrl)
             .withAutomaticReconnect({
@@ -46,12 +47,7 @@ class SignalRConnectionManager {
         this.connection.onreconnected(async (connectionId) => {
             console.assert(this.connection.state === signalR.HubConnectionState.Connected);
             try {
-                if (this.joinGroupParamethers) {
-                    await this.connection.invoke(this.joinGroupMethod, this.joinGroupParamethers);
-                }
-                else {
-                    await this.connection.invoke(this.joinGroupMethod);
-                }
+                await this.joinGroups();
                 console.log("[" + new Date().toISOString() + "] SignalR riconnesso");
                 document.getElementById('lostConnection').classList.add('d-none');
                 document.getElementById('lostConnectionManualRetry').classList.add('d-none');
@@ -70,6 +66,22 @@ class SignalRConnectionManager {
             document.getElementById('lostConnectionManualRetry').classList.remove('d-none');
         });
     }
+    addAdditionalGroup(groupParameter) {
+        if (groupParameter && groupParameter !== this.joinGroupParamethers && !this.additionalGroupParameters.includes(groupParameter)) {
+            this.additionalGroupParameters.push(groupParameter);
+        }
+    }
+    async joinGroups() {
+        if (this.joinGroupParamethers) {
+            await this.connection.invoke(this.joinGroupMethod, this.joinGroupParamethers);
+        }
+        else {
+            await this.connection.invoke(this.joinGroupMethod);
+        }
+        for (const groupParameter of this.additionalGroupParameters) {
+            await this.connection.invoke(this.joinGroupMethod, groupParameter);
+        }
+    }
     async changeConnectionParamethers(joinLeaveGroupParamethers = this.joinGroupParamethers, joinGroupMethod = this.joinGroupMethod, leaveGroupMethod = this.leaveGroupMethod) {
         if (this.connection.state !== signalR.HubConnectionState.Disconnected)
             await this.stopConnection();
@@ -83,12 +95,7 @@ class SignalRConnectionManager {
         try {
             await this.connection.start();
             console.assert(this.connection.state === signalR.HubConnectionState.Connected);
-            if (this.joinGroupParamethers) {
-                await this.connection.invoke(this.joinGroupMethod, this.joinGroupParamethers);
-            }
-            else {
-                await this.connection.invoke(this.joinGroupMethod);
-            }
+            await this.joinGroups();
             console.log("[" + new Date().toISOString() + "] SignalR connesso");
             document.getElementById('lostConnection').classList.add('d-none');
             document.getElementById('lostConnectionManualRetry').classList.add('d-none');
