@@ -18,6 +18,8 @@ class SignalRConnectionManager {
         this.joinGroupParamethers = joinGroupParamethers;
         this.leaveGroupMethod = leaveGroupMethod;
         this.additionalGroupParameters = [];
+        this.reconnectNoticeTimer = undefined;
+        this.initialRetryTimer = undefined;
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(connectionUrl)
             .withAutomaticReconnect({
@@ -41,7 +43,7 @@ class SignalRConnectionManager {
     async registerEvents() {
         this.connection.onreconnecting(error => {
             console.assert(this.connection.state === signalR.HubConnectionState.Reconnecting);
-            document.getElementById('lostConnection').classList.remove('d-none');
+            this.reconnectNoticeTimer = window.setTimeout(() => this.setConnectionBanner(true), 800);
             console.log("[" + new Date().toISOString() + "] SignalR in riconnessione. " + error + ".");
         });
         this.connection.onreconnected(async (connectionId) => {
@@ -49,22 +51,25 @@ class SignalRConnectionManager {
             try {
                 await this.joinGroups();
                 console.log("[" + new Date().toISOString() + "] SignalR riconnesso");
-                document.getElementById('lostConnection').classList.add('d-none');
-                document.getElementById('lostConnectionManualRetry').classList.add('d-none');
-                window.dispatchEvent(new CustomEvent("ordo:signalr-reconnected"));
+                this.setConnectionBanner(false);
             }
             catch (err) {
                 console.error("Impossibile rientrare nel gruppo SignalR", err);
-                document.getElementById('lostConnection').classList.add('d-none');
-                document.getElementById('lostConnectionManualRetry').classList.remove('d-none');
+                this.setConnectionBanner(false, true);
             }
         });
         this.connection.onclose(async (error) => {
             console.assert(this.connection.state === signalR.HubConnectionState.Disconnected);
             console.log("[" + new Date().toISOString() + "] SignalR scollegato definitivamente");
-            document.getElementById('lostConnection').classList.add('d-none');
-            document.getElementById('lostConnectionManualRetry').classList.remove('d-none');
+            this.setConnectionBanner(false, true);
         });
+    }
+    setConnectionBanner(isReconnecting, showManualRetry = false) {
+        if (this.reconnectNoticeTimer)
+            window.clearTimeout(this.reconnectNoticeTimer);
+        this.reconnectNoticeTimer = undefined;
+        document.getElementById('lostConnection')?.classList.toggle('d-none', !isReconnecting);
+        document.getElementById('lostConnectionManualRetry')?.classList.toggle('d-none', !showManualRetry);
     }
     addAdditionalGroup(groupParameter) {
         if (groupParameter && groupParameter !== this.joinGroupParamethers && !this.additionalGroupParameters.includes(groupParameter)) {
@@ -91,25 +96,32 @@ class SignalRConnectionManager {
         await this.startConnection();
     }
     async startConnection() {
+        if (this.connection.state === signalR.HubConnectionState.Connected ||
+            this.connection.state === signalR.HubConnectionState.Connecting ||
+            this.connection.state === signalR.HubConnectionState.Reconnecting)
+            return;
         console.log("[" + new Date().toISOString() + "] SignalR in connessione");
         try {
             await this.connection.start();
             console.assert(this.connection.state === signalR.HubConnectionState.Connected);
             await this.joinGroups();
             console.log("[" + new Date().toISOString() + "] SignalR connesso");
-            document.getElementById('lostConnection').classList.add('d-none');
-            document.getElementById('lostConnectionManualRetry').classList.add('d-none');
+            this.setConnectionBanner(false);
         }
         catch (err) {
             console.assert(this.connection.state === signalR.HubConnectionState.Disconnected);
             if (this.connection.state === signalR.HubConnectionState.Connected) {
                 await this.connection.stop();
             }
-            document.getElementById('lostConnection').classList.remove('d-none');
-            document.getElementById('lostConnectionManualRetry').classList.add('d-none');
+            this.setConnectionBanner(true);
             console.log("[" + new Date().toISOString() + "] SignalR erore in connessione " + err);
             console.log("[" + new Date().toISOString() + "] SignalR riprovo la connessione tra 5000ms");
-            setTimeout(() => this.startConnection(), 5000);
+            if (!this.initialRetryTimer) {
+                this.initialRetryTimer = window.setTimeout(() => {
+                    this.initialRetryTimer = undefined;
+                    this.startConnection();
+                }, 5000);
+            }
         }
     }
     ;
@@ -125,8 +137,7 @@ class SignalRConnectionManager {
             await this.connection.stop();
             console.assert(this.connection.state === signalR.HubConnectionState.Disconnected);
             console.log("[" + new Date().toISOString() + "] SignalR disconnesso");
-            document.getElementById('lostConnection').classList.remove('d-none');
-            document.getElementById('lostConnectionManualRetry').classList.remove('d-none');
+            this.setConnectionBanner(false, true);
         }
         catch (err) {
             console.assert(this.connection.state !== signalR.HubConnectionState.Disconnected);

@@ -191,7 +191,8 @@ namespace Ordo.Web.Areas.Tasks
                                 Titolo = savedTask.Titolo,
                                 ProjectNome = progetto.Nome,
                                 ProjectId = board.ProjectId,
-                                BoardId = board.Id
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
                             });
                         }
                     }
@@ -206,7 +207,8 @@ namespace Ordo.Web.Areas.Tasks
                                 Titolo = savedTask.Titolo,
                                 ProjectNome = progetto.Nome,
                                 ProjectId = board.ProjectId,
-                                BoardId = board.Id
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
                             });
                         }
 
@@ -219,7 +221,8 @@ namespace Ordo.Web.Areas.Tasks
                                 Titolo = savedTask.Titolo,
                                 ProjectNome = progetto.Nome,
                                 ProjectId = board.ProjectId,
-                                BoardId = board.Id
+                                BoardId = board.Id,
+                                TaskId = savedTask.Id
                             });
                         }
                     }
@@ -233,7 +236,8 @@ namespace Ordo.Web.Areas.Tasks
                             Titolo = savedTask.Titolo,
                             ProjectNome = progetto.Nome,
                             ProjectId = board.ProjectId,
-                            BoardId = board.Id
+                            BoardId = board.Id,
+                            TaskId = savedTask.Id
                         });
                     }
 
@@ -288,7 +292,8 @@ namespace Ordo.Web.Areas.Tasks
                     Titolo = task.Titolo,
                     ProjectNome = progetto.Nome,
                     ProjectId = board.ProjectId,
-                    BoardId = board.Id
+                    BoardId = board.Id,
+                    TaskId = task.Id
                 });
             }
 
@@ -359,7 +364,7 @@ namespace Ordo.Web.Areas.Tasks
             if (task == null) return NotFound();
 
             var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
-            var (hasAccess, _, _) = await CheckAccess(board.ProjectId, currentUserId);
+            var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
 
             if (string.IsNullOrWhiteSpace(model.Testo))
@@ -382,6 +387,20 @@ namespace Ordo.Web.Areas.Tasks
                     CommentId = commentId,
                     Titolo = task.Titolo
                 });
+
+                if (task.AssignedUserId.HasValue && task.AssignedUserId != currentUserId)
+                {
+                    await _publisher.Publish(new TaskChangedForUserEvent
+                    {
+                        IdGroup = task.AssignedUserId.Value,
+                        Tipo = "Commented",
+                        Titolo = task.Titolo,
+                        ProjectNome = progetto.Nome,
+                        ProjectId = board.ProjectId,
+                        BoardId = board.Id,
+                        TaskId = task.Id
+                    });
+                }
             }
 
             return RedirectToAction(Actions.Dettaglio(model.TaskId));
@@ -399,7 +418,37 @@ namespace Ordo.Web.Areas.Tasks
             if (commento == null || commento.UserId != currentUserId)
                 return Forbid();
 
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = taskId });
+            if (task == null) return NotFound();
+
+            var board = await _sharedService.Query(new BoardDetailQuery { Id = task.BoardId });
+            if (board == null) return NotFound();
+
+            var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
+            if (!hasAccess) return Forbid();
+
             await _sharedService.Handle(new DeleteCommentCommand { Id = id });
+            await _publisher.Publish(new CommentDeletedEvent
+            {
+                IdGroup = board.Id,
+                TaskId = taskId,
+                CommentId = id,
+                Titolo = task.Titolo
+            });
+
+            if (task.AssignedUserId.HasValue && task.AssignedUserId != currentUserId)
+            {
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = task.AssignedUserId.Value,
+                    Tipo = "CommentDeleted",
+                    Titolo = task.Titolo,
+                    ProjectNome = progetto.Nome,
+                    ProjectId = board.ProjectId,
+                    BoardId = board.Id,
+                    TaskId = task.Id
+                });
+            }
 
             return RedirectToAction(Actions.Dettaglio(taskId));
         }

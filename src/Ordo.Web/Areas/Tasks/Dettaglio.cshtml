@@ -118,6 +118,24 @@
                 });
             }
         });
+        signalRManager.connection.on("CommentDeleted", function (comment) {
+            if (comment.taskId === "@Model.Id") {
+                showSignalRMessage("Un commento è stato eliminato.", 1200, function () {
+                    location.reload();
+                });
+            }
+        });
+        signalRManager.connection.on("TaskMoved", function (taskId) {
+            if (taskId === "@Model.Id") location.reload();
+        });
+        signalRManager.connection.on("TaskUpdated", function (taskUpdate) {
+            if (taskUpdate.task.taskId === "@Model.Id") location.reload();
+        });
+        signalRManager.connection.on("TaskDeleted", function (task) {
+            if (task.taskId === "@Model.Id") {
+                window.location = "@Url.Action(MVC.Kanban.Kanban.Board(Model.BoardId))";
+            }
+        });
         window.addEventListener("ordo:signalr-reconnected", function () {
             window.location.reload();
         });

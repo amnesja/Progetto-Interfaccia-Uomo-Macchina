@@ -139,6 +139,8 @@
                 : "L'attività «" + titolo + "» è stata aggiornata.";
             showSignalRMessage(message, 1200, function () { location.reload(); });
         });
+        signalRManager.connection.on("ProjectUpdated", function () { location.reload(); });
+        signalRManager.connection.on("ProjectDeleted", function () { location.reload(); });
         window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
         signalRManager.startConnection();
     </script>

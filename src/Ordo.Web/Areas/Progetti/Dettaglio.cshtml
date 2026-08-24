@@ -37,6 +37,9 @@
                 <i class="fa-solid fa-pen"></i> Modifica progetto
             </a>
         }
+        <a class="ordo-btn-secondary" asp-action="Chat" asp-route-id="@Model.Id">
+            <i class="fa-solid fa-comments"></i> Apri chat
+        </a>
     </header>
 
     <section class="ordo-dashboard-section">
@@ -157,7 +160,6 @@
     <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
     <script>
         var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.Id", "JoinGroup", "LeaveGroup");
-        signalRManager.addAdditionalGroup("@currentUserId");
         signalRManager.registerEvents();
 
         function refreshProject(message) {
@@ -166,6 +168,9 @@
 
         signalRManager.connection.on("ProjectUpdated", function (projectId, nome) {
             refreshProject("Il progetto «" + nome + "» è stato aggiornato.");
+        });
+        signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome) {
+            refreshProject("È stato aggiunto un collaboratore al progetto.");
         });
         signalRManager.connection.on("BoardCreated", function (projectId, boardId, nome) {
             refreshProject("È stata aggiunta la board «" + nome + "».");

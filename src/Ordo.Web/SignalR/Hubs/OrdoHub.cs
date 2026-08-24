@@ -15,6 +15,7 @@ namespace Ordo.Web.SignalR.Hubs
         Task TaskUpdated(TaskUpdatedEvent task);
         Task TaskDeleted(TaskDeletedEvent task);
         Task CommentAdded(CommentAddedEvent comment);
+        Task CommentDeleted(CommentDeletedEvent comment);
         Task UserAssigned(Guid taskId, Guid? userId, string assignedUserName, string titolo);
 
         Task ProjectMemberAdded(Guid projectId, string nome, string descrizione);
@@ -25,8 +26,9 @@ namespace Ordo.Web.SignalR.Hubs
         Task ProjectUpdated(Guid projectId, string nome, string descrizione);
         Task BoardUpdated(Guid projectId, Guid boardId, string nome);
 
-        Task TaskChangedForUser(string tipo, string titolo, string projectNome, Guid projectId, Guid boardId);
+        Task TaskChangedForUser(string tipo, string titolo, string projectNome, Guid projectId, Guid boardId, Guid taskId);
         Task MemberRemoved(Guid projectId, Guid userId);
+        Task ProjectChatMessageAdded(ProjectChatMessageEvent message);
     }
 
     [Microsoft.AspNetCore.Authorization.Authorize] // Hub utilizzabile solo da utenti autenticati

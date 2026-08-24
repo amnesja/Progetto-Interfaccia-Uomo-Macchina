@@ -46,6 +46,14 @@ namespace Ordo.Web.SignalR.Hubs.Events
         public string Titolo { get; set; }
     }
 
+    public class CommentDeletedEvent
+    {
+        public Guid IdGroup { get; set; }
+        public Guid TaskId { get; set; }
+        public Guid CommentId { get; set; }
+        public string Titolo { get; set; }
+    }
+
     public class UserAssignedEvent
     {
         public Guid IdGroup { get; set; }
@@ -79,7 +87,9 @@ namespace Ordo.Web.SignalR.Hubs.Events
     {
         public Guid ProjectId { get; set; }
         public Guid BoardId { get; set; }
+        public Guid TaskId { get; set; }
         public string BoardNome { get; set; }
+        public Guid[] UtentiCoinvolti { get; set; }
     }
 
     // Notifica sia chi guarda il Dettaglio del progetto (gruppo = ProjectId)
@@ -89,6 +99,7 @@ namespace Ordo.Web.SignalR.Hubs.Events
         public Guid ProjectId { get; set; }
         public Guid BoardId { get; set; }
         public string BoardNome { get; set; }
+        public Guid[] UtentiCoinvolti { get; set; }
     }
 
     // IdGroup implicito = ProjectId: notifica chi guarda il Dettaglio del progetto.
@@ -107,6 +118,7 @@ namespace Ordo.Web.SignalR.Hubs.Events
         public Guid ProjectId { get; set; }
         public Guid BoardId { get; set; }
         public string BoardNome { get; set; }
+        public Guid[] UtentiCoinvolti { get; set; }
     }
 
     // IdGroup = UserId destinatario. Notifica Dashboard e "Le mie attività" di quell'utente
@@ -119,6 +131,7 @@ namespace Ordo.Web.SignalR.Hubs.Events
         public string ProjectNome { get; set; }
         public Guid ProjectId { get; set; }
         public Guid BoardId { get; set; }
+        public Guid TaskId { get; set; }
     }
 
     // Notifica sia la pagina "I miei progetti" dell'utente rimosso (gruppo = UserId)
@@ -127,5 +140,17 @@ namespace Ordo.Web.SignalR.Hubs.Events
     {
         public Guid ProjectId { get; set; }
         public Guid UserId { get; set; }
+    }
+
+    // IdGroup = ProjectId: messaggio visibile a tutti i membri del progetto
+    public class ProjectChatMessageEvent
+    {
+        public Guid IdGroup { get; set; }
+        public Guid MessageId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserName { get; set; }
+        public string Testo { get; set; }
+        public DateTime DataCreazione { get; set; }
+        public Guid[] UtentiCoinvolti { get; set; }
     }
 }

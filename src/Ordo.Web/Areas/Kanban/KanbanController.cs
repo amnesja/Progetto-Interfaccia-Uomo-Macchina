@@ -120,7 +120,8 @@ namespace Ordo.Web.Areas.Kanban
                     Titolo = task.Titolo,
                     ProjectNome = project?.Nome,
                     ProjectId = board.ProjectId,
-                    BoardId = task.BoardId
+                    BoardId = task.BoardId,
+                    TaskId = task.Id
                 });
             }
 
