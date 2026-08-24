@@ -52,6 +52,17 @@ namespace Ordo.Services.Shared
 
             _dbContext.ProjectMembers.Remove(membro);
 
+            // Rimuovi l'assegnazione dai task del progetto che erano assegnati a questo utente:
+            // altrimenti continuerebbe a vederli in Dashboard/Attività pur non essendo più nel progetto
+            var taskDaSassegnare = await _dbContext.Tasks
+                .Where(t => t.Board.ProjectId == cmd.ProjectId && t.AssignedUserId == cmd.UserId)
+                .ToListAsync();
+
+            foreach (var task in taskDaSassegnare)
+            {
+                task.AssignedUserId = null;
+            }
+
             await _dbContext.SaveChangesAsync();
         }
     }

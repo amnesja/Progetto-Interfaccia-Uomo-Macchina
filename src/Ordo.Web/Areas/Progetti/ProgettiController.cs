@@ -7,6 +7,10 @@ using Ordo.Web.Infrastructure;
 using Ordo.Web.SignalR;
 using Ordo.Web.SignalR.Hubs.Events;
 using System.Linq;
+using Ordo.Web.SignalR;
+using Ordo.Web.SignalR.Hubs.Events;
+using Microsoft.EntityFrameworkCore;
+using Ordo.Services;
 
 namespace Ordo.Web.Areas.Progetti
 {
@@ -84,7 +88,9 @@ namespace Ordo.Web.Areas.Progetti
             if (!TryGetCurrentUserId(out var currentUserId))
                 return Challenge();
 
-            if (model.Id.HasValue)
+            var isEditingExisting = model.Id.HasValue;
+
+            if (isEditingExisting)
             {
                 var esistente = await _sharedService.Query(new ProjectDetailQuery { Id = model.Id.Value });
                 if (esistente == null || esistente.OwnerId != currentUserId)
@@ -140,6 +146,12 @@ namespace Ordo.Web.Areas.Progetti
             var utentiCoinvolti = await GetInvolvedUserIds(id, progetto.OwnerId);
             await _sharedService.Handle(new DeleteProjectCommand { Id = id });
             await _publisher.Publish(new ProjectDeletedEvent { ProjectId = id, UtentiCoinvolti = utentiCoinvolti });
+
+            await _publisher.Publish(new ProjectDeletedEvent
+            {
+                ProjectId = id,
+                UtentiCoinvolti = utentiCoinvolti
+            });
 
             Alerts.AddSuccess(this, "Progetto eliminato");
 
@@ -299,6 +311,16 @@ namespace Ordo.Web.Areas.Progetti
             await _sharedService.Handle(new DeleteBoardCommand { Id = id });
             await _publisher.Publish(new BoardDeletedEvent { ProjectId = projectId, BoardId = id, BoardNome = board.Nome, UtentiCoinvolti = await GetInvolvedUserIds(projectId, progetto.OwnerId) });
 
+            if (board != null)
+            {
+                await _publisher.Publish(new BoardDeletedEvent
+                {
+                    ProjectId = projectId,
+                    BoardId = id,
+                    BoardNome = board.Nome
+                });
+            }
+
             Alerts.AddSuccess(this, "Board eliminata");
 
             return RedirectToAction(Actions.Dettaglio(projectId));
@@ -364,8 +386,34 @@ namespace Ordo.Web.Areas.Progetti
             if (progetto == null || progetto.OwnerId != currentUserId)
                 return Forbid();
 
+            // Raccogliamo PRIMA della rimozione i task assegnati a questo utente in questo progetto,
+            // perché dopo Handle() risulteranno già scollegati e non li potremmo più recuperare
+            var taskDaNotificare = await _dbContext.Tasks
+                .Where(t => t.Board.ProjectId == projectId && t.AssignedUserId == userId)
+                .Select(t => new { t.Id, t.Titolo, t.BoardId })
+                .ToListAsync();
+
             await _sharedService.Handle(new RemoveProjectMemberCommand { ProjectId = projectId, UserId = userId });
             await _publisher.Publish(new MemberRemovedEvent { ProjectId = projectId, UserId = userId });
+
+            await _publisher.Publish(new MemberRemovedEvent
+            {
+                ProjectId = projectId,
+                UserId = userId
+            });
+
+            foreach (var task in taskDaNotificare)
+            {
+                await _publisher.Publish(new TaskChangedForUserEvent
+                {
+                    IdGroup = userId,
+                    Tipo = "Unassigned",
+                    Titolo = task.Titolo,
+                    ProjectNome = progetto.Nome,
+                    ProjectId = projectId,
+                    BoardId = task.BoardId
+                });
+            }
 
             Alerts.AddSuccess(this, "Collaboratore rimosso dal progetto");
 

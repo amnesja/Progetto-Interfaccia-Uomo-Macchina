@@ -241,6 +241,51 @@ namespace Ordo.Web.Areas.Tasks
                         });
                     }
 
+                    // Notifiche personali per Dashboard / "Le mie attività"
+                    var newAssignedUserId = command.AssignedUserId;
+
+                    if (oldAssignedUserId != newAssignedUserId)
+                    {
+                        if (oldAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = oldAssignedUserId.Value,
+                                Tipo = "Unassigned",
+                                Titolo = model.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,   
+                                BoardId = board.Id 
+                            });
+                        }
+
+                        if (newAssignedUserId.HasValue)
+                        {
+                            await _publisher.Publish(new TaskChangedForUserEvent
+                            {
+                                IdGroup = newAssignedUserId.Value,
+                                Tipo = "Assigned",
+                                Titolo = model.Titolo,
+                                ProjectNome = progetto.Nome,
+                                ProjectId = board.ProjectId,   
+                                BoardId = board.Id 
+                            });
+                        }
+                    }
+                    else if (newAssignedUserId.HasValue)
+                    {
+                        // stesso assegnatario di prima: se ha cambiato titolo/stato/scadenza, aggiorniamo comunque la sua vista
+                        await _publisher.Publish(new TaskChangedForUserEvent
+                        {
+                            IdGroup = newAssignedUserId.Value,
+                            Tipo = "Updated",
+                            Titolo = model.Titolo,
+                            ProjectNome = progetto.Nome,
+                            ProjectId = board.ProjectId, 
+                            BoardId = board.Id 
+                        });
+                    }
+
                     Alerts.AddSuccess(this, "Task salvato correttamente");
 
                     return RedirectToAction(Actions.Dettaglio(model.Id.Value));
@@ -273,6 +318,8 @@ namespace Ordo.Web.Areas.Tasks
 
             var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
+
+            var task = await _sharedService.Query(new TaskDetailQuery { Id = id });
 
             await _sharedService.Handle(new DeleteTaskCommand { Id = id });
 

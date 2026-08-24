@@ -43,53 +43,55 @@
         }
     </form>
 
-    @if (!Model.Progetti.Any())
-    {
-        <div class="ordo-dashboard-empty">
-            Nessun progetto trovato. Crea il tuo primo progetto per iniziare.
-        </div>
-    }
-    else
-    {
-        <div class="ordo-project-grid">
-            @foreach (var progetto in Model.Progetti)
-            {
-                <article class="ordo-project-card">
-                    <a class="ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(progetto.Id))">
-                        <h3>@progetto.Nome</h3>
-                        @if (!progetto.IsOwner)
-                        {
-                            <span class="ordo-role-badge">Collaboratore</span>
-                        }
-                        <p>@(string.IsNullOrWhiteSpace(progetto.Descrizione) ? "Nessuna descrizione." : progetto.Descrizione)</p>
-                    </a>
-
-                    @* Mostra le azioni di gestione solo se l'utente è Owner *@
-                    @if (progetto.IsOwner)
-                    {
-                        <footer>
-                            <a href="@Url.Action(MVC.Progetti.Progetti.Edit(progetto.Id))" title="Modifica progetto">
-                                <i class="fa-solid fa-pen"></i> Modifica
-                            </a>
-                            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.Delete())"
-                                  onsubmit="return confirm('Eliminare definitivamente questo progetto e tutte le sue board?');">
-                                <input type="hidden" name="id" value="@progetto.Id" />
-                                <button type="submit" class="ordo-link-danger"><i class="fa-solid fa-trash"></i> Elimina</button>
-                            </form>
-                        </footer>
-                    }
-                </article>
-            }
-        </div>
-
-        @if (Model.TotalPages() > 1)
+    <div id="ordoProjectGrid">
+        @if (!Model.Progetti.Any())
         {
-            <nav class="ordo-pagination">
-                <a class="@(Model.Page <= 1 ? "disabled" : "")" href="@Model.PrevPageUrl(Url)">&laquo; Precedente</a>
-                <span>Pagina @Model.Page di @Model.TotalPages()</span>
-                <a class="@(Model.Page >= Model.TotalPages() ? "disabled" : "")" href="@Model.NextPageUrl(Url)">Successiva &raquo;</a>
-            </nav>
+            <div class="ordo-dashboard-empty" id="ordoProjectsEmpty">
+                Nessun progetto trovato. Crea il tuo primo progetto per iniziare.
+            </div>
         }
+        else
+        {
+            <div class="ordo-project-grid" id="ordoProjectGridInner">
+                @foreach (var progetto in Model.Progetti)
+                {
+                    <article class="ordo-project-card" data-project-id="@progetto.Id">
+                        <a class="ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(progetto.Id))">
+                            <h3>
+                                @progetto.Nome
+                                @if (!progetto.IsOwner)
+                                {
+                                    <span class="ordo-role-badge">Collaboratore</span>
+                                }
+                            </h3>
+                            <p>@(string.IsNullOrWhiteSpace(progetto.Descrizione) ? "Nessuna descrizione." : progetto.Descrizione)</p>
+                        </a>
+                        <footer>
+                            @if (progetto.IsOwner)
+                            {
+                                <a href="@Url.Action(MVC.Progetti.Progetti.Edit(progetto.Id))" title="Modifica progetto">
+                                    <i class="fa-solid fa-pen"></i> Modifica
+                                </a>
+                                <form method="post" action="@Url.Action(MVC.Progetti.Progetti.Delete())"
+                                      onsubmit="return confirm('Eliminare definitivamente questo progetto e tutte le sue board?');">
+                                    <input type="hidden" name="id" value="@progetto.Id" />
+                                    <button type="submit" class="ordo-link-danger"><i class="fa-solid fa-trash"></i> Elimina</button>
+                                </form>
+                            }
+                        </footer>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages() > 1)
+    {
+        <nav class="ordo-pagination">
+            <a class="@(Model.Page <= 1 ? "disabled" : "")" href="@Model.PrevPageUrl(Url)">&laquo; Precedente</a>
+            <span>Pagina @Model.Page di @Model.TotalPages()</span>
+            <a class="@(Model.Page >= Model.TotalPages() ? "disabled" : "")" href="@Model.NextPageUrl(Url)">Successiva &raquo;</a>
+        </nav>
     }
 </div>
 

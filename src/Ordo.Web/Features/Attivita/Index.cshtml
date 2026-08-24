@@ -96,6 +96,29 @@
                 </table>
             </div>
         }
+        
+        <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
+        <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
+        <script type="text/javascript">
+            var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
+            signalRManager.registerEvents();
+        
+            signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+                if (tipo === "Assigned") {
+                    Ordo.Toast.showAssigned(titolo, projectNome);
+                    setTimeout(function () { location.reload(); }, 2500);
+                } else {
+                    location.reload();
+                }
+            });
+        
+            signalRManager.connection.on("ProjectUpdated", function (projectId, nome, descrizione) {
+                location.reload();
+            });
+        
+            signalRManager.startConnection();
+        </script>    
+        
     </section>
 </div>
 
