@@ -39,7 +39,7 @@
             </div>
             <div class="ordo-field">
                 <label asp-for="Scadenza"></label>
-                <input asp-for="Scadenza" id="task-due-date" type="date" />
+                <input asp-for="Scadenza" type="date" />
             </div>
         </div>
 
@@ -71,23 +71,3 @@
         </form>
     }
 </div>
-
-@section scripts {
-    <script>
-        (function () {
-            const dueDateInput = document.getElementById("task-due-date");
-
-            dueDateInput?.addEventListener("click", function () {
-                if (!window.matchMedia("(max-width: 640px)").matches || typeof dueDateInput.showPicker !== "function") {
-                    return;
-                }
-
-                try {
-                    dueDateInput.showPicker();
-                } catch {
-                    // Il browser userà il comportamento nativo predefinito.
-                }
-            });
-        })();
-    </script>
-}

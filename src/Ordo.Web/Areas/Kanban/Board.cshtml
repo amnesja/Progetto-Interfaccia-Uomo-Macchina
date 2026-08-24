@@ -6,6 +6,7 @@
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
+
 @section styles {
     <link href="~/css/kanban.css" asp-append-version="true" rel="stylesheet" />
     <link href="~/css/tasks.css" asp-append-version="true" rel="stylesheet" />
@@ -24,9 +25,8 @@
     <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
     <a href="javascript:location.reload()">Ricarica la pagina</a>
 </div>
-@Html.AntiForgeryToken()
 
-<div class="kanban-toolbar mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="kanban-page-title mb-0">@Model.BoardName</h1>
     <a class="ordo-btn-primary btn btn-primary"
        asp-area="Tasks"
@@ -53,10 +53,7 @@
                  draggable="true"
                  @@dragstart="onDragStart(task)"
                  @@click="openTaskDetail(task.id)"
-                 @@keydown.enter="openTaskDetail(task.id)"
-                 @@keydown.space.prevent="openTaskDetail(task.id)"
-                 role="button"
-                 tabindex="0">
+                 style="cursor: pointer;">
 
                 <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
                 <b>{{ task.titolo }}</b>
@@ -66,19 +63,6 @@
                 <div class="kanban-card-assignee" v-if="task.assignedUserName">
                     {{ task.assignedUserName }}
                 </div>
-                <label class="kanban-card-move">
-                    <span class="visually-hidden">Sposta {{ task.titolo }} in</span>
-                    <select :value="task.stato"
-                            @@click.stop
-                            @@keydown.stop
-                            @@change="moveTaskFromSelect(task, $event)">
-                        <option v-for="targetColumn in columns"
-                                :key="targetColumn.stato"
-                                :value="targetColumn.stato">
-                            {{ targetColumn.titolo }}
-                        </option>
-                    </select>
-                </label>
             </div>
 
         </div>
@@ -101,39 +85,22 @@
     // Collegamento SignalR: entra nel gruppo della Board e ascolta gli eventi in tempo reale
     var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.BoardId", "JoinGroup", "LeaveGroup");
     signalRManager.registerEvents();
-    var stateLabels = ["Da fare", "In corso", "Review", "Done"];
-
-    signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato, titolo) {
+    signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato) {
         Ordo.Kanban.applyRemoteMove(kanbanVm, taskId, nuovoStato);
-        showSignalRMessage("\u00ab" + titolo + "\u00bb è stato spostato in " + (stateLabels[nuovoStato] || "un'altra colonna") + ".");
     });
-    signalRManager.connection.on("TaskCreated", function (task) {
-        kanbanVm.addTask(task);
-        showSignalRMessage("Nuovo task: \u00ab" + task.titolo + "\u00bb in " + (stateLabels[task.stato] || "board") + ".");
+    signalRManager.connection.on("TaskCreated", function (taskId){
+        location.reload();
     });
-    signalRManager.connection.on("TaskUpdated", function (taskUpdate) {
-        kanbanVm.updateTask(taskUpdate.task);
-        if (!taskUpdate.isAssignmentChanged) {
-            showSignalRMessage("\u00ab" + taskUpdate.task.titolo + "\u00bb è stato aggiornato.");
-        }
-    });
-    signalRManager.connection.on("TaskDeleted", function (task) {
-        kanbanVm.removeTask(task.taskId);
-        showSignalRMessage("\u00ab" + task.titolo + "\u00bb è stato eliminato.");
-    });
-    signalRManager.connection.on("UserAssigned", function (taskId, userId, assignedUserName, titolo) {
-        kanbanVm.updateTaskAssignee(taskId, userId, assignedUserName);
-        showSignalRMessage(assignedUserName
-            ? "\u00ab" + titolo + "\u00bb è stato assegnato a " + assignedUserName + "."
-            : "L'assegnazione di \u00ab" + titolo + "\u00bb è stata rimossa.");
+    signalRManager.connection.on("UserAssigned", function (taskId, userId){
+        location.reload();
     });
 
-    // La board stessa può essere rinominata o cancellata da un altro utente mentre la guardi
     signalRManager.connection.on("BoardDeleted", function (projectId, boardId, nome) {
         if (boardId === "@Model.BoardId") {
             window.location = "/Progetti/Dettaglio/@Model.ProjectId?notice=board-deleted";
         }
     });
+
     signalRManager.connection.on("BoardUpdated", function (projectId, boardId, nome) {
         if (boardId === "@Model.BoardId") {
             var titleEl = document.querySelector(".kanban-page-title");
@@ -141,20 +108,15 @@
         }
     });
 
-    // Notifica personale: ti hanno assegnato un task su un'ALTRA board (non questa che stai guardando)
     signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
         if (tipo !== "Assigned") return;
-        if (boardId === "@Model.BoardId") return; // sei già su questa board, TaskMoved/UserAssigned bastano
+        if (boardId === "@Model.BoardId") return; // sei già su questa board
 
         Ordo.Toast.showAssigned(titolo, projectNome);
     });
 
-    window.addEventListener("ordo:signalr-reconnected", function () {
-        window.location.reload();
+    signalRManager.startConnection().then(function () {
+        signalRManager.connection.invoke("JoinGroup", "@currentUserId");
     });
-
-    // Entra sia nel gruppo della Board (aggiornamenti sulla board) sia nel proprio canale
-    // personale (notifiche individuali anche quando non sei su questa pagina)
-    signalRManager.addAdditionalGroup("@currentUserId");
-    signalRManager.startConnection();
+    
 </script>
