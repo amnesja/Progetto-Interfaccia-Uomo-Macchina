@@ -23,35 +23,35 @@
                asp-area="" 
                asp-controller="Dashboard" 
                asp-action="Index">
-                <i class="fa-solid fa-table-cells-large"></i> Dashboard
+                <i class="fa-solid fa-table-cells-large"></i> <span>Dashboard</span>
             </a>
 
             <a class="@(area == "Progetti" ? "active" : "")" 
                asp-area="Progetti" 
                asp-controller="Progetti" 
                asp-action="Index">
-                <i class="fa-regular fa-folder"></i> I miei progetti
+                <i class="fa-regular fa-folder"></i> <span>I miei progetti</span>
             </a>
 
             <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")" 
                asp-area="" 
                asp-controller="Attivita" 
                asp-action="Index">
-                <i class="fa-solid fa-list"></i> Attività
+                <i class="fa-solid fa-list"></i> <span>Attività</span>
             </a>
 
             <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")" 
                asp-area="" 
                asp-controller="Profile" 
                asp-action="Profile">
-                <i class="fa-regular fa-user"></i> Profilo
+                <i class="fa-regular fa-user"></i> <span>Profilo</span>
             </a>
         </nav>
 
         @* Corretto con asp-area="" *@
         <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
             <button class="ordo-dashboard-logout" type="submit">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Esci
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Esci</span>
             </button>
         </form>
     </aside>
