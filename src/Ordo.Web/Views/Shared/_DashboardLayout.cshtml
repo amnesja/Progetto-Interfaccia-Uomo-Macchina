@@ -66,6 +66,16 @@
                 <div id="notificationList"><p>Nessuna notifica.</p></div>
             </div>
         </div>
+        @if (ViewData[Alerts.ALERTS_KEY] is AlertsDto alerts)
+        {
+            foreach (var alert in alerts.List)
+            {
+                <div class="ordo-dashboard-alert ordo-dashboard-alert-@alert.Level" role="alert">
+                    <i class="fa-solid @(alert.Level == AlertsDto.AlertLevelEnum.success ? "fa-circle-check" : alert.Level == AlertsDto.AlertLevelEnum.error ? "fa-circle-exclamation" : "fa-circle-info")"></i>
+                    <span>@alert.Value</span>
+                </div>
+            }
+        }
         @RenderBody()
     </main>
 
@@ -104,6 +114,14 @@
 </div>
 
 @section scripts {
+    <script>
+        document.querySelectorAll(".ordo-dashboard-alert").forEach(function (alert) {
+            window.setTimeout(function () {
+                alert.classList.add("is-dismissing");
+                window.setTimeout(function () { alert.remove(); }, 400);
+            }, 5000);
+        });
+    </script>
     <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
     <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
     <script>

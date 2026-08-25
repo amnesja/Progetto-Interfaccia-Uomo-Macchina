@@ -19,19 +19,19 @@ namespace Ordo.Services.Shared
 
     public partial class SharedService
     {
-        public async Task Handle(AddProjectMemberCommand cmd)
+        public async Task<bool> Handle(AddProjectMemberCommand cmd)
         {
             var project = await _dbContext.Projects
                 .Where(x => x.Id == cmd.ProjectId)
                 .FirstOrDefaultAsync();
 
-            if (project == null) return;
-            if (project.OwnerId == cmd.UserId) return; // il proprietario non è un "membro"
+            if (project == null) return false;
+            if (project.OwnerId == cmd.UserId) return false; // il proprietario non è un "membro"
 
             var giaMembro = await _dbContext.ProjectMembers
                 .AnyAsync(x => x.ProjectId == cmd.ProjectId && x.UserId == cmd.UserId);
 
-            if (giaMembro) return;
+            if (giaMembro) return false;
 
             _dbContext.ProjectMembers.Add(new ProjectMember
             {
@@ -40,6 +40,7 @@ namespace Ordo.Services.Shared
             });
 
             await _dbContext.SaveChangesAsync();
+            return true;
         }
 
         public async Task Handle(RemoveProjectMemberCommand cmd)

@@ -320,12 +320,13 @@ namespace Ordo.Web.Areas.Progetti
                 return RedirectToAction(Actions.Dettaglio(model.ProjectId));
             }
 
-            var utenti = await _sharedService.Query(new UsersSelectQuery { IdCurrentUser = currentUserId, Filter = model.Email });
-            var utente = utenti.Users.FirstOrDefault(u => string.Equals(u.Email, model.Email, StringComparison.OrdinalIgnoreCase));
+            var email = model.Email.Trim();
+            var utenti = await _sharedService.Query(new UsersSelectQuery { IdCurrentUser = currentUserId, Filter = email });
+            var utente = utenti.Users.FirstOrDefault(u => string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
 
             if (utente == null)
             {
-                Alerts.AddError(this, "Nessun utente registrato trovato con questa email");
+                Alerts.AddError(this, "Nessun utente registrato trovato con questa email. L'utente deve prima creare un account.");
             }
             else if (utente.Id == progetto.OwnerId)
             {
@@ -333,22 +334,29 @@ namespace Ordo.Web.Areas.Progetti
             }
             else
             {
-                await _sharedService.Handle(new AddProjectMemberCommand { ProjectId = model.ProjectId, UserId = utente.Id });
-                await _publisher.Publish(new MemberAddedEvent
+                var aggiunto = await _sharedService.Handle(new AddProjectMemberCommand { ProjectId = model.ProjectId, UserId = utente.Id });
+                if (!aggiunto)
                 {
-                    IdGroup = utente.Id,
-                    ProjectId = model.ProjectId,
-                    ProjectNome = progetto.Nome,
-                    ProjectDescrizione = progetto.Descrizione
-                });
-                await _publisher.Publish(new MemberAddedEvent
+                    Alerts.AddError(this, "Questo utente è già un collaboratore del progetto");
+                }
+                else
                 {
-                    IdGroup = model.ProjectId,
-                    ProjectId = model.ProjectId,
-                    ProjectNome = progetto.Nome,
-                    ProjectDescrizione = progetto.Descrizione
-                });
-                Alerts.AddSuccess(this, "Collaboratore aggiunto al progetto");
+                    await _publisher.Publish(new MemberAddedEvent
+                    {
+                        IdGroup = utente.Id,
+                        ProjectId = model.ProjectId,
+                        ProjectNome = progetto.Nome,
+                        ProjectDescrizione = progetto.Descrizione
+                    });
+                    await _publisher.Publish(new MemberAddedEvent
+                    {
+                        IdGroup = model.ProjectId,
+                        ProjectId = model.ProjectId,
+                        ProjectNome = progetto.Nome,
+                        ProjectDescrizione = progetto.Descrizione
+                    });
+                    Alerts.AddSuccess(this, "Collaboratore aggiunto al progetto");
+                }
             }
 
             return RedirectToAction(Actions.Dettaglio(model.ProjectId));
