@@ -93,9 +93,10 @@ namespace Ordo.Web.Features.Login
         }
 
         [HttpPost]
-        public virtual IActionResult Logout()
+        public virtual async Task<IActionResult> Logout()
         {
-            HttpContext.SignOutAsync();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            HttpContext.Session.Clear();
 
             Alerts.AddSuccess(this, "Utente scollegato correttamente");
             return RedirectToAction(MVC.Login.Login());
