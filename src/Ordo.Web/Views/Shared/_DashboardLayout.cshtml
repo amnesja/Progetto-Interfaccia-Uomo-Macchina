@@ -4,6 +4,7 @@
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var area = ViewContext.RouteData.Values["area"]?.ToString();
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var identitaCorrente = ViewData[Ordo.Web.Areas.IdentitaViewModel.VIEWDATA_IDENTITACORRENTE_KEY] as Ordo.Web.Areas.IdentitaViewModel;
 }
 
 @section styles {
@@ -49,11 +50,21 @@
         </nav>
 
         @* Corretto con asp-area="" *@
-        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
-            <button class="ordo-dashboard-logout" type="submit">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Esci</span>
-            </button>
-        </form>
+        <div class="ordo-dashboard-sidebar-footer">
+            @if (identitaCorrente != null)
+            {
+                <a class="ordo-dashboard-identity" asp-area="" asp-controller="Profile" asp-action="Profile"
+                   title="@identitaCorrente.EmailUtenteCorrente">
+                    <img src="@identitaCorrente.GravatarUrl" alt="" />
+                    <span>@identitaCorrente.EmailUtenteCorrente</span>
+                </a>
+            }
+            <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
+                <button class="ordo-dashboard-logout" type="submit">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Esci</span>
+                </button>
+            </form>
+        </div>
     </aside>
 
     <main class="ordo-dashboard-main">
