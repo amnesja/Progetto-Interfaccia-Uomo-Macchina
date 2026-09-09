@@ -14,7 +14,7 @@ namespace Ordo.Web.Features.Attivita
     {
         private readonly OrdoDbContext _dbContext;
 
-        public AttivitaController(OrdoDbContext dbContext)
+        public AttivitaController(OrdoDbContext dbContext, SharedService sharedService) : base(sharedService)
         {
             _dbContext = dbContext;
         }

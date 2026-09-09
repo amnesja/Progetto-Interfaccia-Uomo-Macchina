@@ -14,7 +14,7 @@ namespace Ordo.Web.Features.Dashboard
     {
         private readonly OrdoDbContext _dbContext;
         
-        public DashboardController(OrdoDbContext dbContext)
+        public DashboardController(OrdoDbContext dbContext, SharedService sharedService) : base(sharedService)
         {
             _dbContext = dbContext;
         }

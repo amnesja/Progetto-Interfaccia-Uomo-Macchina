@@ -16,7 +16,7 @@ namespace Ordo.Web.Areas.Progetti
         private readonly SharedService _sharedService;
         private readonly IPublishDomainEvents _publisher;
 
-        public ProgettiController(SharedService sharedService, IPublishDomainEvents publisher)
+        public ProgettiController(SharedService sharedService, IPublishDomainEvents publisher): base(sharedService)
         {
             _sharedService = sharedService;
             _publisher = publisher;

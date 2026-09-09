@@ -15,7 +15,7 @@ namespace Ordo.Web.Areas.Kanban
         private readonly SharedService _sharedService;
         private readonly IPublishDomainEvents _publisher;
 
-        public KanbanController(SharedService sharedService, IPublishDomainEvents publisher)
+        public KanbanController(SharedService sharedService, IPublishDomainEvents publisher) : base(sharedService)
         {
             _sharedService = sharedService;
             _publisher = publisher;

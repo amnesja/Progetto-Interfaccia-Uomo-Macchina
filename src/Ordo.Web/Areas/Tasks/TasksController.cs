@@ -18,7 +18,7 @@ namespace Ordo.Web.Areas.Tasks
         private readonly SharedService _sharedService;
         private readonly IPublishDomainEvents _publisher;
 
-        public TasksController(SharedService sharedService, IPublishDomainEvents publisher)
+        public TasksController(SharedService sharedService, IPublishDomainEvents publisher) : base(sharedService)
         {
             _sharedService = sharedService;
             _publisher = publisher;

@@ -15,7 +15,7 @@ namespace Ordo.Web.Features.Profile
         private readonly OrdoDbContext _dbContext;
         private readonly SharedService _sharedService;
 
-        public ProfileController(OrdoDbContext dbContext, SharedService sharedService)
+        public ProfileController(OrdoDbContext dbContext, SharedService sharedService) : base(sharedService)
         {
             _dbContext = dbContext;
             _sharedService = sharedService;
