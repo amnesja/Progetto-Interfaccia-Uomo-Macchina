@@ -2,6 +2,9 @@
 @{
     Layout = "_DashboardLayout";
     ViewData["Title"] = Model.Titolo;
+    ViewData["BreadcrumbProjectId"] = Model.ProjectId;
+    ViewData["BreadcrumbBoardId"] = Model.BoardId;
+    ViewData["BreadcrumbBoardName"] = Model.BoardNome;
 }
 
 @section styles {
@@ -11,7 +14,7 @@
     <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
-<div class="ordo-projects-page ordo-projects-page-narrow">
+<div class="ordo-projects-page ordo-task-page">
 
     <div id="lostConnection" class="ordo-signalr-banner d-none">
         <i class="fa-solid fa-triangle-exclamation"></i> Connessione persa, riconnessione in corso...
@@ -21,13 +24,13 @@
         <a href="javascript:location.reload()">Ricarica la pagina</a>
     </div>
 
-    <a class="ordo-back-link" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId">
-        <i class="fa-solid fa-arrow-left"></i> Torna a "@Model.BoardNome"
-    </a>
+    <div class="ordo-task-context">
+        <a class="ordo-back-link" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.BoardId"><i class="fa-solid fa-arrow-left"></i> @Model.BoardNome</a>
+        <span>/</span><span>@Model.Titolo</span>
+    </div>
 
     <header class="ordo-project-detail-heading">
         <div>
-            <span class="ordo-eyebrow">Task</span>
             <h1>@Model.Titolo</h1>
             <span class="ordo-status stato-@Model.Stato.ToString().ToLower()">@Model.StatoLabel</span>
             <span class="ordo-priority-badge priorita-@((int)Model.Priorita)">Priorità @Model.PrioritaLabel</span>

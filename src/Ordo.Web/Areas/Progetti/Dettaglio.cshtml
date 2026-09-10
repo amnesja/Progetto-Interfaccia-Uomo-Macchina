@@ -3,6 +3,8 @@
 @{
     Layout = "_DashboardLayout";
     ViewData["Title"] = Model.Nome;
+    ViewData["BreadcrumbProjectId"] = Model.Id;
+    ViewData["BreadcrumbProjectName"] = Model.Nome;
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
@@ -24,9 +26,15 @@
         <i class="fa-solid fa-arrow-left"></i> Torna ai progetti
     </a>
 
-    <header class="ordo-project-detail-heading">
+    <nav class="ordo-project-nav" aria-label="Navigazione progetto">
+        <a class="active" href="#panoramica">Panoramica</a>
+        <a href="#boards">Board</a>
+        <a href="#membri">Persone</a>
+        <a href="@Url.Action("Chat", "Progetti", new { area = "Progetti", id = Model.Id })">Chat</a>
+    </nav>
+
+    <header class="ordo-project-detail-heading" id="panoramica">
         <div>
-            <span class="ordo-eyebrow">Progetto</span>
             <h1>@Model.Nome</h1>
             <p>@(string.IsNullOrWhiteSpace(Model.Descrizione) ? "Nessuna descrizione." : Model.Descrizione)</p>
             <span class="ordo-role-badge">@(Model.IsOwner ? "Proprietario" : "Collaboratore")</span>
@@ -37,12 +45,15 @@
                 <i class="fa-solid fa-pen"></i> Modifica progetto
             </a>
         }
-        <a class="ordo-btn-secondary" asp-action="Chat" asp-route-id="@Model.Id">
-            <i class="fa-solid fa-comments"></i> Apri chat
-        </a>
+        @if (Model.Boards.Any())
+        {
+            <a class="ordo-btn-secondary" asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@Model.Boards.First().Id">
+                <i class="fa-solid fa-table-columns"></i> Apri board
+            </a>
+        }
     </header>
 
-    <section class="ordo-dashboard-section">
+    <section class="ordo-dashboard-section" id="boards">
         <div class="ordo-section-title">
             <h2>Board</h2>
             <span>@Model.Boards.Count() board in questo progetto</span>
@@ -106,9 +117,9 @@
         }
     </section>
 
-    <section class="ordo-dashboard-section">
+    <section class="ordo-dashboard-section" id="membri">
         <div class="ordo-section-title">
-            <h2>Collaboratori</h2>
+            <h2>Persone</h2>
             <span>@Model.Membri.Count() invitati, oltre al proprietario</span>
         </div>
 

@@ -64,6 +64,7 @@ namespace Ordo.Web.Features.Dashboard
                     .Take(6)
                     .Select(x => new DashboardTaskViewModel
                     {
+                        Id = x.Id,
                         Titolo = x.Titolo,
                         Progetto = x.Board.Project.Nome,
                         Board = x.Board.Nome,
@@ -80,6 +81,7 @@ namespace Ordo.Web.Features.Dashboard
                     .Take(4)
                     .Select(x => new DashboardProjectViewModel
                     {
+                        Id = x.Id,
                         Nome = x.Nome,
                         Descrizione = x.Descrizione,
                         NumeroBoard = x.Boards.Count,

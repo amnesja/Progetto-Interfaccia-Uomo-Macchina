@@ -94,3 +94,35 @@
 .ordo-chat-form textarea { width:100%; padding:10px 12px; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; resize:vertical; }
 .ordo-chat-form textarea:focus { border-color:var(--ordo-blue); outline:0; box-shadow:0 0 0 3px rgba(36,66,157,.12); }
 .ordo-chat-form button { justify-self:end; }
+
+
+/* Project workspace navigation */
+.ordo-project-nav { display:flex; align-items:center; gap:4px; margin:0 0 22px; padding:4px; background:#eef2f7; border:1px solid var(--ordo-border); border-radius:10px; width:max-content; max-width:100%; overflow:auto; }
+.ordo-project-nav a { padding:8px 13px; color:#59677d; border-radius:7px; font-size:13px; font-weight:650; text-decoration:none; white-space:nowrap; }
+.ordo-project-nav a:hover { color:var(--ordo-text); background:#fff; }
+.ordo-project-nav a.active { color:var(--ordo-text); background:#fff; box-shadow:0 1px 4px rgba(16,25,46,.08); }
+.ordo-project-detail-heading { padding:4px 0; }
+.ordo-project-detail-heading .ordo-eyebrow { margin-bottom:6px; }
+.ordo-project-detail-heading h1 { font-size:31px; }
+.ordo-project-detail-heading > div:first-child { min-width:0; flex:1; }
+.ordo-board-row { min-height:62px; background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
+.ordo-board-row:hover { border-color:#c5cfdf; box-shadow:0 3px 10px rgba(16,25,46,.05); }
+.ordo-board-open-link { font-size:13px; }
+.ordo-project-card-rich { min-height:175px; }
+.ordo-project-card-title { display:flex; align-items:center; gap:11px; }
+.ordo-project-card-title h3 { margin:0; }
+.ordo-project-icon { display:grid; width:38px; height:38px; place-items:center; flex:0 0 auto; color:var(--ordo-blue); background:#eef1fb; border-radius:9px; }
+.ordo-project-card-rich footer { border-top:1px solid var(--ordo-border); padding-top:14px; }
+.ordo-projects-toolbar { padding:10px; margin-bottom:28px; background:#fff; border:1px solid var(--ordo-border); border-radius:11px; box-shadow:var(--ordo-shadow-soft); }
+.ordo-search-large { width:auto; flex:1; border:0; background:#f7f8fa; }
+.ordo-projects-toolbar button { min-height:40px; }
+.ordo-projects-page .ordo-pagination { padding-top:2px; }
+.ordo-project-detail-heading + .ordo-dashboard-section { margin-top:8px; }
+@media (max-width:640px) {
+    .ordo-project-nav { width:100%; }
+    .ordo-project-nav a { flex:1; text-align:center; }
+    .ordo-project-detail-heading h1 { font-size:27px; }
+    .ordo-projects-toolbar { padding:8px; }
+    .ordo-projects-toolbar .ordo-search { width:100%; }
+    .ordo-projects-toolbar button { width:100%; }
+}

@@ -2,7 +2,9 @@
 @using System.Security.Claims
 @{
     Layout = "_DashboardLayout";
-    ViewData["Title"] = "Chat - " + Model.ProjectNome;
+    ViewData["Title"] = "Chat";
+    ViewData["BreadcrumbProjectId"] = Model.ProjectId;
+    ViewData["BreadcrumbProjectName"] = Model.ProjectNome;
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
@@ -23,15 +25,20 @@
     <a class="ordo-back-link" asp-action="Dettaglio" asp-route-id="@Model.ProjectId">
         <i class="fa-solid fa-arrow-left"></i> Torna al progetto
     </a>
+    <nav class="ordo-project-nav" aria-label="Navigazione progetto">
+        <a href="@Url.Action("Dettaglio", "Progetti", new { area = "Progetti", id = Model.ProjectId })">Panoramica</a>
+        <a href="@Url.Action("Dettaglio", "Progetti", new { area = "Progetti", id = Model.ProjectId })#boards">Board</a>
+        <a href="@Url.Action("Dettaglio", "Progetti", new { area = "Progetti", id = Model.ProjectId })#membri">Persone</a>
+        <a class="active" href="#chat">Chat</a>
+    </nav>
     <header class="ordo-project-detail-heading">
         <div>
-            <span class="ordo-eyebrow">Chat del progetto</span>
             <h1>@Model.ProjectNome</h1>
             <p>Conversazione con i collaboratori del progetto.</p>
         </div>
     </header>
 
-    <section class="ordo-project-chat" aria-label="Messaggi della chat">
+    <section id="chat" class="ordo-project-chat" aria-label="Messaggi della chat">
         <div id="chatMessages" class="ordo-chat-messages">
             @if (!Model.Messages.Any())
             {

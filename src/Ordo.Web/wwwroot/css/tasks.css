@@ -34,3 +34,10 @@
 .ordo-comment-form textarea { flex:1; padding:11px 12px; color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); border-radius:8px; font:inherit; font-size:14px; outline:0; resize:vertical; }
 .ordo-comment-form textarea:focus { border-color:var(--ordo-blue); box-shadow:0 0 0 3px rgba(36,66,157,.12); }
 .ordo-comment-form button { padding:11px 16px; color:#111827; background:var(--ordo-orange); border:1px solid #111827; border-radius:8px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
+
+
+.ordo-task-page { max-width:900px; }
+.ordo-task-context { display:flex; align-items:center; gap:8px; margin-bottom:16px; color:#8a96a8; font-size:13px; }
+.ordo-task-context .ordo-back-link { margin:0; }
+.ordo-task-page .ordo-project-detail-heading { align-items:center; }
+.ordo-task-page .ordo-dashboard-section { box-shadow:var(--ordo-shadow-soft); }

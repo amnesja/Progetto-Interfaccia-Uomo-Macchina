@@ -21,6 +21,7 @@ namespace Ordo.Web.Features.Dashboard
 
     public class DashboardTaskViewModel
     {
+        public Guid Id { get; set; }
         public string Titolo { get; set; }
         public string Progetto { get; set; }
         public string Board { get; set; }
@@ -31,6 +32,7 @@ namespace Ordo.Web.Features.Dashboard
     
     public class DashboardProjectViewModel
     {
+        public Guid Id { get; set; }
         public string Nome { get; set; }
         public string Descrizione { get; set; }
         public int NumeroBoard { get; set; }

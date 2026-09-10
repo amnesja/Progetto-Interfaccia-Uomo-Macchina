@@ -2,7 +2,10 @@
 @using System.Security.Claims
 @{
     Layout = "_DashboardLayout";
-    ViewData["Title"] = "Board - " + Model.BoardName;
+    ViewData["Title"] = Model.BoardName;
+    ViewData["BreadcrumbProjectId"] = Model.ProjectId;
+    ViewData["BreadcrumbBoardId"] = Model.BoardId;
+    ViewData["BreadcrumbBoardName"] = Model.BoardName;
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
@@ -12,10 +15,13 @@
     <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
-<a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId"
-   class="kanban-back-link">
-    <i class="fa-solid fa-arrow-left"></i> Torna al progetto
-</a>
+<div class="kanban-context-bar">
+    <a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@Model.ProjectId" class="kanban-back-link">
+        <i class="fa-solid fa-arrow-left"></i> Progetto
+    </a>
+    <span class="kanban-context-separator">/</span>
+    <span class="kanban-context-current">@Model.BoardName</span>
+</div>
 
 <div id="lostConnection" class="ordo-signalr-banner d-none">
     <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...

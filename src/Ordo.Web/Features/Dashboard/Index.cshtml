@@ -21,7 +21,6 @@
     </div>
     <header class="ordo-dashboard-heading">
         <div>
-            <span class="ordo-eyebrow">Dashboard</span>
             <h1>Buongiorno, @Model.NomeUtente</h1>
             <p>Qui trovi una panoramica del lavoro da seguire.</p>
         </div>
@@ -81,7 +80,7 @@
                                       task.Scadenza.Value.Date < DateTime.Today;
 
                         <tr>
-                            <td><strong>@task.Titolo</strong></td>
+                            <td><a class="ordo-task-link" asp-area="Tasks" asp-controller="Tasks" asp-action="Dettaglio" asp-route-id="@task.Id"><strong>@task.Titolo</strong></a></td>
                             <td>@task.Progetto <small>@task.Board</small></td>
                             <td><span class="ordo-status stato-@task.Stato.ToString().ToLowerInvariant()">@stato</span></td>
                             <td class="@(scaduta ? "is-overdue" : "")">
@@ -112,14 +111,14 @@
             <div class="ordo-project-grid">
                 @foreach (var project in Model.Progetti)
                 {
-                    <article class="ordo-project-card">
-                        <h3>@project.Nome</h3>
+                    <a class="ordo-project-card ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(project.Id))">
+                        <div class="ordo-project-card-title"><span class="ordo-project-icon"><i class="fa-regular fa-folder-open"></i></span><h3>@project.Nome</h3></div>
                         <p>@(string.IsNullOrWhiteSpace(project.Descrizione) ? "Nessuna descrizione." : project.Descrizione)</p>
                         <footer>
                             <span>@project.NumeroBoard board</span>
                             <span>@project.NumeroTask attività</span>
                         </footer>
-                    </article>
+                    </a>
                 }
             </div>
         }

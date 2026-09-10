@@ -5,6 +5,18 @@
     var area = ViewContext.RouteData.Values["area"]?.ToString();
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     var identitaCorrente = ViewData[Ordo.Web.Areas.IdentitaViewModel.VIEWDATA_IDENTITACORRENTE_KEY] as Ordo.Web.Areas.IdentitaViewModel;
+    var title = ViewData["Title"]?.ToString() ?? "Ordo";
+    var projectId = ViewData["BreadcrumbProjectId"]?.ToString();
+    var boardId = ViewData["BreadcrumbBoardId"]?.ToString();
+    var projectName = ViewData["BreadcrumbProjectName"]?.ToString();
+    var boardName = ViewData["BreadcrumbBoardName"]?.ToString();
+    var isDashboard = string.IsNullOrEmpty(area) && controller == "Dashboard";
+    var isProjects = area == "Progetti" && controller == "Progetti";
+    var isActivities = string.IsNullOrEmpty(area) && controller == "Attivita";
+    var isKanban = area == "Kanban";
+    var isTasks = area == "Tasks";
+    var emailPrefix = identitaCorrente?.EmailUtenteCorrente?.Split('@')[0] ?? "?";
+    var userInitials = emailPrefix.Length >= 2 ? emailPrefix[..2].ToUpperInvariant() : emailPrefix.ToUpperInvariant();
 }
 
 @section styles {
@@ -13,70 +25,121 @@
 }
 
 <div class="ordo-dashboard-shell">
-    <aside class="ordo-dashboard-sidebar">
-        @* Corretto anche il link al brand aggiungendo asp-area="" *@
+    <header class="ordo-dashboard-topbar">
         <a class="ordo-brand" asp-area="" asp-controller="Dashboard" asp-action="Index" aria-label="Ordo, dashboard">
             <span class="ordo-brand-mark">O</span><span>Ordo</span>
         </a>
 
+        <div class="ordo-dashboard-context">
+            <nav class="ordo-breadcrumb" aria-label="Percorso">
+                <a asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+
+                @if (projectId != null || isKanban || isTasks)
+                {
+                    <span aria-hidden="true">/</span>
+                    <a asp-area="Progetti" asp-controller="Progetti" asp-action="Index">Progetti</a>
+                }
+
+                @if (projectId != null)
+                {
+                    <span aria-hidden="true">/</span>
+                    <a asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@projectId">
+                        @(string.IsNullOrWhiteSpace(projectName) ? "Progetto" : projectName)
+                    </a>
+                }
+
+                @if (boardId != null)
+                {
+                    <span aria-hidden="true">/</span>
+                    <a asp-area="Kanban" asp-controller="Kanban" asp-action="Board" asp-route-id="@boardId">
+                        @(string.IsNullOrWhiteSpace(boardName) ? "Board" : boardName)
+                    </a>
+                }
+
+                @if (!isDashboard && !isProjects && projectId == null && !isActivities)
+                {
+                    <span aria-hidden="true">/</span>
+                    <span>@title</span>
+                }
+                else if (isProjects && projectId == null)
+                {
+                    <span aria-hidden="true">/</span>
+                    <span>Progetti</span>
+                }
+                else if (isActivities)
+                {
+                    <span aria-hidden="true">/</span>
+                    <span>Attività</span>
+                }
+                else if (projectId != null && boardId == null && !isProjects)
+                {
+                    <span aria-hidden="true">/</span>
+                    <span>@title</span>
+                }
+                else if (boardId != null && isTasks)
+                {
+                    <span aria-hidden="true">/</span>
+                    <span>@title</span>
+                }
+            </nav>
+        </div>
+
+        <form class="ordo-global-search" asp-area="Progetti" asp-controller="Progetti" asp-action="Index" method="get" role="search">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input name="Filter" type="search" placeholder="Cerca progetti..." autocomplete="off" aria-label="Cerca progetti" />
+            <kbd>Ctrl K</kbd>
+        </form>
+
+        <div class="ordo-dashboard-topbar-actions">
+            <div class="ordo-notification-center">
+                <button id="notificationBell" class="ordo-notification-bell" type="button" aria-label="Apri notifiche" aria-expanded="false">
+                    <i class="fa-regular fa-bell"></i><span id="notificationBadge" class="d-none">0</span>
+                </button>
+                <div id="notificationPanel" class="ordo-notification-panel d-none" role="status" aria-live="polite">
+                    <header><strong>Notifiche</strong><button id="clearNotifications" type="button">Segna come lette</button></header>
+                    <div id="notificationList"><p>Nessuna notifica.</p></div>
+                </div>
+            </div>
+            @if (identitaCorrente != null)
+            {
+                <div class="ordo-user-menu">
+                    <button id="userMenuButton" class="ordo-user-menu-button" type="button" aria-label="Apri menu utente" aria-expanded="false" aria-controls="userMenuPanel">
+                        <span aria-hidden="true">@userInitials</span>
+                    </button>
+                    <div id="userMenuPanel" class="ordo-user-menu-panel d-none">
+                        <div class="ordo-user-menu-profile">
+                            <span class="ordo-user-menu-avatar">@userInitials</span>
+                            <div><strong>@emailPrefix</strong><small>@identitaCorrente.EmailUtenteCorrente</small></div>
+                        </div>
+                        <a asp-area="" asp-controller="Profile" asp-action="Profile"><i class="fa-regular fa-user"></i> Profilo</a>
+                        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
+                            <button type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i> Esci</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </header>
+
+    <aside class="ordo-dashboard-sidebar">
         <nav class="ordo-dashboard-nav" aria-label="Navigazione principale">
-            <a class="@(string.IsNullOrEmpty(area) && controller == "Dashboard" ? "active" : "")" 
-               asp-area="" 
-               asp-controller="Dashboard" 
-               asp-action="Index">
-                <i class="fa-solid fa-table-cells-large"></i> <span>Dashboard</span>
+            <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index">
+                <i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span>
             </a>
-
-            <a class="@(area == "Progetti" ? "active" : "")" 
-               asp-area="Progetti" 
-               asp-controller="Progetti" 
-               asp-action="Index">
-                <i class="fa-regular fa-folder"></i> <span>I miei progetti</span>
+            <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
+                <i class="fa-regular fa-folder"></i><span>Progetti</span>
             </a>
-
-            <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")" 
-               asp-area="" 
-               asp-controller="Attivita" 
-               asp-action="Index">
-                <i class="fa-solid fa-list"></i> <span>Attività</span>
-            </a>
-
-            <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")" 
-               asp-area="" 
-               asp-controller="Profile" 
-               asp-action="Profile">
-                <i class="fa-regular fa-user"></i> <span>Profilo</span>
+            <a class="@(isActivities ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index">
+                <i class="fa-solid fa-list-check"></i><span>Attività</span>
             </a>
         </nav>
 
-        @* Corretto con asp-area="" *@
-        <div class="ordo-dashboard-sidebar-footer">
-            @if (identitaCorrente != null)
-            {
-                <a class="ordo-dashboard-identity" asp-area="" asp-controller="Profile" asp-action="Profile"
-                   title="@identitaCorrente.EmailUtenteCorrente">
-                    <img src="@identitaCorrente.GravatarUrl" alt="" />
-                    <span>@identitaCorrente.EmailUtenteCorrente</span>
-                </a>
-            }
-            <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
-                <button class="ordo-dashboard-logout" type="submit">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Esci</span>
-                </button>
-            </form>
+        <div class="ordo-sidebar-footer">
+            <div class="ordo-sidebar-hint"><i class="fa-regular fa-circle-question"></i><span>Gestisci il lavoro del tuo team in un unico posto.</span></div>
         </div>
     </aside>
 
     <main class="ordo-dashboard-main">
-        <div class="ordo-notification-center">
-            <button id="notificationBell" class="ordo-notification-bell" type="button" aria-label="Apri notifiche" aria-expanded="false">
-                <i class="fa-regular fa-bell"></i><span id="notificationBadge" class="d-none">0</span>
-            </button>
-            <div id="notificationPanel" class="ordo-notification-panel d-none" role="status" aria-live="polite">
-                <header><strong>Notifiche</strong><button id="clearNotifications" type="button">Segna come lette</button></header>
-                <div id="notificationList"><p>Nessuna notifica.</p></div>
-            </div>
-        </div>
         @if (ViewData[Alerts.ALERTS_KEY] is AlertsDto alerts)
         {
             foreach (var alert in alerts.List)
@@ -91,46 +154,31 @@
     </main>
 
     <nav class="ordo-mobile-nav" aria-label="Navigazione mobile">
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Dashboard" ? "active" : "")"
-           asp-area="" asp-controller="Dashboard" asp-action="Index">
-            <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>
-            <span>Home</span>
+        <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-table-cells-large"></i><span>Home</span></a>
+        <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="Progetti" asp-controller="Progetti" asp-action="Index"><i class="fa-regular fa-folder"></i><span>Progetti</span></a>
+        <a class="@(isActivities ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index"><i class="fa-solid fa-list-check"></i><span>Attività</span></a>
+        <a class="ordo-mobile-search" asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
+            <i class="fa-solid fa-magnifying-glass"></i><span>Cerca</span>
         </a>
-
-        <a class="@(area == "Progetti" ? "active" : "")"
-           asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
-            <i class="fa-regular fa-folder" aria-hidden="true"></i>
-            <span>Progetti</span>
-        </a>
-
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Attivita" ? "active" : "")"
-           asp-area="" asp-controller="Attivita" asp-action="Index">
-            <i class="fa-solid fa-list" aria-hidden="true"></i>
-            <span>Attività</span>
-        </a>
-
-        <a class="@(string.IsNullOrEmpty(area) && controller == "Profile" ? "active" : "")"
-           asp-area="" asp-controller="Profile" asp-action="Profile">
-            <i class="fa-regular fa-user" aria-hidden="true"></i>
-            <span>Profilo</span>
-        </a>
-
-        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post">
-            <button type="submit" class="ordo-mobile-nav-logout">
-                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                <span>Esci</span>
-            </button>
-        </form>
+        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post"><button type="submit" class="ordo-mobile-nav-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Esci</span></button></form>
     </nav>
 </div>
 
 @section scripts {
     <script>
         document.querySelectorAll(".ordo-dashboard-alert").forEach(function (alert) {
-            window.setTimeout(function () {
-                alert.classList.add("is-dismissing");
-                window.setTimeout(function () { alert.remove(); }, 400);
-            }, 5000);
+            window.setTimeout(function () { alert.classList.add("is-dismissing"); window.setTimeout(function () { alert.remove(); }, 400); }, 5000);
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+                event.preventDefault();
+                document.querySelector(".ordo-global-search input")?.focus();
+            }
+            if (event.key === "Escape") {
+                document.getElementById("notificationPanel")?.classList.add("d-none");
+                document.getElementById("userMenuPanel")?.classList.add("d-none");
+            }
         });
     </script>
     <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
@@ -147,82 +195,51 @@
             function renderNotifications() {
                 list.replaceChildren();
                 if (!notifications.length) {
-                    var empty = document.createElement("p");
-                    empty.textContent = "Nessuna notifica.";
-                    list.appendChild(empty);
+                    var empty = document.createElement("p"); empty.textContent = "Nessuna notifica."; list.appendChild(empty);
                 } else {
                     notifications.forEach(function (notification) {
                         var item = document.createElement(notification.url ? "a" : "article");
                         item.className = "ordo-notification-item";
                         if (notification.url) item.href = notification.url;
                         var icon = document.createElement("i");
-                        icon.className = notification.icon === "chat" ? "fa-regular fa-comments" :
-                            notification.icon === "project" ? "fa-regular fa-folder" :
-                            notification.icon === "board" ? "fa-solid fa-table-columns" : "fa-solid fa-list-check";
-                        var text = document.createElement("span");
-                        text.textContent = notification.text;
-                        var time = document.createElement("time");
-                        time.textContent = notification.time;
-                        item.append(icon, text, time);
-                        list.appendChild(item);
+                        icon.className = notification.icon === "chat" ? "fa-regular fa-comments" : notification.icon === "project" ? "fa-regular fa-folder" : notification.icon === "board" ? "fa-solid fa-table-columns" : "fa-solid fa-list-check";
+                        var text = document.createElement("span"); text.textContent = notification.text;
+                        var time = document.createElement("time"); time.textContent = notification.time;
+                        item.append(icon, text, time); list.appendChild(item);
                     });
                 }
                 badge.textContent = notifications.length;
                 badge.classList.toggle("d-none", notifications.length === 0);
                 sessionStorage.setItem(storageKey, JSON.stringify(notifications));
             }
-
             function addNotification(text, url, icon) {
-                notifications.unshift({ text: text, url: url, icon: icon, time: new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) });
-                notifications = notifications.slice(0, 20);
-                renderNotifications();
+                notifications.unshift({ text:text, url:url, icon:icon, time:new Date().toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"}) });
+                notifications = notifications.slice(0,20); renderNotifications();
             }
-
-            bell.addEventListener("click", function () {
-                var isHidden = panel.classList.toggle("d-none");
-                bell.setAttribute("aria-expanded", (!isHidden).toString());
-            });
-            document.getElementById("clearNotifications").addEventListener("click", function () {
-                notifications = [];
-                renderNotifications();
-            });
+            bell?.addEventListener("click", function (event) { event.stopPropagation(); var hidden = panel.classList.toggle("d-none"); bell.setAttribute("aria-expanded", (!hidden).toString()); });
+            var userMenuButton = document.getElementById("userMenuButton");
+            var userMenuPanel = document.getElementById("userMenuPanel");
+            if (userMenuButton && userMenuPanel) {
+                userMenuButton.addEventListener("click", function (event) { event.stopPropagation(); var hidden = userMenuPanel.classList.toggle("d-none"); userMenuButton.setAttribute("aria-expanded", (!hidden).toString()); });
+                document.addEventListener("click", function () { userMenuPanel.classList.add("d-none"); userMenuButton.setAttribute("aria-expanded", "false"); panel?.classList.add("d-none"); });
+            }
+            document.getElementById("clearNotifications")?.addEventListener("click", function () { notifications=[]; renderNotifications(); });
             renderNotifications();
 
             var globalSignalR = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
             globalSignalR.registerEvents();
             globalSignalR.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
-                var actions = {
-                    Assigned: "Ti è stata assegnata l'attività",
-                    Unassigned: "Non sei più assegnato all'attività",
-                    Updated: "Attività aggiornata",
-                    Deleted: "Attività eliminata",
-                    Commented: "Nuovo commento sull'attività",
-                    CommentDeleted: "Commento eliminato dall'attività"
-                };
+                var actions = {Assigned:"Ti è stata assegnata l'attività", Unassigned:"Non sei più assegnato all'attività", Updated:"Attività aggiornata", Deleted:"Attività eliminata", Commented:"Nuovo commento sull'attività", CommentDeleted:"Commento eliminato dall'attività"};
                 var url = tipo === "Deleted" ? "/Kanban/Board/" + boardId : "/Tasks/Dettaglio/" + taskId;
                 addNotification((actions[tipo] || "Attività aggiornata") + ": «" + titolo + "»" + (projectNome ? " · " + projectNome : ""), url, "task");
             });
-            globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) {
-                addNotification("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project");
-            });
-            globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) {
-                addNotification("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project");
-            });
-            globalSignalR.connection.on("ProjectDeleted", function () {
-                addNotification("Un progetto non è più disponibile.");
-            });
-            globalSignalR.connection.on("ProjectChatMessageAdded", function (message) {
-                addNotification("Nuovo messaggio da " + message.userName + ".", "/Progetti/Chat/" + message.idGroup, "chat");
-            });
-            globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) {
-                addNotification("È stata creata la board «" + nome + "».", "/Kanban/Board/" + boardId, "board");
-            });
-            globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) {
-                addNotification("La board «" + nome + "» è stata aggiornata.", "/Kanban/Board/" + boardId, "board");
-            });
-            globalSignalR.connection.on("BoardDeleted", function (projectId, boardId, nome) {
-                addNotification("La board «" + nome + "» è stata eliminata.", "/Progetti/Dettaglio/" + projectId, "board");
-            });
+            globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) { addNotification("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project"); });
+            globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { addNotification("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
+            globalSignalR.connection.on("ProjectDeleted", function () { addNotification("Un progetto non è più disponibile."); });
+            globalSignalR.connection.on("ProjectChatMessageAdded", function (message) { addNotification("Nuovo messaggio da " + message.userName + ".", "/Progetti/Chat/" + message.idGroup, "chat"); });
+            globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) { addNotification("È stata creata la board «" + nome + "».", "/Kanban/Board/" + boardId, "board"); });
+            globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) { addNotification("La board «" + nome + "» è stata aggiornata.", "/Kanban/Board/" + boardId, "board"); });
+            globalSignalR.connection.on("BoardDeleted", function (projectId) { addNotification("Una board non è più disponibile.", "/Progetti/Dettaglio/" + projectId, "board"); });
             globalSignalR.startConnection();
         })();
     </script>
