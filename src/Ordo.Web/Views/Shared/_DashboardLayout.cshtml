@@ -1,4 +1,8 @@
 @using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using Ordo.Services
+@using Ordo.Services.Shared
+@inject OrdoDbContext SidebarDbContext
 @{
     Layout = "_LayoutHtml";
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -17,6 +21,27 @@
     var isTasks = area == "Tasks";
     var emailPrefix = identitaCorrente?.EmailUtenteCorrente?.Split('@')[0] ?? "?";
     var userInitials = emailPrefix.Length >= 2 ? emailPrefix[..2].ToUpperInvariant() : emailPrefix.ToUpperInvariant();
+    var sidebarUserId = Guid.TryParse(currentUserId, out var parsedSidebarUserId) ? parsedSidebarUserId : Guid.Empty;
+    var sidebarProjects = sidebarUserId == Guid.Empty
+        ? new List<dynamic>()
+        : (await SidebarDbContext.Projects
+            .AsNoTracking()
+            .Where(x => x.OwnerId == sidebarUserId || x.Members.Any(member => member.UserId == sidebarUserId))
+            .OrderBy(x => x.Nome)
+            .Select(x => new { x.Id, x.Nome })
+            .ToListAsync()).Cast<dynamic>().ToList();
+    var sidebarTaskCounts = sidebarUserId == Guid.Empty
+        ? new Dictionary<TaskState, int>()
+        : (await SidebarDbContext.Tasks
+            .AsNoTracking()
+            .Where(x => x.AssignedUserId == sidebarUserId)
+            .Select(x => x.Stato)
+            .ToListAsync())
+            .GroupBy(state => state)
+            .ToDictionary(group => group.Key, group => group.Count());
+    var activityFilter = ViewContext.HttpContext.Request.Query["filtro"].ToString();
+
+    int SidebarTaskCount(TaskState state) => sidebarTaskCounts.TryGetValue(state, out var count) ? count : 0;
 }
 
 @section styles {
@@ -126,12 +151,59 @@
             <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index">
                 <i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span>
             </a>
-            <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
-                <i class="fa-regular fa-folder"></i><span>Progetti</span>
-            </a>
-            <a class="@(isActivities ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index">
-                <i class="fa-solid fa-list-check"></i><span>Attività</span>
-            </a>
+            <section class="ordo-sidebar-group ordo-sidebar-group-pinned @(isActivities ? "is-current" : "")" data-sidebar-accordion>
+                <button type="button" class="ordo-sidebar-group-toggle" aria-expanded="@(isActivities ? "true" : "false")">
+                    <span><i class="fa-solid fa-list-check"></i><span>Attività</span></span>
+                    <i class="fa-solid fa-chevron-down ordo-sidebar-chevron"></i>
+                </button>
+                <div class="ordo-sidebar-group-items" @(isActivities ? "" : "hidden")>
+                    <a class="@(isActivities && string.IsNullOrEmpty(activityFilter) ? "active" : "")"
+                       asp-area="" asp-controller="Attivita" asp-action="Index">
+                        <i class="fa-solid fa-layer-group"></i><span>Tutte</span>
+                    </a>
+                    <a class="@(isActivities && activityFilter == TaskState.ToDo.ToString() ? "active" : "")"
+                       asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.ToDo">
+                        <i class="fa-regular fa-circle"></i><span>Da fare</span><b>@SidebarTaskCount(TaskState.ToDo)</b>
+                    </a>
+                    <a class="@(isActivities && activityFilter == TaskState.InProgress.ToString() ? "active" : "")"
+                       asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.InProgress">
+                        <i class="fa-solid fa-spinner"></i><span>In corso</span><b>@SidebarTaskCount(TaskState.InProgress)</b>
+                    </a>
+                    <a class="@(isActivities && activityFilter == TaskState.Review.ToString() ? "active" : "")"
+                       asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Review">
+                        <i class="fa-solid fa-magnifying-glass"></i><span>Review</span><b>@SidebarTaskCount(TaskState.Review)</b>
+                    </a>
+                    <a class="@(isActivities && activityFilter == TaskState.Done.ToString() ? "active" : "")"
+                       asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Done">
+                        <i class="fa-regular fa-circle-check"></i><span>Completate</span><b>@SidebarTaskCount(TaskState.Done)</b>
+                    </a>
+                </div>
+            </section>
+
+            <div class="ordo-sidebar-scroll">
+                <section class="ordo-sidebar-group @(area == "Progetti" || isKanban || isTasks ? "is-current" : "")" data-sidebar-accordion>
+                    <button type="button" class="ordo-sidebar-group-toggle" aria-expanded="@(area == "Progetti" || isKanban || isTasks ? "true" : "false")">
+                        <span><i class="fa-regular fa-folder"></i><span>Progetti</span></span>
+                        <i class="fa-solid fa-chevron-down ordo-sidebar-chevron"></i>
+                    </button>
+                    <div class="ordo-sidebar-group-items" @(area == "Progetti" || isKanban || isTasks ? "" : "hidden")>
+                        @if (sidebarProjects.Count == 0)
+                        {
+                            <span class="ordo-sidebar-empty">Nessun progetto</span>
+                        }
+                        else
+                        {
+                            foreach (var project in sidebarProjects)
+                            {
+                                <a class="@(projectId == project.Id.ToString() ? "active" : "")"
+                                   asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@project.Id">
+                                    <i class="fa-regular fa-folder-open"></i><span>@project.Nome</span>
+                                </a>
+                            }
+                        }
+                    </div>
+                </section>
+            </div>
         </nav>
 
         <div class="ordo-sidebar-footer">
@@ -166,6 +238,21 @@
 
 @section scripts {
     <script>
+        document.querySelectorAll("[data-sidebar-accordion] .ordo-sidebar-group-toggle").forEach(function (toggle) {
+            toggle.addEventListener("click", function () {
+                var group = toggle.closest("[data-sidebar-accordion]");
+                var isExpanded = toggle.getAttribute("aria-expanded") === "true";
+                document.querySelectorAll("[data-sidebar-accordion]").forEach(function (otherGroup) {
+                    otherGroup.querySelector(".ordo-sidebar-group-toggle").setAttribute("aria-expanded", "false");
+                    otherGroup.querySelector(".ordo-sidebar-group-items").hidden = true;
+                });
+                if (!isExpanded) {
+                    toggle.setAttribute("aria-expanded", "true");
+                    group.querySelector(".ordo-sidebar-group-items").hidden = false;
+                }
+            });
+        });
+
         document.querySelectorAll(".ordo-dashboard-alert").forEach(function (alert) {
             window.setTimeout(function () { alert.classList.add("is-dismissing"); window.setTimeout(function () { alert.remove(); }, 400); }, 5000);
         });

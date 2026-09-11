@@ -41,12 +41,23 @@ namespace Ordo.Web.Features.Dashboard
                 .Where(x => x.AssignedUserId == userId);
 
             var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+            var endOfWeek = startOfWeek.AddDays(7);
+            var dueDatesThisWeek = await tasks
+                .Where(x => x.Scadenza.HasValue &&
+                            x.Scadenza.Value.Date >= startOfWeek &&
+                            x.Scadenza.Value.Date < endOfWeek)
+                .Select(x => x.Scadenza.Value.Date)
+                .ToArrayAsync();
 
             var model = new DashboardViewModel
             {
                 NomeUtente = !string.IsNullOrWhiteSpace(user.FirstName)
                     ? user.FirstName
                     : (!string.IsNullOrWhiteSpace(user.NickName) ? user.NickName : user.Email),
+                AttivitaSettimana = Enumerable.Range(0, 7)
+                    .Select(dayOffset => dueDatesThisWeek.Count(date => date == startOfWeek.AddDays(dayOffset)))
+                    .ToArray(),
 
                 AttivitaDaFare = await tasks.CountAsync(x => x.Stato == TaskState.ToDo),
                 AttivitaInCorso = await tasks.CountAsync(x => x.Stato == TaskState.InProgress),
@@ -61,7 +72,6 @@ namespace Ordo.Web.Features.Dashboard
                     .OrderBy(x => x.Scadenza == null)
                     .ThenBy(x => x.Scadenza)
                     .ThenBy(x => x.Titolo)
-                    .Take(6)
                     .Select(x => new DashboardTaskViewModel
                     {
                         Id = x.Id,
@@ -86,7 +96,9 @@ namespace Ordo.Web.Features.Dashboard
                         Nome = x.Nome,
                         Descrizione = x.Descrizione,
                         NumeroBoard = x.Boards.Count,
-                        NumeroTask = x.Boards.SelectMany(b => b.Tasks).Count()
+                        NumeroTask = x.Boards.SelectMany(b => b.Tasks).Count(),
+                        NumeroTaskCompletate = x.Boards.SelectMany(b => b.Tasks)
+                            .Count(task => task.Stato == TaskState.Done)
                     })
                     .ToArrayAsync()
             };

@@ -17,6 +17,7 @@ namespace Ordo.Web.Features.Dashboard
             = Array.Empty<DashboardTaskViewModel>();
         public IEnumerable<DashboardProjectViewModel> Progetti { get; set; }
             = Array.Empty<DashboardProjectViewModel>();
+        public int[] AttivitaSettimana { get; set; } = new int[7];
     }
 
     public class DashboardTaskViewModel
@@ -38,5 +39,6 @@ namespace Ordo.Web.Features.Dashboard
         public string Descrizione { get; set; }
         public int NumeroBoard { get; set; }
         public int NumeroTask { get; set; }
+        public int NumeroTaskCompletate { get; set; }
     }
 }
