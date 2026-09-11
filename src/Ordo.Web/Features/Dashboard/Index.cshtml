@@ -80,7 +80,17 @@
                                       task.Scadenza.Value.Date < DateTime.Today;
 
                         <tr>
-                            <td><a class="ordo-task-link" asp-area="Tasks" asp-controller="Tasks" asp-action="Dettaglio" asp-route-id="@task.Id"><strong>@task.Titolo</strong></a></td>
+                            <td>
+                                <a class="ordo-task-link"
+                                   asp-area="Progetti"
+                                   asp-controller="Progetti"
+                                   asp-action="Dettaglio"
+                                   asp-route-id="@task.ProjectId"
+                                   asp-route-tab="board"
+                                   asp-route-task="@task.Id">
+                                    <strong>@task.Titolo</strong>
+                                </a>
+                            </td>
                             <td>@task.Progetto <small>@task.Board</small></td>
                             <td><span class="ordo-status stato-@task.Stato.ToString().ToLowerInvariant()">@stato</span></td>
                             <td class="@(scaduta ? "is-overdue" : "")">
@@ -111,7 +121,8 @@
             <div class="ordo-project-grid">
                 @foreach (var project in Model.Progetti)
                 {
-                    <a class="ordo-project-card ordo-project-card-link" href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(project.Id))">
+                    <a class="ordo-project-card ordo-project-card-link"
+                       href="@Url.Action(MVC.Progetti.Progetti.Dettaglio(project.Id))?tab=board">
                         <div class="ordo-project-card-title"><span class="ordo-project-icon"><i class="fa-regular fa-folder-open"></i></span><h3>@project.Nome</h3></div>
                         <p>@(string.IsNullOrWhiteSpace(project.Descrizione) ? "Nessuna descrizione." : project.Descrizione)</p>
                         <footer>

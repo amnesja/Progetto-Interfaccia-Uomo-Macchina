@@ -21,6 +21,7 @@ namespace Ordo.Services.Shared
     {
         public Guid Id { get; set; }
         public TaskState NuovoStato { get; set; }
+        public Priorita? NuovaPriorita { get; set; }
     }
 
     public class DeleteTaskCommand
@@ -66,6 +67,8 @@ namespace Ordo.Services.Shared
             if (task == null) return;
 
             task.Stato = cmd.NuovoStato;
+            if (cmd.NuovaPriorita.HasValue)
+                task.Priorita = cmd.NuovaPriorita.Value;
 
             await _dbContext.SaveChangesAsync();
 

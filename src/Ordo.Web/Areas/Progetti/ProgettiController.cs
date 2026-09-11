@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Ordo.Services.Shared;
@@ -108,6 +109,22 @@ namespace Ordo.Web.Areas.Progetti
                             UtentiCoinvolti = await GetInvolvedUserIds(model.Id.Value, currentUserId)
                         });
                     }
+                    else
+                    {
+                        var boardId = await _sharedService.Handle(new AddOrUpdateBoardCommand
+                        {
+                            Nome = "Board",
+                            ProjectId = model.Id.Value
+                        });
+
+                        await _publisher.Publish(new BoardCreatedEvent
+                        {
+                            ProjectId = model.Id.Value,
+                            BoardId = boardId,
+                            BoardNome = "Board",
+                            UtentiCoinvolti = new[] { currentUserId }
+                        });
+                    }
 
                     Alerts.AddSuccess(this, "Progetto salvato correttamente");
                 }
@@ -164,11 +181,59 @@ namespace Ordo.Web.Areas.Progetti
                 return Forbid();
 
             var boards = await _sharedService.Query(new BoardsByProjectQuery { ProjectId = id });
+            if (!boards.Boards.Any() && isOwner)
+            {
+                var boardId = await _sharedService.Handle(new AddOrUpdateBoardCommand
+                {
+                    Nome = "Board",
+                    ProjectId = id
+                });
+
+                await _publisher.Publish(new BoardCreatedEvent
+                {
+                    ProjectId = id,
+                    BoardId = boardId,
+                    BoardNome = "Board",
+                    UtentiCoinvolti = await GetInvolvedUserIds(id, progetto.OwnerId)
+                });
+
+                boards = await _sharedService.Query(new BoardsByProjectQuery { ProjectId = id });
+            }
+            var boardTasks = new List<BoardTaskViewModel>();
+            foreach (var board in boards.Boards)
+            {
+                var tasks = await _sharedService.Query(new TasksByBoardQuery { BoardId = board.Id });
+                boardTasks.AddRange(tasks.Tasks.Select(task => new BoardTaskViewModel
+                {
+                    Id = task.Id,
+                    BoardId = board.Id,
+                    Titolo = task.Titolo,
+                    Descrizione = task.Descrizione,
+                    Priorita = task.Priorita,
+                    Stato = task.Stato,
+                    Scadenza = task.Scadenza,
+                    AssignedUserId = task.AssignedUserId,
+                    AssignedUserName = task.AssignedUserNickName
+                }));
+            }
+            var messages = await _sharedService.Query(new ProjectChatMessagesQuery { ProjectId = id });
 
             var model = new DettaglioViewModel();
             model.SetProject(progetto, isOwner);
             model.SetBoards(boards);
             model.SetMembers(membri);
+            var owner = await _sharedService.Query(new UserDetailQuery { Id = progetto.OwnerId });
+            if (owner != null && !model.Membri.Any(member => member.UserId == owner.Id))
+            {
+                model.Membri = model.Membri.Append(new MemberItemViewModel
+                {
+                    UserId = owner.Id,
+                    NomeCompleto = $"{owner.FirstName} {owner.LastName} (proprietario)",
+                    Email = owner.Email
+                }).ToArray();
+            }
+            model.SetBoardTasks(boardTasks);
+            model.SetMessages(messages);
 
             return View(model);
         }
@@ -220,7 +285,7 @@ namespace Ordo.Web.Areas.Progetti
             if (!ModelState.IsValid)
             {
                 Alerts.AddError(this, "Messaggio non valido");
-                return RedirectToAction(nameof(Chat), new { id = model.ProjectId });
+                return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "chat" });
             }
 
             var message = await _sharedService.Handle(new AddProjectChatMessageCommand
@@ -243,7 +308,7 @@ namespace Ordo.Web.Areas.Progetti
                 UtentiCoinvolti = await GetInvolvedUserIds(model.ProjectId, progetto.OwnerId)
             });
 
-            return RedirectToAction(nameof(Chat), new { id = model.ProjectId });
+            return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "chat" });
         }
 
         [HttpPost]
@@ -278,7 +343,7 @@ namespace Ordo.Web.Areas.Progetti
                 Alerts.AddSuccess(this, "Board salvata correttamente");
             }
 
-            return RedirectToAction(Actions.Dettaglio(model.ProjectId));
+            return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "board" });
         }
 
         [HttpPost]
@@ -301,7 +366,7 @@ namespace Ordo.Web.Areas.Progetti
 
             Alerts.AddSuccess(this, "Board eliminata");
 
-            return RedirectToAction(Actions.Dettaglio(projectId));
+            return RedirectToAction(nameof(Dettaglio), new { id = projectId, tab = "board" });
         }
 
         [HttpPost]
@@ -317,7 +382,7 @@ namespace Ordo.Web.Areas.Progetti
             if (!ModelState.IsValid)
             {
                 Alerts.AddError(this, "Inserisci un'email valida");
-                return RedirectToAction(Actions.Dettaglio(model.ProjectId));
+                return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "people" });
             }
 
             var email = model.Email.Trim();
@@ -359,7 +424,7 @@ namespace Ordo.Web.Areas.Progetti
                 }
             }
 
-            return RedirectToAction(Actions.Dettaglio(model.ProjectId));
+            return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "people" });
         }
 
         [HttpPost]
@@ -377,7 +442,7 @@ namespace Ordo.Web.Areas.Progetti
 
             Alerts.AddSuccess(this, "Collaboratore rimosso dal progetto");
 
-            return RedirectToAction(Actions.Dettaglio(projectId));
+            return RedirectToAction(nameof(Dettaglio), new { id = projectId, tab = "people" });
         }
     }
 }

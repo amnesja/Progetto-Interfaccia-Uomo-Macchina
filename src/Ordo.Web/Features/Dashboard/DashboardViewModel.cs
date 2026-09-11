@@ -22,6 +22,7 @@ namespace Ordo.Web.Features.Dashboard
     public class DashboardTaskViewModel
     {
         public Guid Id { get; set; }
+        public Guid ProjectId { get; set; }
         public string Titolo { get; set; }
         public string Progetto { get; set; }
         public string Board { get; set; }

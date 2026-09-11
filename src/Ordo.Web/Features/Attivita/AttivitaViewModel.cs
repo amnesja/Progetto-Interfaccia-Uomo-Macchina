@@ -14,6 +14,7 @@ namespace Ordo.Web.Features.Attivita
     public class AttivitaTaskViewModel
     {
         public Guid Id { get; set; }
+        public Guid ProjectId { get; set; }
         public string Titolo { get; set; }
         public string Progetto { get; set; }
         public string Board { get; set; }

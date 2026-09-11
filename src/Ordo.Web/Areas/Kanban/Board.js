@@ -21,7 +21,9 @@ var Ordo;
                 },
                 methods: {
                     tasksByStato(stato) {
-                        return this.tasks.filter(t => t.stato === stato);
+                        return this.tasks
+                            .filter(t => t.stato === stato)
+                            .sort((left, right) => right.priorita - left.priorita);
                     },
                     formatDate(dateStr) {
                         const d = new Date(dateStr);

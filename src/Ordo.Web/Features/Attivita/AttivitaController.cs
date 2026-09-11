@@ -45,6 +45,7 @@ namespace Ordo.Web.Features.Attivita
                     .Select(x => new AttivitaTaskViewModel
                     {
                         Id = x.Id,
+                        ProjectId = x.Board.ProjectId,
                         Titolo = x.Titolo,
                         Progetto = x.Board.Project.Nome,
                         Board = x.Board.Nome,

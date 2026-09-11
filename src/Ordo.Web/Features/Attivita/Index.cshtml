@@ -79,7 +79,13 @@
 
                         <tr>
                             <td>
-                                <a class="ordo-task-link" asp-area="Tasks" asp-controller="Tasks" asp-action="Dettaglio" asp-route-id="@task.Id">
+                                <a class="ordo-task-link"
+                                   asp-area="Progetti"
+                                   asp-controller="Progetti"
+                                   asp-action="Dettaglio"
+                                   asp-route-id="@task.ProjectId"
+                                   asp-route-tab="board"
+                                   asp-route-task="@task.Id">
                                     <strong>@task.Titolo</strong>
                                 </a>
                             </td>

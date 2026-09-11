@@ -243,6 +243,25 @@ namespace Ordo.Web.Areas.Tasks
 
                     Alerts.AddSuccess(this, "Task salvato correttamente");
 
+                    if (Request.Headers["Accept"].Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return Json(new
+                        {
+                            task = new
+                            {
+                                id = savedTask.Id,
+                                boardId = savedTask.BoardId,
+                                titolo = savedTask.Titolo,
+                                descrizione = savedTask.Descrizione,
+                                priorita = (int)savedTask.Priorita,
+                                stato = (int)savedTask.Stato,
+                                scadenza = savedTask.Scadenza,
+                                assignedUserId = savedTask.AssignedUserId,
+                                assignedUserName
+                            }
+                        });
+                    }
+
                     return RedirectToAction(Actions.Dettaglio(model.Id.Value));
                 }
                 catch (Exception e)

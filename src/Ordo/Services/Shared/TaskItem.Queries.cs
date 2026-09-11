@@ -21,6 +21,7 @@ namespace Ordo.Services.Shared
         {
             public Guid Id { get; set; }
             public string Titolo { get; set; }
+            public string Descrizione { get; set; }
             public Priorita Priorita { get; set; }
             public TaskState Stato { get; set; }
             public DateTime? Scadenza { get; set; }
@@ -60,6 +61,7 @@ namespace Ordo.Services.Shared
                     {
                         Id = x.Id,
                         Titolo = x.Titolo,
+                        Descrizione = x.Descrizione,
                         Priorita = x.Priorita,
                         Stato = x.Stato,
                         Scadenza = x.Scadenza,

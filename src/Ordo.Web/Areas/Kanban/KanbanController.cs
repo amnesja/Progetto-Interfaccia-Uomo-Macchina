@@ -83,6 +83,8 @@ namespace Ordo.Web.Areas.Kanban
 
             if (!Enum.IsDefined(typeof(TaskState), request.NuovoStato))
                 return BadRequest();
+            if (request.NuovaPriorita.HasValue && !Enum.IsDefined(typeof(Priorita), request.NuovaPriorita.Value))
+                return BadRequest();
 
             var task = await _sharedService.Query(new TaskDetailQuery { Id = request.TaskId });
             if (task == null) return NotFound();
@@ -93,26 +95,60 @@ namespace Ordo.Web.Areas.Kanban
             if (!await HasProjectAccess(board.ProjectId, currentUserId))
                 return Forbid();
 
+            var project = await _sharedService.Query(new ProjectDetailQuery { Id = board.ProjectId });
+            string assignedUserName = null;
+            if (task.AssignedUserId.HasValue)
+            {
+                var assignedUser = await _sharedService.Query(new UserDetailQuery { Id = task.AssignedUserId.Value });
+                assignedUserName = assignedUser == null
+                    ? null
+                    : (string.IsNullOrWhiteSpace(assignedUser.FirstName)
+                        ? assignedUser.Email
+                        : $"{assignedUser.FirstName} {assignedUser.LastName}");
+                if (assignedUser != null && project?.OwnerId == assignedUser.Id)
+                    assignedUserName += " (proprietario)";
+            }
+
             await _sharedService.Handle(new MoveTaskCommand
             {
                 Id = request.TaskId,
-                NuovoStato = (TaskState)request.NuovoStato
+                NuovoStato = (TaskState)request.NuovoStato,
+                NuovaPriorita = request.NuovaPriorita.HasValue
+                    ? (Priorita)request.NuovaPriorita.Value
+                    : null
             });
 
-            // Notifica in tempo reale chiunque altro stia guardando questa stessa board
-            await _publisher.Publish(new TaskMovedEvent
+            if (request.NuovaPriorita.HasValue && request.NuovoStato == (int)task.Stato)
             {
-                IdGroup = board.Id,
-                TaskId = request.TaskId,
-                NuovoStato = (TaskState)request.NuovoStato,
-                Titolo = task.Titolo
-            });
+                await _publisher.Publish(new TaskUpdatedEvent
+                {
+                    Task = new TaskCreatedEvent
+                    {
+                        IdGroup = board.Id,
+                        TaskId = request.TaskId,
+                        Titolo = task.Titolo,
+                        Priorita = request.NuovaPriorita.Value,
+                        Stato = request.NuovoStato,
+                        Scadenza = task.Scadenza,
+                        AssignedUserId = task.AssignedUserId,
+                        AssignedUserName = assignedUserName
+                    }
+                });
+            }
+            else
+            {
+                await _publisher.Publish(new TaskMovedEvent
+                {
+                    IdGroup = board.Id,
+                    TaskId = request.TaskId,
+                    NuovoStato = (TaskState)request.NuovoStato,
+                    Titolo = task.Titolo
+                });
+            }
 
             // Notifica personale a chi è assegnato al task, anche se non sta guardando questa board
             if (task.AssignedUserId.HasValue)
             {
-                var project = await _sharedService.Query(new ProjectDetailQuery { Id = board.ProjectId });
-
                 await _publisher.Publish(new TaskChangedForUserEvent
                 {
                     IdGroup = task.AssignedUserId.Value,

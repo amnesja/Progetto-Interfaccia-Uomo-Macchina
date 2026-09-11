@@ -35,5 +35,6 @@ namespace Ordo.Web.Areas.Kanban
     {
         public Guid TaskId { get; set; }
         public int NuovoStato { get; set; }
+        public int? NuovaPriorita { get; set; }
     }
 }
