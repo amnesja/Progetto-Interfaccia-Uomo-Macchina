@@ -111,27 +111,27 @@
 
     signalRManager.connection.on("TaskMoved", function (taskId, nuovoStato, titolo) {
         Ordo.Kanban.applyRemoteMove(kanbanVm, taskId, nuovoStato);
-        showSignalRMessage("\u00ab" + titolo + "\u00bb è stato spostato in " + (stateLabels[nuovoStato] || "un'altra colonna") + ".");
+        ordoNotify("\u00ab" + titolo + "\u00bb è stato spostato in " + (stateLabels[nuovoStato] || "un'altra colonna") + ".", "/Progetti/Dettaglio/@Model.ProjectId?tab=board", "board");
     });
     signalRManager.connection.on("TaskCreated", function (task) {
         kanbanVm.addTask(task);
-        showSignalRMessage("Nuovo task: \u00ab" + task.titolo + "\u00bb in " + (stateLabels[task.stato] || "board") + ".");
+        ordoNotify("Nuovo task: \u00ab" + task.titolo + "\u00bb in " + (stateLabels[task.stato] || "board") + ".", "/Progetti/Dettaglio/@Model.ProjectId?tab=board&task=" + task.id, "task");
     });
     signalRManager.connection.on("TaskUpdated", function (taskUpdate) {
         kanbanVm.updateTask(taskUpdate.task);
         if (!taskUpdate.isAssignmentChanged) {
-            showSignalRMessage("\u00ab" + taskUpdate.task.titolo + "\u00bb è stato aggiornato.");
+            ordoNotify("\u00ab" + taskUpdate.task.titolo + "\u00bb è stato aggiornato.", "/Progetti/Dettaglio/@Model.ProjectId?tab=board&task=" + taskUpdate.task.taskId, "task");
         }
     });
     signalRManager.connection.on("TaskDeleted", function (task) {
         kanbanVm.removeTask(task.taskId);
-        showSignalRMessage("\u00ab" + task.titolo + "\u00bb è stato eliminato.");
+        ordoNotify("\u00ab" + task.titolo + "\u00bb è stato eliminato.", "/Progetti/Dettaglio/@Model.ProjectId?tab=board", "board");
     });
     signalRManager.connection.on("UserAssigned", function (taskId, userId, assignedUserName, titolo) {
         kanbanVm.updateTaskAssignee(taskId, userId, assignedUserName);
-        showSignalRMessage(assignedUserName
+        ordoNotify(assignedUserName
             ? "\u00ab" + titolo + "\u00bb è stato assegnato a " + assignedUserName + "."
-            : "L'assegnazione di \u00ab" + titolo + "\u00bb è stata rimossa.");
+            : "L'assegnazione di \u00ab" + titolo + "\u00bb è stata rimossa.", "/Progetti/Dettaglio/@Model.ProjectId?tab=board&task=" + taskId, "task");
     });
 
     // La board stessa può essere rinominata o cancellata da un altro utente mentre la guardi
@@ -148,11 +148,11 @@
     });
 
     // Notifica personale: ti hanno assegnato un task su un'ALTRA board (non questa che stai guardando)
-    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId) {
+    signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
         if (tipo !== "Assigned") return;
         if (boardId === "@Model.BoardId") return; // sei già su questa board, TaskMoved/UserAssigned bastano
 
-        Ordo.Toast.showAssigned(titolo, projectNome);
+        ordoNotify("Ti è stata assegnata l'attività «" + titolo + "» in " + projectNome + ".", "/Progetti/Dettaglio/" + projectId + "?tab=board&task=" + taskId, "task");
     });
 
     window.addEventListener("ordo:signalr-reconnected", function () {

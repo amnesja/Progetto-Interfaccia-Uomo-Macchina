@@ -116,14 +116,14 @@
         // ricarica la pagina per mostrarlo
         signalRManager.connection.on("CommentAdded", function (comment) {
             if (comment.taskId === "@Model.Id") {
-                showSignalRMessage("Nuovo commento su \u00ab" + comment.titolo + "\u00bb.", 1200, function () {
+                ordoNotify("Nuovo commento su \u00ab" + comment.titolo + "\u00bb.", "/Progetti/Dettaglio/@Model.ProjectId?tab=board&task=@Model.Id", "task", 1200, function () {
                     location.reload();
                 });
             }
         });
         signalRManager.connection.on("CommentDeleted", function (comment) {
             if (comment.taskId === "@Model.Id") {
-                showSignalRMessage("Un commento è stato eliminato.", 1200, function () {
+                ordoNotify("Un commento è stato eliminato.", "/Progetti/Dettaglio/@Model.ProjectId?tab=board&task=@Model.Id", "task", 1200, function () {
                     location.reload();
                 });
             }

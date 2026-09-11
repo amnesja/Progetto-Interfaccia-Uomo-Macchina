@@ -28,14 +28,14 @@
     </header>
 
     <nav class="ordo-activity-filters" aria-label="Filtra per stato">
-        <a class="@(Model.Filtro == null ? "active" : "")" href="@Url.Action("Index")">Tutte</a>
-        <a class="@(Model.Filtro == TaskState.ToDo ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.ToDo })">Da fare</a>
-        <a class="@(Model.Filtro == TaskState.InProgress ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.InProgress })">In corso</a>
-        <a class="@(Model.Filtro == TaskState.Review ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.Review })">Review</a>
-        <a class="@(Model.Filtro == TaskState.Done ? "active" : "")" href="@Url.Action("Index", new { filtro = TaskState.Done })">Completate</a>
+        <a class="@(Model.Filtro == null ? "active" : "")" data-activity-filter="" href="@Url.Action("Index")">Tutte</a>
+        <a class="@(Model.Filtro == TaskState.ToDo ? "active" : "")" data-activity-filter="@TaskState.ToDo" href="@Url.Action("Index", new { filtro = TaskState.ToDo })">Da fare</a>
+        <a class="@(Model.Filtro == TaskState.InProgress ? "active" : "")" data-activity-filter="@TaskState.InProgress" href="@Url.Action("Index", new { filtro = TaskState.InProgress })">In corso</a>
+        <a class="@(Model.Filtro == TaskState.Review ? "active" : "")" data-activity-filter="@TaskState.Review" href="@Url.Action("Index", new { filtro = TaskState.Review })">Review</a>
+        <a class="@(Model.Filtro == TaskState.Done ? "active" : "")" data-activity-filter="@TaskState.Done" href="@Url.Action("Index", new { filtro = TaskState.Done })">Completate</a>
     </nav>
 
-    <section class="ordo-dashboard-section">
+    <section id="activityResults" class="ordo-dashboard-section">
         @if (!Model.Attivita.Any())
         {
             <div class="ordo-dashboard-empty">
@@ -108,14 +108,105 @@
     <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
     <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
     <script>
+        (function () {
+            var results = document.getElementById("activityResults");
+            var filterLinks = document.querySelectorAll("[data-activity-filter], [data-sidebar-activity-filter]");
+            var dataUrl = "@Url.Action("Data")";
+            var labels = {
+                states: ["Da fare", "In corso", "Review", "Completata"],
+                priorities: ["Bassa", "Media", "Alta"]
+            };
+
+            function escapeHtml(value) {
+                return String(value ?? "").replace(/[&<>"']/g, function (character) {
+                    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[character];
+                });
+            }
+
+            function formatDate(value) {
+                return value
+                    ? new Date(value).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" })
+                    : "Nessuna scadenza";
+            }
+
+            function renderActivities(data, filter) {
+                if (!data.activities.length) {
+                    results.innerHTML = '<div class="ordo-dashboard-empty">Nessuna attività assegnata' +
+                        (filter ? ' in questo stato' : '') + '.</div>';
+                    return;
+                }
+
+                var rows = data.activities.map(function (task) {
+                    var overdue = task.stato !== 3 && task.scadenza && new Date(task.scadenza) < new Date();
+                    return '<tr>' +
+                        '<td><a class="ordo-task-link" href="/Progetti/Dettaglio/' + task.projectId + '?tab=board&task=' + task.id + '">' +
+                        '<strong>' + escapeHtml(task.titolo) + '</strong></a></td>' +
+                        '<td>' + escapeHtml(task.progetto) + '<small>' + escapeHtml(task.board) + '</small></td>' +
+                        '<td><span class="ordo-priority-badge priorita-' + task.priorita + '">' + labels.priorities[task.priorita] + '</span></td>' +
+                        '<td><span class="ordo-status stato-' + ["todo", "inprogress", "review", "done"][task.stato] + '">' + labels.states[task.stato] + '</span></td>' +
+                        '<td class="' + (overdue ? "is-overdue" : "") + '">' + formatDate(task.scadenza) + '</td>' +
+                        '</tr>';
+                }).join("");
+
+                results.innerHTML = '<div class="ordo-dashboard-table-wrap"><table class="ordo-dashboard-table">' +
+                    '<thead><tr><th>Attività</th><th>Progetto</th><th>Priorità</th><th>Stato</th><th>Scadenza</th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table></div>';
+            }
+
+            function updateSidebarCounts(counts) {
+                document.querySelectorAll("[data-sidebar-activity-filter]").forEach(function (link) {
+                    var state = link.dataset.sidebarActivityFilter;
+                    var badge = link.querySelector("b");
+                    if (badge && counts[state] !== undefined) badge.textContent = counts[state];
+                });
+            }
+
+            function setActiveFilter(filter) {
+                filterLinks.forEach(function (link) {
+                    link.classList.toggle("active", link.dataset.activityFilter === filter ||
+                        link.dataset.sidebarActivityFilter === filter);
+                });
+            }
+
+            function loadActivities(filter, url, pushHistory) {
+                results.classList.add("is-loading");
+                fetch(dataUrl + (filter ? "?filtro=" + encodeURIComponent(filter) : ""))
+                    .then(function (response) {
+                        if (!response.ok) throw new Error("Caricamento attività non riuscito.");
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        renderActivities(data, filter);
+                        updateSidebarCounts(data.counts);
+                        setActiveFilter(filter);
+                        if (pushHistory) history.pushState({}, "", url);
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        window.location.href = url;
+                    })
+                    .finally(function () { results.classList.remove("is-loading"); });
+            }
+
+            filterLinks.forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    loadActivities(link.dataset.activityFilter ?? link.dataset.sidebarActivityFilter, link.href, true);
+                });
+            });
+            window.addEventListener("popstate", function () {
+                loadActivities(new URLSearchParams(window.location.search).get("filtro") || "", window.location.href, false);
+            });
+        })();
+
         var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
         signalRManager.registerEvents();
 
-        signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome) {
+        signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
             var message = tipo === "Assigned"
                 ? "Ti è stata assegnata l'attività «" + titolo + "» in " + projectNome + "."
                 : "L'attività «" + titolo + "» è stata aggiornata.";
-            showSignalRMessage(message, 1200, function () { location.reload(); });
+            ordoNotify(message, "/Progetti/Dettaglio/" + projectId + "?tab=board&task=" + taskId, "task", 1200, function () { location.reload(); });
         });
         window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
         signalRManager.startConnection();

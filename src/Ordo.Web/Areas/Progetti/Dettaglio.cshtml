@@ -137,7 +137,7 @@
                      @@dragover.prevent @@drop="dropTask(column.stato)">
                     <div class="kanban-column-header">
                         <span>{{ column.titolo }}</span>
-                        <span class="kanban-count">{{ tasksByState(column.stato).length }}</span>
+                    <span class="kanban-count">{{ filteredTasksByState(column.stato).length }}</span>
                     </div>
                     <div class="kanban-column-body">
                         <article v-for="task in filteredTasksByState(column.stato)" :key="task.id"
@@ -154,6 +154,9 @@
                             </div>
                             <div v-if="task.assignedUserName" class="kanban-card-assignee">{{ task.assignedUserName }}</div>
                         </article>
+                        <div v-if="!filteredTasksByState(column.stato).length" class="kanban-column-empty">
+                            Nessuna attività
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,6 +208,7 @@
             <p v-if="!messages.length" class="ordo-dashboard-empty">Nessun messaggio. Inizia la conversazione.</p>
             <article v-for="message in messages" :key="message.id"
                      class="ordo-chat-message" :class="{ mine: message.userId === currentUserId }">
+                <span class="ordo-chat-avatar">{{ message.userName ? message.userName.substring(0, 1).toUpperCase() : '?' }}</span>
                 <header><strong>{{ message.userName }}</strong><time>{{ formatMessageDate(message.dataCreazione) }}</time></header>
                 <p>{{ message.testo }}</p>
             </article>
@@ -237,28 +241,41 @@
                 </div>
                 <div class="ordo-field-row">
                     <div class="ordo-field">
-                        <label for="workspaceTaskPriority">Priorità</label>
-                        <select id="workspaceTaskPriority" name="Priorita" v-model="taskModal.priorita">
-                            <option value="0">Bassa</option>
-                            <option value="1">Media</option>
-                            <option value="2">Alta</option>
-                        </select>
+                        <label>Priorità</label>
+                        <input type="hidden" name="Priorita" v-model="taskModal.priorita" />
+                        <div class="ordo-priority-picker" role="radiogroup" aria-label="Priorità">
+                            <button type="button" :class="{ active: taskModal.priorita === '0' }" :aria-pressed="taskModal.priorita === '0'" @@click="taskModal.priorita = '0'">
+                                <i class="fa-solid fa-arrow-down"></i><span>Bassa</span>
+                            </button>
+                            <button type="button" :class="{ active: taskModal.priorita === '1' }" :aria-pressed="taskModal.priorita === '1'" @@click="taskModal.priorita = '1'">
+                                <i class="fa-solid fa-minus"></i><span>Media</span>
+                            </button>
+                            <button type="button" :class="{ active: taskModal.priorita === '2' }" :aria-pressed="taskModal.priorita === '2'" @@click="taskModal.priorita = '2'">
+                                <i class="fa-solid fa-arrow-up"></i><span>Alta</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="ordo-field">
                         <label for="workspaceTaskDueDate">Scadenza</label>
                         <input id="workspaceTaskDueDate" name="Scadenza" type="date" v-model="taskModal.scadenza" />
                     </div>
                 </div>
-                <div class="ordo-field">
+                <div class="ordo-field ordo-assignee-field">
                     <label for="workspaceTaskAssignee">Assegnato a</label>
-                    <select id="workspaceTaskAssignee" name="AssignedUserId" v-model="taskModal.assignedUserId">
-                        <option value="">Nessuna assegnazione</option>
-                        <option v-for="member in members" :value="member.userId">{{ member.nomeCompleto }}</option>
-                    </select>
+                    <div class="ordo-assignee-select">
+                        <i class="fa-regular fa-user"></i>
+                        <select id="workspaceTaskAssignee" name="AssignedUserId" v-model="taskModal.assignedUserId">
+                            <option value="">Nessuna assegnazione</option>
+                            <option v-for="member in members" :value="member.userId">{{ member.nomeCompleto }}</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="ordo-project-form-actions">
                     <button type="button" class="ordo-btn-secondary" @@click="closeTaskModal">Annulla</button>
-                    <button type="submit" class="ordo-btn-primary">Salva attività</button>
+                    <button type="submit" class="ordo-btn-primary" :disabled="savingTask">
+                        <i class="fa-solid" :class="savingTask ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                        {{ savingTask ? 'Salvataggio...' : 'Salva attività' }}
+                    </button>
                 </div>
             </form>
         </section>

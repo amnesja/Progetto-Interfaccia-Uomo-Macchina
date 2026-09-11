@@ -47,6 +47,7 @@
             @foreach (var message in Model.Messages)
             {
                 <article class="ordo-chat-message @(message.UserId.ToString() == currentUserId ? "mine" : "")">
+                    <span class="ordo-chat-avatar">@message.UserName.Substring(0, 1).ToUpperInvariant()</span>
                     <header><strong>@message.UserName</strong><time>@message.DataCreazione.ToLocalTime().ToString("dd/MM HH:mm")</time></header>
                     <p>@message.Testo</p>
                 </article>
@@ -67,7 +68,7 @@
         var signalRManager = new SignalRConnectionManager("/OrdoHub", "@Model.ProjectId", "JoinGroup", "LeaveGroup");
         signalRManager.registerEvents();
         signalRManager.connection.on("ProjectChatMessageAdded", function (message) {
-            showSignalRMessage("Nuovo messaggio da " + message.userName + ".", 1200, function () { location.reload(); });
+            ordoNotify("Nuovo messaggio da " + message.userName + ".", "/Progetti/Dettaglio/" + message.idGroup + "?tab=chat", "chat", 1200, function () { location.reload(); });
         });
         window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
         signalRManager.startConnection();

@@ -369,11 +369,11 @@
         var signalRManager = new SignalRConnectionManager("/OrdoHub", "@currentUserId", "JoinGroup", "LeaveGroup");
         signalRManager.registerEvents();
 
-        signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome) {
+        signalRManager.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
             var message = tipo === "Assigned"
                 ? "Ti è stata assegnata l'attività «" + titolo + "» in " + projectNome + "."
                 : "L'attività «" + titolo + "» è stata aggiornata.";
-            showSignalRMessage(message, 1200, function () { location.reload(); });
+            ordoNotify(message, "/Progetti/Dettaglio/" + projectId + "?tab=board&task=" + taskId, "task", 1200, function () { location.reload(); });
         });
         signalRManager.connection.on("ProjectUpdated", function () { location.reload(); });
         signalRManager.connection.on("ProjectDeleted", function () { location.reload(); });

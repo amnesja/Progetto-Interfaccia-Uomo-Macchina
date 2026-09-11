@@ -1,5 +1,9 @@
 "use strict";
 function showSignalRMessage(message, duration = 4000, callback) {
+    if (typeof window.ordoNotify === "function") {
+        window.ordoNotify(message, null, "task", duration, callback);
+        return;
+    }
     if (typeof Toastify !== "function")
         return;
     Toastify({

@@ -35,7 +35,8 @@ var Ordo;
                         taskModal: {
                             open: false, id: "", boardId: null, titolo: "", descrizione: "",
                             priorita: "1", scadenza: "", assignedUserId: ""
-                        }
+                        },
+                        savingTask: false
                     };
                 },
                 computed: {
@@ -144,6 +145,7 @@ var Ordo;
                     async saveTask(event) {
                         const form = event.target;
                         const formData = new FormData(form);
+                        this.savingTask = true;
                         try {
                             const response = await fetch(form.action, {
                                 method: "POST",
@@ -169,6 +171,8 @@ var Ordo;
                         } catch (error) {
                             console.error(error);
                             alert("Non è stato possibile salvare l'attività.");
+                        } finally {
+                            this.savingTask = false;
                         }
                     },
                     formatDate(value) {

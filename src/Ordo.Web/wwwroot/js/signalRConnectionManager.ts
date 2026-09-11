@@ -2,6 +2,11 @@
 declare var Toastify: any;
 
 function showSignalRMessage(message: string, duration = 4000, callback?: () => void) {
+    if (typeof (window as any).ordoNotify === "function") {
+        (window as any).ordoNotify(message, null, "task", duration, callback);
+        return;
+    }
+
     if (typeof Toastify !== "function") return;
 
     Toastify({

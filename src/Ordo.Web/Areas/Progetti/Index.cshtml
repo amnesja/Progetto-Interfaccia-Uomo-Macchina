@@ -100,13 +100,13 @@
         signalRManager.registerEvents();
 
         signalRManager.connection.on("ProjectMemberAdded", function (projectId, nome) {
-            showSignalRMessage("Sei stato aggiunto al progetto «" + nome + "».", 1200, function () { location.reload(); });
+            ordoNotify("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project", 1200, function () { location.reload(); });
         });
         signalRManager.connection.on("ProjectDeleted", function (projectId) {
-            showSignalRMessage("Un progetto non è più disponibile.", 1200, function () { location.reload(); });
+            ordoNotify("Un progetto non è più disponibile.", null, "project", 1200, function () { location.reload(); });
         });
         signalRManager.connection.on("ProjectUpdated", function (projectId, nome) {
-            showSignalRMessage("Il progetto «" + nome + "» è stato aggiornato.", 1200, function () { location.reload(); });
+            ordoNotify("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project", 1200, function () { location.reload(); });
         });
         window.addEventListener("ordo:signalr-reconnected", function () { location.reload(); });
         signalRManager.startConnection();

@@ -118,7 +118,7 @@
         <div class="ordo-dashboard-topbar-actions">
             <div class="ordo-notification-center">
                 <button id="notificationBell" class="ordo-notification-bell" type="button" aria-label="Apri notifiche" aria-expanded="false">
-                    <i class="fa-regular fa-bell"></i><span id="notificationBadge" class="d-none">0</span>
+                    <i class="fa-regular fa-bell"></i><span id="notificationPreview"></span><span id="notificationBadge" class="d-none">0</span>
                 </button>
                 <div id="notificationPanel" class="ordo-notification-panel d-none" role="status" aria-live="polite">
                     <header><strong>Notifiche</strong><button id="clearNotifications" type="button">Segna come lette</button></header>
@@ -158,22 +158,27 @@
                 </button>
                 <div class="ordo-sidebar-group-items" @(isActivities ? "" : "hidden")>
                     <a class="@(isActivities && string.IsNullOrEmpty(activityFilter) ? "active" : "")"
+                       data-sidebar-activity-filter=""
                        asp-area="" asp-controller="Attivita" asp-action="Index">
                         <i class="fa-solid fa-layer-group"></i><span>Tutte</span>
                     </a>
                     <a class="@(isActivities && activityFilter == TaskState.ToDo.ToString() ? "active" : "")"
+                       data-sidebar-activity-filter="@TaskState.ToDo"
                        asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.ToDo">
                         <i class="fa-regular fa-circle"></i><span>Da fare</span><b>@SidebarTaskCount(TaskState.ToDo)</b>
                     </a>
                     <a class="@(isActivities && activityFilter == TaskState.InProgress.ToString() ? "active" : "")"
+                       data-sidebar-activity-filter="@TaskState.InProgress"
                        asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.InProgress">
                         <i class="fa-solid fa-spinner"></i><span>In corso</span><b>@SidebarTaskCount(TaskState.InProgress)</b>
                     </a>
                     <a class="@(isActivities && activityFilter == TaskState.Review.ToString() ? "active" : "")"
+                       data-sidebar-activity-filter="@TaskState.Review"
                        asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Review">
                         <i class="fa-solid fa-magnifying-glass"></i><span>Review</span><b>@SidebarTaskCount(TaskState.Review)</b>
                     </a>
                     <a class="@(isActivities && activityFilter == TaskState.Done.ToString() ? "active" : "")"
+                       data-sidebar-activity-filter="@TaskState.Done"
                        asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Done">
                         <i class="fa-regular fa-circle-check"></i><span>Completate</span><b>@SidebarTaskCount(TaskState.Done)</b>
                     </a>
@@ -272,27 +277,52 @@
     <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
     <script>
         (function () {
-            var storageKey = "ordo:notifications";
+            var storageKey = "ordo:notifications:@currentUserId";
             var notifications = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
             var bell = document.getElementById("notificationBell");
             var badge = document.getElementById("notificationBadge");
+            var preview = document.getElementById("notificationPreview");
             var panel = document.getElementById("notificationPanel");
             var list = document.getElementById("notificationList");
+            var recentNotifications = {};
+            var previewTimer;
+
+            function notificationDay(notification) {
+                var date = notification.createdAt ? new Date(notification.createdAt) : new Date();
+                var today = new Date();
+                var yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                if (date.toDateString() === today.toDateString()) return "Oggi";
+                if (date.toDateString() === yesterday.toDateString()) return "Ieri";
+                return date.toLocaleDateString("it-IT", { day: "numeric", month: "long" });
+            }
 
             function renderNotifications() {
                 list.replaceChildren();
                 if (!notifications.length) {
                     var empty = document.createElement("p"); empty.textContent = "Nessuna notifica."; list.appendChild(empty);
                 } else {
+                    var groups = {};
                     notifications.forEach(function (notification) {
+                        var day = notificationDay(notification);
+                        if (!groups[day]) {
+                            groups[day] = document.createElement("section");
+                            groups[day].className = "ordo-notification-group";
+                            var heading = document.createElement("h3");
+                            heading.textContent = day;
+                            groups[day].appendChild(heading);
+                            list.appendChild(groups[day]);
+                        }
                         var item = document.createElement(notification.url ? "a" : "article");
                         item.className = "ordo-notification-item";
                         if (notification.url) item.href = notification.url;
                         var icon = document.createElement("i");
                         icon.className = notification.icon === "chat" ? "fa-regular fa-comments" : notification.icon === "project" ? "fa-regular fa-folder" : notification.icon === "board" ? "fa-solid fa-table-columns" : "fa-solid fa-list-check";
-                        var text = document.createElement("span"); text.textContent = notification.text;
+                        var content = document.createElement("span"); content.className = "ordo-notification-content";
+                        var text = document.createElement("strong"); text.textContent = notification.text;
                         var time = document.createElement("time"); time.textContent = notification.time;
-                        item.append(icon, text, time); list.appendChild(item);
+                        content.append(text, time);
+                        item.append(icon, content); groups[day].appendChild(item);
                     });
                 }
                 badge.textContent = notifications.length;
@@ -300,9 +330,38 @@
                 sessionStorage.setItem(storageKey, JSON.stringify(notifications));
             }
             function addNotification(text, url, icon) {
-                notifications.unshift({ text:text, url:url, icon:icon, time:new Date().toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"}) });
+                notifications.unshift({ text:text, url:url, icon:icon, createdAt:Date.now(), time:new Date().toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"}) });
                 notifications = notifications.slice(0,20); renderNotifications();
+                bell.classList.add("has-new");
+                window.clearTimeout(bell.newNotificationTimer);
+                bell.newNotificationTimer = window.setTimeout(function () {
+                    bell.classList.remove("has-new");
+                }, 1800);
             }
+            function showNotificationPreview(text, duration) {
+                window.clearTimeout(previewTimer);
+                preview.textContent = text;
+                bell.classList.add("is-preview");
+                previewTimer = window.setTimeout(function () {
+                    bell.classList.remove("is-preview");
+                    preview.textContent = "";
+                }, duration || 2800);
+            }
+            window.ordoNotify = function (text, url, icon, duration, callback) {
+                var key = text + "|" + (url || "");
+                var now = Date.now();
+                var duplicate = recentNotifications[key] && now - recentNotifications[key] < 1500;
+                recentNotifications[key] = now;
+
+                if (!duplicate) {
+                    addNotification(text, url, icon || "task");
+                    showNotificationPreview(text);
+                }
+
+                if (typeof callback === "function") {
+                    window.setTimeout(callback, duplicate ? 0 : duration || 1200);
+                }
+            };
             bell?.addEventListener("click", function (event) { event.stopPropagation(); var hidden = panel.classList.toggle("d-none"); bell.setAttribute("aria-expanded", (!hidden).toString()); });
             var userMenuButton = document.getElementById("userMenuButton");
             var userMenuPanel = document.getElementById("userMenuPanel");
@@ -317,16 +376,16 @@
             globalSignalR.registerEvents();
             globalSignalR.connection.on("TaskChangedForUser", function (tipo, titolo, projectNome, projectId, boardId, taskId) {
                 var actions = {Assigned:"Ti è stata assegnata l'attività", Unassigned:"Non sei più assegnato all'attività", Updated:"Attività aggiornata", Deleted:"Attività eliminata", Commented:"Nuovo commento sull'attività", CommentDeleted:"Commento eliminato dall'attività"};
-                var url = tipo === "Deleted" ? "/Kanban/Board/" + boardId : "/Tasks/Dettaglio/" + taskId;
-                addNotification((actions[tipo] || "Attività aggiornata") + ": «" + titolo + "»" + (projectNome ? " · " + projectNome : ""), url, "task");
+                var url = "/Progetti/Dettaglio/" + projectId + "?tab=board" + (tipo === "Deleted" ? "" : "&task=" + taskId);
+                ordoNotify((actions[tipo] || "Attività aggiornata") + ": «" + titolo + "»" + (projectNome ? " · " + projectNome : ""), url, "task");
             });
-            globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) { addNotification("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project"); });
-            globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { addNotification("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
-            globalSignalR.connection.on("ProjectDeleted", function () { addNotification("Un progetto non è più disponibile."); });
-            globalSignalR.connection.on("ProjectChatMessageAdded", function (message) { addNotification("Nuovo messaggio da " + message.userName + ".", "/Progetti/Chat/" + message.idGroup, "chat"); });
-            globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) { addNotification("È stata creata la board «" + nome + "».", "/Kanban/Board/" + boardId, "board"); });
-            globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) { addNotification("La board «" + nome + "» è stata aggiornata.", "/Kanban/Board/" + boardId, "board"); });
-            globalSignalR.connection.on("BoardDeleted", function (projectId) { addNotification("Una board non è più disponibile.", "/Progetti/Dettaglio/" + projectId, "board"); });
+            globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) { ordoNotify("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project"); });
+            globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { ordoNotify("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
+            globalSignalR.connection.on("ProjectDeleted", function () { ordoNotify("Un progetto non è più disponibile.", null, "project"); });
+            globalSignalR.connection.on("ProjectChatMessageAdded", function (message) { ordoNotify("Nuovo messaggio da " + message.userName + ".", "/Progetti/Dettaglio/" + message.idGroup + "?tab=chat", "chat"); });
+            globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) { ordoNotify("È stata creata la board «" + nome + "».", "/Progetti/Dettaglio/" + projectId + "?tab=board", "board"); });
+            globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) { ordoNotify("La board «" + nome + "» è stata aggiornata.", "/Progetti/Dettaglio/" + projectId + "?tab=board", "board"); });
+            globalSignalR.connection.on("BoardDeleted", function (projectId) { ordoNotify("Una board non è più disponibile.", "/Progetti/Dettaglio/" + projectId + "?tab=board", "board"); });
             globalSignalR.startConnection();
         })();
     </script>
