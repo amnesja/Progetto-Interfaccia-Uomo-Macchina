@@ -9,8 +9,8 @@
 }
 
 <div class="ordo-projects-page ordo-projects-page-narrow">
-    <a class="ordo-back-link" href="@Url.Action(MVC.Progetti.Progetti.Index())">
-        <i class="fa-solid fa-arrow-left"></i> Torna ai progetti
+    <a class="ordo-back-link" href="@Url.Action("Index", "Dashboard", new { area = "" })">
+        <i class="fa-solid fa-arrow-left"></i> Torna alla dashboard
     </a>
     <h1>@ViewData["Title"]</h1>
 
@@ -36,7 +36,7 @@
                     Elimina progetto
                 </button>
             }
-            <a href="@Url.Action(MVC.Progetti.Progetti.Index())">Annulla</a>
+            <a href="@Url.Action("Index", "Dashboard", new { area = "" })">Annulla</a>
             <button type="submit">Salva</button>
         </div>
     </form>

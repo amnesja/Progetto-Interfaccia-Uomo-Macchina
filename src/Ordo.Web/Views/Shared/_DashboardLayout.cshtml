@@ -59,12 +59,6 @@
             <nav class="ordo-breadcrumb" aria-label="Percorso">
                 <a asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
 
-                @if (projectId != null || isKanban || isTasks)
-                {
-                    <span aria-hidden="true">/</span>
-                    <a asp-area="Progetti" asp-controller="Progetti" asp-action="Index">Progetti</a>
-                }
-
                 @if (projectId != null)
                 {
                     <span aria-hidden="true">/</span>
@@ -89,7 +83,7 @@
                 else if (isProjects && projectId == null)
                 {
                     <span aria-hidden="true">/</span>
-                    <span>Progetti</span>
+                    <span>@title</span>
                 }
                 else if (isActivities)
                 {
@@ -108,12 +102,6 @@
                 }
             </nav>
         </div>
-
-        <form class="ordo-global-search" asp-area="Progetti" asp-controller="Progetti" asp-action="Index" method="get" role="search">
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input name="Filter" type="search" placeholder="Cerca progetti..." autocomplete="off" aria-label="Cerca progetti" />
-            <kbd>Ctrl K</kbd>
-        </form>
 
         <div class="ordo-dashboard-topbar-actions">
             <div class="ordo-notification-center">
@@ -232,11 +220,8 @@
 
     <nav class="ordo-mobile-nav" aria-label="Navigazione mobile">
         <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-table-cells-large"></i><span>Home</span></a>
-        <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="Progetti" asp-controller="Progetti" asp-action="Index"><i class="fa-regular fa-folder"></i><span>Progetti</span></a>
+        <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-regular fa-folder"></i><span>Progetti</span></a>
         <a class="@(isActivities ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index"><i class="fa-solid fa-list-check"></i><span>Attività</span></a>
-        <a class="ordo-mobile-search" asp-area="Progetti" asp-controller="Progetti" asp-action="Index">
-            <i class="fa-solid fa-magnifying-glass"></i><span>Cerca</span>
-        </a>
         <form asp-area="" asp-controller="Login" asp-action="Logout" method="post"><button type="submit" class="ordo-mobile-nav-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Esci</span></button></form>
     </nav>
 </div>

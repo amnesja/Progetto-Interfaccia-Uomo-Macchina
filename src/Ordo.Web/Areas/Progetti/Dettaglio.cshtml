@@ -29,8 +29,8 @@
     </div>
     @Html.AntiForgeryToken()
 
-    <a class="ordo-back-link" href="@Url.Action(MVC.Progetti.Progetti.Index())">
-        <i class="fa-solid fa-arrow-left"></i> Progetti
+    <a class="ordo-back-link" href="@Url.Action("Index", "Dashboard", new { area = "" })">
+        <i class="fa-solid fa-arrow-left"></i> Dashboard
     </a>
 
     <header class="ordo-project-workspace-header">
@@ -220,10 +220,15 @@
         </form>
     </section>
 
-    <div v-if="taskModal.open" class="ordo-modal-backdrop" @@click.self="closeTaskModal">
-        <section class="ordo-modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+    <div v-if="taskModal.open"
+         class="ordo-modal-backdrop"
+         :class="{ 'ordo-sidebar-backdrop': taskModal.mode === 'edit' }"
+         @@click.self="closeTaskModal">
+        <section class="ordo-modal"
+                 :class="{ 'ordo-task-sidebar': taskModal.mode === 'edit' }"
+                 role="dialog" aria-modal="false" aria-labelledby="taskModalTitle">
             <header class="ordo-modal-header">
-                <h2 id="taskModalTitle">{{ taskModal.id ? 'Modifica attività' : 'Nuova attività' }}</h2>
+                <h2 id="taskModalTitle">{{ taskModal.mode === 'edit' ? 'Dettaglio attività' : 'Nuova attività' }}</h2>
                 <button type="button" class="ordo-modal-close" @@click="closeTaskModal" aria-label="Chiudi">&times;</button>
             </header>
             <form method="post" action="@Url.Action("Edit", "Tasks", new { area = "Tasks" })"

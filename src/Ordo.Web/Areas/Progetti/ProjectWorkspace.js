@@ -33,7 +33,7 @@ var Ordo;
                         columns: COLUMNS,
                         filters: { search: "", state: "", priority: "", assignee: "" },
                         taskModal: {
-                            open: false, id: "", boardId: null, titolo: "", descrizione: "",
+                            open: false, mode: "create", id: "", boardId: null, titolo: "", descrizione: "",
                             priorita: "1", scadenza: "", assignedUserId: ""
                         },
                         savingTask: false
@@ -113,13 +113,13 @@ var Ordo;
                     },
                     openNewTask() {
                         this.taskModal = {
-                            open: true, id: "", boardId: this.selectedBoard.id, titolo: "",
+                            open: true, mode: "create", id: "", boardId: this.selectedBoard.id, titolo: "",
                             descrizione: "", priorita: "1", scadenza: "", assignedUserId: ""
                         };
                     },
                     openEditTask(task) {
                         this.taskModal = {
-                            open: true, id: task.id, boardId: this.selectedBoard.id,
+                            open: true, mode: "edit", id: task.id, boardId: this.selectedBoard.id,
                             titolo: task.titolo, descrizione: task.descrizione || "",
                             priorita: String(task.priorita), scadenza: task.scadenza ? task.scadenza.substring(0, 10) : "",
                             assignedUserId: task.assignedUserId || ""
@@ -141,6 +141,11 @@ var Ordo;
                     },
                     closeTaskModal() {
                         this.taskModal.open = false;
+                    },
+                    closeTaskModalOnPageClick(event) {
+                        if (!this.taskModal.open || event.target.closest?.(".ordo-modal"))
+                            return;
+                        this.closeTaskModal();
                     },
                     async saveTask(event) {
                         const form = event.target;
@@ -251,6 +256,12 @@ var Ordo;
                     }
                 },
                 mounted() {
+                    document.addEventListener("click", this.closeTaskModalOnPageClick, true);
+                    window.addEventListener("keydown", event => {
+                        if (event.key === "Escape" && this.taskModal.open) {
+                            this.closeTaskModal();
+                        }
+                    });
                     this.$watch("selectedBoardId", value => {
                         if (value)
                             window.localStorage.setItem("ordo:last-board:" + projectId, value);

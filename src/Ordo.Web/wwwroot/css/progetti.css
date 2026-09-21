@@ -374,6 +374,58 @@
     from { opacity:0; transform:translateY(10px) scale(.98); }
     to { opacity:1; transform:translateY(0) scale(1); }
 }
+
+/* Dettaglio task: stesso form del modale, ma agganciato a destra e senza oscurare la board */
+.ordo-sidebar-backdrop {
+    inset:0 0 0 auto;
+    width:min(440px, 100%);
+    display:flex;
+    justify-content:flex-end;
+    align-items:stretch;
+    padding:0;
+    background:transparent;
+    backdrop-filter:none;
+    pointer-events:none;
+}
+.ordo-task-sidebar {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    max-width:100%;
+    height:100vh;
+    height:100dvh;
+    max-height:100vh;
+    max-height:100dvh;
+    min-height:0;
+    overflow:hidden;
+    box-sizing:border-box;
+    pointer-events:auto;
+    border-radius:0;
+    border:0;
+    border-left:1px solid var(--ordo-border);
+    box-shadow:-24px 0 60px rgba(16,25,46,.16);
+    animation:ordo-sidebar-in .22s cubic-bezier(.2,.8,.2,1) both;
+}
+.ordo-task-sidebar .ordo-modal-header {
+    flex:0 0 auto;
+}
+.ordo-task-sidebar .ordo-modal-form {
+    flex:1;
+    min-height:0;
+    align-content:start;
+    overflow-y:auto;
+}
+.ordo-task-sidebar .ordo-modal-form .ordo-field-row {
+    display:contents;
+}
+@keyframes ordo-sidebar-in {
+    from { opacity:0; transform:translateX(28px); }
+    to { opacity:1; transform:translateX(0); }
+}
+@media (max-width:640px) {
+    .ordo-sidebar-backdrop { padding:0; }
+    .ordo-task-sidebar { width:100%; }
+}
 .ordo-workspace-settings { margin-top:22px; padding-top:18px; border-top:1px solid var(--ordo-border); }
 .ordo-workspace-settings summary { color:var(--ordo-muted); font-size:13px; font-weight:700; cursor:pointer; }
 .ordo-project-inline-form { max-width:680px; margin-top:14px; padding:18px; }

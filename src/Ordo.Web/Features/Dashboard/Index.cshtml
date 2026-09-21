@@ -68,7 +68,9 @@
                 <ul class="ordo-onboarding-list">
                     <li class="ordo-onboarding-item next">
                         <i class="fa-regular fa-circle"></i>
-                        <a href="@Url.Action(MVC.Progetti.Progetti.New())">Crea il tuo primo progetto</a>
+                        <button type="button" class="ordo-onboarding-link" data-open-project-modal>
+                            Crea il tuo primo progetto
+                        </button>
                     </li>
                     <li class="ordo-onboarding-item">
                         <i class="fa-regular fa-circle"></i>
@@ -212,9 +214,9 @@
                 <div class="ordo-empty-icon orange"><i class="fa-regular fa-folder-open"></i></div>
                 <strong>Inizia con il tuo primo progetto</strong>
                 <span>Organizza attività, persone e conversazioni in un unico spazio.</span>
-                <a class="ordo-empty-action" href="@Url.Action(MVC.Progetti.Progetti.New())">
+                <button type="button" class="ordo-empty-action" data-open-project-modal>
                     <i class="fa-solid fa-plus"></i> Crea un progetto
-                </a>
+                </button>
             </div>
         }
         else
@@ -234,12 +236,11 @@
                         </footer>
                     </a>
                 }
-                <a class="ordo-project-card ordo-project-card-invite"
-                   data-dashboard-create-project
-                   href="@Url.Action(MVC.Progetti.Progetti.New())">
+                <button type="button" class="ordo-project-card ordo-project-card-invite"
+                        data-open-project-modal>
                     <i class="fa-solid fa-plus"></i>
                     <span>Nuovo progetto</span>
-                </a>
+                </button>
             </div>
         }
     </section>
@@ -247,9 +248,75 @@
     <div id="dashboardFilterEmpty" class="ordo-dashboard-filter-empty" hidden>
         Nessuna attività corrisponde al filtro selezionato.
     </div>
+
+    <div id="create-project-modal" class="ordo-dashboard-modal-backdrop" hidden>
+        <section class="ordo-dashboard-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="create-project-modal-title" aria-describedby="create-project-modal-description">
+            <header class="ordo-dashboard-modal-header">
+                <div>
+                    <span class="ordo-dashboard-modal-icon"><i class="fa-regular fa-folder-open"></i></span>
+                    <div>
+                        <span class="ordo-eyebrow">Nuovo spazio di lavoro</span>
+                        <h2 id="create-project-modal-title">Crea un progetto</h2>
+                    </div>
+                </div>
+                <button type="button" class="ordo-modal-close" data-close-project-modal aria-label="Chiudi">&times;</button>
+            </header>
+            <form class="ordo-project-form ordo-dashboard-project-form" method="post"
+                  action="@Url.Action(MVC.Progetti.Progetti.Edit())">
+                @Html.AntiForgeryToken()
+                <p id="create-project-modal-description" class="ordo-dashboard-modal-description">
+                    Crea uno spazio per organizzare attività, persone e conversazioni.
+                </p>
+                <div class="ordo-field">
+                    <label for="dashboardProjectName">Nome progetto</label>
+                    <input id="dashboardProjectName" name="Nome" required autocomplete="off"
+                           placeholder="Es. Rilascio prodotto" />
+                </div>
+                <div class="ordo-field">
+                    <label for="dashboardProjectDescription">Descrizione <span>(facoltativa)</span></label>
+                    <textarea id="dashboardProjectDescription" name="Descrizione" rows="4"
+                              placeholder="A cosa serve questo progetto?"></textarea>
+                </div>
+                <div class="ordo-project-form-actions">
+                    <button type="button" class="ordo-btn-secondary" data-close-project-modal>Annulla</button>
+                    <button type="submit" class="ordo-btn-primary">Crea progetto</button>
+                </div>
+            </form>
+        </section>
+    </div>
 </div>
 
 @section scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById("create-project-modal");
+            const openButtons = document.querySelectorAll("[data-open-project-modal]");
+            const closeButtons = document.querySelectorAll("[data-close-project-modal]");
+            const nameInput = document.getElementById("dashboardProjectName");
+
+            function closeModal() {
+                if (modal) {
+                    modal.hidden = true;
+                }
+            }
+
+            openButtons.forEach(function (openButton) {
+                openButton.addEventListener("click", function () {
+                    if (!modal) return;
+                    modal.hidden = false;
+                    nameInput?.focus();
+                });
+            });
+            closeButtons.forEach(button => button.addEventListener("click", closeModal));
+            modal?.addEventListener("click", function (event) {
+                if (event.target === modal) closeModal();
+            });
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape" && modal && !modal.hidden) closeModal();
+            });
+        })();
+    </script>
     <script src="/js/bundle-signalr.js" asp-append-version="true"></script>
     <script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
     <script>

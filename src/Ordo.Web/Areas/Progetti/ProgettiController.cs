@@ -21,8 +21,6 @@ namespace Ordo.Web.Areas.Progetti
         {
             _sharedService = sharedService;
             _publisher = publisher;
-
-            ModelUnbinderHelpers.ModelUnbinders.Add(typeof(IndexViewModel), new SimplePropertyModelUnbinder());
         }
 
         private bool TryGetCurrentUserId(out Guid userId)
@@ -41,15 +39,9 @@ namespace Ordo.Web.Areas.Progetti
         }
 
         [HttpGet]
-        public virtual async Task<IActionResult> Index(IndexViewModel model)
+        public virtual IActionResult Index()
         {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            var progetti = await _sharedService.Query(model.ToProjectsIndexQuery(currentUserId));
-            model.SetProjects(progetti);
-
-            return View(model);
+            return RedirectToAction("Index", "Dashboard", new { area = "" });
         }
 
         [HttpGet]
@@ -160,7 +152,7 @@ namespace Ordo.Web.Areas.Progetti
 
             Alerts.AddSuccess(this, "Progetto eliminato");
 
-            return RedirectToAction(Actions.Index());
+            return RedirectToAction("Index", "Dashboard", new { area = "" });
         }
 
         [HttpGet]

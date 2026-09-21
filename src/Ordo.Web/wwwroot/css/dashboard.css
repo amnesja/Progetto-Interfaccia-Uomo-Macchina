@@ -82,8 +82,44 @@ body { margin:0; color:var(--ordo-text); background:var(--ordo-bg); font-family:
 .ordo-dashboard-empty > i { margin-bottom:3px; color:#b6bdc7; font-size:24px; }
 .ordo-dashboard-empty > strong { color:var(--ordo-text); font-size:15px; }
 .ordo-dashboard-empty > span { color:var(--ordo-muted); font-size:13px; }
-.ordo-empty-action { display:inline-flex; align-items:center; gap:7px; margin-top:8px; padding:8px 12px; color:#9a5d00; background:#fff3d9; border:1px solid #f5d18a; border-radius:7px; font-size:12px; font-weight:700; text-decoration:none; }
+.ordo-empty-action { display:inline-flex; align-items:center; gap:7px; margin-top:8px; padding:8px 12px; color:#9a5d00; background:#fff3d9; border:1px solid #f5d18a; border-radius:7px; font:inherit; font-size:12px; font-weight:700; text-decoration:none; cursor:pointer; }
 .ordo-empty-action:hover { color:#754600; background:#ffebbc; }
+.ordo-onboarding-link { padding:0; color:var(--ordo-blue); background:none; border:0; font:inherit; font-weight:650; text-decoration:none; cursor:pointer; }
+.ordo-onboarding-link:hover { text-decoration:underline; }
+.ordo-dashboard-modal-backdrop { position:fixed; inset:0; z-index:3000; display:grid; place-items:center; padding:20px; background:rgba(11,19,38,.56); backdrop-filter:blur(6px); animation:ordo-dashboard-modal-backdrop-in .18s ease both; }
+.ordo-dashboard-modal { width:min(560px, 100%); max-height:min(680px, calc(100dvh - 40px)); overflow:auto; background:#fff; border:1px solid rgba(255,255,255,.78); border-radius:20px; box-shadow:0 30px 90px rgba(16,25,46,.3); animation:ordo-dashboard-modal-in .22s cubic-bezier(.2,.8,.2,1) both; }
+.ordo-dashboard-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:26px 28px 22px; background:linear-gradient(135deg, #f7f9fd, #fff); border-bottom:1px solid #edf0f5; }
+.ordo-dashboard-modal-header > div:first-child { display:flex; align-items:center; gap:13px; }
+.ordo-dashboard-modal-header h2 { margin:2px 0 0; color:var(--ordo-text); font-size:24px; letter-spacing:-.03em; }
+.ordo-dashboard-modal-header .ordo-eyebrow { margin:0; font-size:10px; }
+.ordo-dashboard-modal-icon { display:grid; width:42px; height:42px; place-items:center; flex:0 0 auto; color:var(--ordo-blue); background:#e8edfb; border-radius:11px; font-size:18px; }
+.ordo-dashboard-modal .ordo-modal-close { display:grid; width:34px; height:34px; place-items:center; flex:0 0 auto; padding:0; color:#7c8798; background:#eef2f7; border:0; border-radius:50%; font-size:22px; line-height:1; cursor:pointer; transition:color .18s ease, background-color .18s ease, transform .18s ease; }
+.ordo-dashboard-modal .ordo-modal-close:hover { color:var(--ordo-text); background:#e2e8f1; transform:rotate(90deg); }
+.ordo-dashboard-modal-description { margin:0; color:var(--ordo-muted); font-size:14px; line-height:1.55; }
+.ordo-dashboard-project-form { display:grid; gap:20px; padding:26px 28px 28px; border:0; box-shadow:none; }
+.ordo-dashboard-project-form .ordo-field { display:grid; gap:7px; }
+.ordo-dashboard-project-form label { color:#39465b; font-size:13px; font-weight:700; }
+.ordo-dashboard-project-form input, .ordo-dashboard-project-form textarea { width:100%; padding:12px 13px; color:var(--ordo-text); background:#f8fafc; border:1px solid #dce3ed; border-radius:10px; font:inherit; outline:0; resize:vertical; transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
+.ordo-dashboard-project-form input:focus, .ordo-dashboard-project-form textarea:focus { border-color:var(--ordo-blue); background:#fff; box-shadow:0 0 0 3px rgba(36,66,157,.12); }
+.ordo-dashboard-project-form label span { color:var(--ordo-muted); font-size:12px; font-weight:500; }
+.ordo-dashboard-project-form textarea { min-height:112px; }
+.ordo-dashboard-project-form .ordo-project-form-actions { justify-content:flex-end; gap:10px; margin-top:2px; padding-top:20px; border-top:1px solid #edf0f5; }
+.ordo-dashboard-project-form .ordo-btn-primary, .ordo-dashboard-project-form .ordo-btn-secondary { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+.ordo-dashboard-project-form .ordo-btn-primary { color:#111827; background:var(--ordo-orange); border:1px solid #111827; box-shadow:0 1px 1px #d98500; }
+.ordo-dashboard-project-form .ordo-btn-secondary { color:var(--ordo-text); background:#fff; border:1px solid var(--ordo-border); }
+.ordo-project-card-invite { font:inherit; text-align:center; cursor:pointer; }
+@keyframes ordo-dashboard-modal-backdrop-in { from { opacity:0; } to { opacity:1; } }
+@keyframes ordo-dashboard-modal-in { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media (max-width:640px) {
+    .ordo-dashboard-modal-backdrop { align-items:end; padding:0; }
+    .ordo-dashboard-modal { width:100%; max-height:calc(100dvh - 12px); border-radius:18px 18px 0 0; }
+    .ordo-dashboard-modal-header,
+    .ordo-dashboard-project-form { padding-left:20px; padding-right:20px; }
+    .ordo-dashboard-modal-header h2 { font-size:21px; }
+    .ordo-dashboard-project-form .ordo-project-form-actions { flex-direction:column-reverse; align-items:stretch; }
+    .ordo-dashboard-project-form .ordo-btn-primary,
+    .ordo-dashboard-project-form .ordo-btn-secondary { justify-content:center; width:100%; }
+}
 .ordo-dashboard-stat { min-height:76px; padding:14px 18px; }
 .ordo-dashboard-stat span { color:#8b8e93; font-size:12px; font-weight:500; }
 .ordo-dashboard-stat strong { font-size:25px; font-weight:500; }
@@ -584,10 +620,7 @@ body { background:#f6f8fb; }
     .ordo-dashboard-main { width:100%; margin-left:0; padding:24px 16px 94px; }
     .ordo-dashboard-topbar-actions { padding:0 12px; }
     .ordo-dashboard-heading h1, .ordo-projects-heading h1 { font-size:27px; }
-    .ordo-mobile-nav { grid-template-columns:repeat(5,1fr); }
-    .ordo-mobile-search { display:grid; place-content:center; gap:4px; color:#9ba9bf; }
-    .ordo-mobile-search i { font-size:18px; }
-    .ordo-mobile-search:hover { color:#fff; }
+    .ordo-mobile-nav { grid-template-columns:repeat(4,1fr); }
 }
 
 /*
