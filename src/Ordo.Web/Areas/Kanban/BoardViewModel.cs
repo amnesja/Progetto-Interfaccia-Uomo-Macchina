@@ -36,5 +36,6 @@ namespace Ordo.Web.Areas.Kanban
         public Guid TaskId { get; set; }
         public int NuovoStato { get; set; }
         public int? NuovaPriorita { get; set; }
+        public Guid? SwapWithTaskId { get; set; } // Se non nullo, indica che la priorità della card trascinata deve essere scambiata con quella della card di destinazione
     }
 }

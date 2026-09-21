@@ -69,6 +69,8 @@ var Ordo;
 
                         currentUserId,
 
+                        ownerId: seed.ownerId || null,
+
                         columns: COLUMNS,
 
                         filters: {
@@ -163,6 +165,23 @@ var Ordo;
                             task => this.matchesFilters(task)
                         ).length;
 
+                    },
+
+                    taskMinDate() {
+
+                        const today = new Date();
+
+                        return (
+                            today.getFullYear() +
+                            "-" +
+                            String(
+                                today.getMonth() + 1
+                            ).padStart(2, "0") +
+                            "-" +
+                            String(
+                                today.getDate()
+                            ).padStart(2, "0")
+                        );
                     }
 
                 },
@@ -243,6 +262,9 @@ var Ordo;
                     },
 
 
+                    // Scambio esatto delle priorità tra due card della stessa colonna.
+                    // Stessa logica (e stesso parametro "swapWithTaskId" verso il backend)
+                    // usata dalla board Kanban a pagina intera, per coerenza tra le due viste.
                     async dropTaskOnTask(targetTask) {
 
                         const draggedTask =
@@ -260,49 +282,20 @@ var Ordo;
                         }
 
 
-                        const direction =
-                            this.tasksByState(
-                                targetTask.stato
-                            ).findIndex(
-                                task =>
-                                    task.id === draggedTask.id
-                            )
-                            <
-                            this.tasksByState(
-                                targetTask.stato
-                            ).findIndex(
-                                task =>
-                                    task.id === targetTask.id
-                            )
-                                ? -1
-                                : 1;
-
-
-                        const previousPriority =
+                        const draggedPriority =
                             draggedTask.priorita;
 
-
-                        const newPriority =
-                            Math.max(
-                                0,
-                                Math.min(
-                                    2,
-                                    targetTask.priorita +
-                                    direction
-                                )
-                            );
+                        const targetPriority =
+                            targetTask.priorita;
 
 
-                        if (
-                            newPriority ===
-                            previousPriority
-                        ) {
-                            return;
-                        }
-
-
+                        // Aggiornamento ottimistico: scambiamo subito
+                        // le due priorità nell'interfaccia.
                         draggedTask.priorita =
-                            newPriority;
+                            targetPriority;
+
+                        targetTask.priorita =
+                            draggedPriority;
 
 
                         try {
@@ -334,8 +327,8 @@ var Ordo;
                                             nuovoStato:
                                             draggedTask.stato,
 
-                                            nuovaPriorita:
-                                            newPriority
+                                            swapWithTaskId:
+                                            targetTask.id
                                         })
                                     }
                                 );
@@ -353,8 +346,12 @@ var Ordo;
                         }
                         catch (error) {
 
+                            // Rollback nel caso in cui il backend rifiuti la richiesta.
                             draggedTask.priorita =
-                                previousPriority;
+                                draggedPriority;
+
+                            targetTask.priorita =
+                                targetPriority;
 
                             console.error(error);
 
@@ -1317,6 +1314,20 @@ var Ordo;
                             this.removeTask(task)
                     );
 
+                    manager.connection.on(
+                        "ProjectDeleted",
+                        deletedProjectId => {
+
+                            if (
+                                deletedProjectId &&
+                                deletedProjectId !== projectId
+                            ) {
+                                return;
+                            }
+
+                            window.location.href = dashboardUrl;
+                        }
+                    );
 
                     manager.connection.on(
                         "ProjectUpdated",

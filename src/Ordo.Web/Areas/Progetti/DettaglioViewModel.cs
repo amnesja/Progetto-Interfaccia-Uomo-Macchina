@@ -58,14 +58,21 @@ namespace Ordo.Web.Areas.Progetti
 
         public string ToJson() => JsonSerializer.ToJsonCamelCase(this);
 
-        public void SetMembers(ProjectMembersDTO dto)
+        public void SetMembers(ProjectMembersDTO dto, Guid ownerId)
         {
-            Membri = dto.Members.Select(x => new MemberItemViewModel
-            {
-                UserId = x.UserId,
-                NomeCompleto = string.IsNullOrWhiteSpace(x.FirstName) ? x.Email : $"{x.FirstName} {x.LastName}",
-                Email = x.Email
-            }).ToArray();
+            Membri = dto.Members
+                .Where(x => x.UserId != ownerId)
+                .Select(x => new MemberItemViewModel
+                {
+                    UserId = x.UserId,
+
+                    NomeCompleto =
+                        string.IsNullOrWhiteSpace(x.FirstName)
+                            ? x.Email
+                            : $"{x.FirstName} {x.LastName}",
+
+                    Email = x.Email
+                }).ToArray();
         }
     }
 

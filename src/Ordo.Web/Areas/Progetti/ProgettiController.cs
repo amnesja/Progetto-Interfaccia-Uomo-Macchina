@@ -244,7 +244,7 @@ namespace Ordo.Web.Areas.Progetti
             var model = new DettaglioViewModel();
             model.SetProject(progetto, isOwner);
             model.SetBoards(boards);
-            model.SetMembers(membri);
+            model.SetMembers(membri, progetto.OwnerId);
             var owner = await _sharedService.Query(new UserDetailQuery { Id = progetto.OwnerId });
             if (owner != null && !model.Membri.Any(member => member.UserId == owner.Id))
             {
@@ -432,13 +432,6 @@ namespace Ordo.Web.Areas.Progetti
                     await _publisher.Publish(new MemberAddedEvent
                     {
                         IdGroup = utente.Id,
-                        ProjectId = model.ProjectId,
-                        ProjectNome = progetto.Nome,
-                        ProjectDescrizione = progetto.Descrizione
-                    });
-                    await _publisher.Publish(new MemberAddedEvent
-                    {
-                        IdGroup = model.ProjectId,
                         ProjectId = model.ProjectId,
                         ProjectNome = progetto.Nome,
                         ProjectDescrizione = progetto.Descrizione

@@ -58,6 +58,8 @@
                  :key="task.id"
                  draggable="true"
                  @@dragstart="onDragStart(task)"
+                 @@dragover.prevent
+                 @@drop.stop="onDropOnTask(task)"
                  @@click="openTaskDetail(task.id)"
                  @@keydown.enter="openTaskDetail(task.id)"
                  @@keydown.space.prevent="openTaskDetail(task.id)"

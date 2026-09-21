@@ -5,10 +5,22 @@ var Ordo;
     var Kanban;
     (function (Kanban) {
         const COLUMNS = [
-            { stato: 0, titolo: "Da fare" },
-            { stato: 1, titolo: "In corso" },
-            { stato: 2, titolo: "Review" },
-            { stato: 3, titolo: "Done" }
+            {
+                stato: 0,
+                titolo: "Da fare"
+            },
+            {
+                stato: 1,
+                titolo: "In corso"
+            },
+            {
+                stato: 2,
+                titolo: "Review"
+            },
+            {
+                stato: 3,
+                titolo: "Done"
+            }
         ];
         function createBoardApp(seed, moveTaskUrl) {
             const component = Vue.defineComponent({
@@ -22,16 +34,22 @@ var Ordo;
                 methods: {
                     tasksByStato(stato) {
                         return this.tasks
-                            .filter(t => t.stato === stato)
-                            .sort((left, right) => right.priorita - left.priorita);
+                            .filter(task => task.stato === stato)
+                            .sort((left, right) => right.priorita -
+                            left.priorita);
                     },
                     formatDate(dateStr) {
                         const d = new Date(dateStr);
-                        return d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
+                        return d.toLocaleDateString("it-IT", {
+                            day: "2-digit",
+                            month: "2-digit"
+                        });
                     },
                     addTask(taskEvent) {
-                        if (this.tasks.some(task => task.id === taskEvent.taskId))
+                        if (this.tasks.some(task => task.id ===
+                            taskEvent.taskId)) {
                             return;
+                        }
                         this.tasks.push({
                             id: taskEvent.taskId,
                             titolo: taskEvent.titolo,
@@ -43,84 +61,214 @@ var Ordo;
                         });
                     },
                     updateTask(taskEvent) {
-                        const task = this.tasks.find(task => task.id === taskEvent.taskId);
+                        const task = this.tasks.find(task => task.id ===
+                            taskEvent.taskId);
                         if (!task) {
                             this.addTask(taskEvent);
                             return;
                         }
-                        task.titolo = taskEvent.titolo;
-                        task.priorita = taskEvent.priorita;
-                        task.stato = taskEvent.stato;
-                        task.scadenza = taskEvent.scadenza;
-                        task.assignedUserId = taskEvent.assignedUserId;
-                        task.assignedUserName = taskEvent.assignedUserName;
+                        task.titolo =
+                            taskEvent.titolo;
+                        task.priorita =
+                            taskEvent.priorita;
+                        task.stato =
+                            taskEvent.stato;
+                        task.scadenza =
+                            taskEvent.scadenza;
+                        task.assignedUserId =
+                            taskEvent.assignedUserId;
+                        task.assignedUserName =
+                            taskEvent.assignedUserName;
                     },
                     removeTask(taskId) {
-                        const index = this.tasks.findIndex(task => task.id === taskId);
-                        if (index >= 0)
+                        const index = this.tasks.findIndex(task => task.id ===
+                            taskId);
+                        if (index >= 0) {
                             this.tasks.splice(index, 1);
+                        }
                     },
                     updateTaskAssignee(taskId, assignedUserId, assignedUserName) {
-                        const task = this.tasks.find(task => task.id === taskId);
-                        if (!task)
+                        const task = this.tasks.find(task => task.id ===
+                            taskId);
+                        if (!task) {
                             return;
-                        task.assignedUserId = assignedUserId;
-                        task.assignedUserName = assignedUserName;
+                        }
+                        task.assignedUserId =
+                            assignedUserId;
+                        task.assignedUserName =
+                            assignedUserName;
                     },
                     onDragStart(task) {
-                        this.draggedTask = task;
+                        this.draggedTask =
+                            task;
                     },
+                    /*
+                     * Drop sulla colonna.
+                     *
+                     * Questo rimane il normale spostamento
+                     * tra colonne.
+                     */
                     async onDrop(nuovoStato) {
-                        if (!this.draggedTask)
+                        if (!this.draggedTask) {
                             return;
+                        }
                         const task = this.draggedTask;
-                        this.draggedTask = null;
+                        this.draggedTask =
+                            null;
                         await this.moveTask(task, nuovoStato);
+                    },
+                    /*
+                     * Drop direttamente sopra una card.
+                     *
+                     * Se le due task sono nella stessa colonna,
+                     * viene richiesto al backend lo scambio
+                     * delle priorità.
+                     */
+                    async onDropOnTask(targetTask) {
+                        const draggedTask = this.draggedTask;
+                        this.draggedTask =
+                            null;
+                        if (!draggedTask) {
+                            return;
+                        }
+                        /*
+                         * Non facciamo nulla se l'utente
+                         * rilascia la task su se stessa.
+                         */
+                        if (draggedTask.id ===
+                            targetTask.id) {
+                            return;
+                        }
+                        /*
+                         * Per lo scambio di priorità
+                         * le task devono appartenere
+                         * alla stessa colonna.
+                         */
+                        if (draggedTask.stato !==
+                            targetTask.stato) {
+                            /*
+                             * Se invece l'utente trascina
+                             * una card sopra una card di
+                             * un'altra colonna, trattiamo
+                             * l'operazione come un normale
+                             * spostamento di stato.
+                             */
+                            await this.moveTask(draggedTask, targetTask.stato);
+                            return;
+                        }
+                        await this.swapTaskPriority(draggedTask, targetTask);
                     },
                     async moveTaskFromSelect(task, event) {
                         const select = event.target;
                         await this.moveTask(task, Number(select.value));
                     },
+                    /*
+                     * Spostamento normale tra colonne.
+                     */
                     async moveTask(task, nuovoStato) {
                         var _a;
-                        if (task.stato === nuovoStato)
+                        if (task.stato ===
+                            nuovoStato) {
                             return;
+                        }
                         const statoPrecedente = task.stato;
-                        task.stato = nuovoStato; // aggiornamento ottimistico
+                        task.stato =
+                            nuovoStato;
                         try {
-                            const antiforgeryToken = (_a = document.querySelector("input[name='__RequestVerificationToken']")) === null || _a === void 0 ? void 0 : _a.value;
+                            const antiforgeryToken = (_a = document
+                                .querySelector("input[name='__RequestVerificationToken']")) === null || _a === void 0 ? void 0 : _a.value;
                             const response = await fetch(moveTaskUrl, {
                                 method: "POST",
                                 headers: {
                                     "Content-Type": "application/json",
                                     "RequestVerificationToken": antiforgeryToken !== null && antiforgeryToken !== void 0 ? antiforgeryToken : ""
                                 },
-                                body: JSON.stringify({ taskId: task.id, nuovoStato: nuovoStato })
+                                body: JSON.stringify({
+                                    taskId: task.id,
+                                    nuovoStato: nuovoStato
+                                })
                             });
                             if (!response.ok) {
-                                throw new Error("Richiesta fallita: " + response.status);
+                                throw new Error("Richiesta fallita: " +
+                                    response.status);
                             }
                         }
                         catch (err) {
-                            task.stato = statoPrecedente; // rollback se il salvataggio fallisce
+                            task.stato =
+                                statoPrecedente;
                             console.error("Impossibile spostare il task", err);
                             utilities.alertError("Non è stato possibile salvare lo spostamento. Riprova.");
                         }
                     },
+                    /*
+                     * Scambio delle priorità tra due task.
+                     */
+                    async swapTaskPriority(draggedTask, targetTask) {
+                        var _a;
+                        const draggedPriority = draggedTask.priorita;
+                        const targetPriority = targetTask.priorita;
+                        /*
+                         * Aggiornamento ottimistico:
+                         * cambiamo subito la priorità
+                         * nell'interfaccia.
+                         */
+                        draggedTask.priorita =
+                            targetPriority;
+                        targetTask.priorita =
+                            draggedPriority;
+                        try {
+                            const antiforgeryToken = (_a = document
+                                .querySelector("input[name='__RequestVerificationToken']")) === null || _a === void 0 ? void 0 : _a.value;
+                            const response = await fetch(moveTaskUrl, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "RequestVerificationToken": antiforgeryToken !== null && antiforgeryToken !== void 0 ? antiforgeryToken : ""
+                                },
+                                body: JSON.stringify({
+                                    taskId: draggedTask.id,
+                                    nuovoStato: draggedTask.stato,
+                                    swapWithTaskId: targetTask.id
+                                })
+                            });
+                            if (!response.ok) {
+                                throw new Error("Richiesta fallita: " +
+                                    response.status);
+                            }
+                        }
+                        catch (err) {
+                            /*
+                             * Rollback nel caso in cui
+                             * il backend rifiuti la richiesta.
+                             */
+                            draggedTask.priorita =
+                                draggedPriority;
+                            targetTask.priorita =
+                                targetPriority;
+                            console.error("Impossibile modificare la priorità", err);
+                            utilities.alertError("Non è stato possibile aggiornare la priorità. Riprova.");
+                        }
+                    },
                     openTaskDetail(taskId) {
-                        window.location.href = "/Tasks/Dettaglio/" + taskId;
+                        window.location.href =
+                            "/Tasks/Dettaglio/" +
+                                taskId;
                     }
                 }
             });
             return Vue.createApp(component);
         }
         Kanban.createBoardApp = createBoardApp;
-        // Chiamato quando arriva un evento "TaskMoved" via SignalR da un ALTRO utente collegato
-        // alla stessa board: aggiorna lo stato reattivo senza bisogno di ricaricare la pagina.
+        /*
+         * Chiamato quando arriva un evento
+         * "TaskMoved" via SignalR da un altro
+         * utente collegato alla stessa board.
+         */
         function applyRemoteMove(kanbanVm, taskId, nuovoStato) {
             const task = kanbanVm.tasks.find(t => t.id === taskId);
             if (task) {
-                task.stato = nuovoStato;
+                task.stato =
+                    nuovoStato;
             }
         }
         Kanban.applyRemoteMove = applyRemoteMove;

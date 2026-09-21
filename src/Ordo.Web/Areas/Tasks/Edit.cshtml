@@ -39,7 +39,7 @@
             </div>
             <div class="ordo-field">
                 <label asp-for="Scadenza"></label>
-                <input asp-for="Scadenza" id="task-due-date" type="date" />
+                <input asp-for="Scadenza" id="task-due-date" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")"/>
             </div>
         </div>
 

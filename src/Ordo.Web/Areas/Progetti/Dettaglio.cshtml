@@ -142,7 +142,7 @@
             </article>
 
             <article>
-                <strong>{{ members.length + 1 }}</strong>
+                <strong>{{ members.length }}</strong>
                 <span>Persone</span>
             </article>
 
@@ -933,7 +933,8 @@
                         <input id="workspaceTaskDueDate"
                                name="Scadenza"
                                type="date"
-                               v-model="taskModal.scadenza" />
+                               v-model="taskModal.scadenza" 
+                               min="taskMinDate" />
 
                     </div>
 

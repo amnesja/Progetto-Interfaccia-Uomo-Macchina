@@ -366,7 +366,13 @@
             });
             globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) { ordoNotify("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project"); });
             globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { ordoNotify("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
-            globalSignalR.connection.on("ProjectDeleted", function () { ordoNotify("Un progetto non è più disponibile.", null, "project"); });
+            globalSignalR.connection.on("ProjectDeleted", function () {
+                ordoNotify("Un progetto non è più disponibile.", null, "project");
+                // Ricarichiamo la pagina corrente ovunque ci si trovi (sidebar, contatori
+                // e liste sono calcolati lato server): senza questo reload, restavano
+                // aggiornati solo se ci si trovava già sulla Dashboard.
+                location.reload();
+            });
             globalSignalR.connection.on("ProjectChatMessageAdded", function (message) { ordoNotify("Nuovo messaggio da " + message.userName + ".", "/Progetti/Dettaglio/" + message.idGroup + "?tab=chat", "chat"); });
             globalSignalR.connection.on("BoardCreated", function (projectId, boardId, nome) { ordoNotify("È stata creata la board «" + nome + "».", "/Progetti/Dettaglio/" + projectId + "?tab=board", "board"); });
             globalSignalR.connection.on("BoardUpdated", function (projectId, boardId, nome) { ordoNotify("La board «" + nome + "» è stata aggiornata.", "/Progetti/Dettaglio/" + projectId + "?tab=board", "board"); });

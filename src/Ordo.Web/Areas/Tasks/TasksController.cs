@@ -115,6 +115,11 @@ namespace Ordo.Web.Areas.Tasks
             var (hasAccess, _, progetto) = await CheckAccess(board.ProjectId, currentUserId);
             if (!hasAccess) return Forbid();
 
+            if(model.Scadenza.HasValue && model.Scadenza.Value < DateTime.Today)
+            {
+                ModelState.AddModelError(nameof(model.Scadenza), "La scadenza non può essere una data passata");
+            }
+
             if (ModelState.IsValid)
             {
                 try

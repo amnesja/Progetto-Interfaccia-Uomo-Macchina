@@ -46,13 +46,13 @@ namespace Ordo.Services.Shared
         public async Task Handle(DeleteProjectCommand cmd)
         {
             var project = await _dbContext.Projects
-                .Where(x => x.Id == cmd.Id)
-                .FirstOrDefaultAsync();
+                .Include(p => p.Boards).ThenInclude(b => b.Tasks)
+                .Include(p => p.Members)
+                .FirstOrDefaultAsync(x => x.Id == cmd.Id);
 
             if (project == null) return;
 
             _dbContext.Projects.Remove(project);
-
             await _dbContext.SaveChangesAsync();
         }
     }

@@ -40,4 +40,18 @@
 		<Exec Command="npm install" />
 	</Target>
 
+	<ItemGroup>
+		<TypeScriptSource Include="**\*.ts" Exclude="node_modules\**;bin\**;obj\**" />
+	</ItemGroup>
+
+	<Target Name="CompileTypeScript"
+			BeforeTargets="Build"
+			DependsOnTargets="RestoreNpmPackages"
+			Inputs="@(TypeScriptSource)"
+			Outputs="$(IntermediateOutputPath)tsc.buildmarker">
+		<Message Text="Compilazione TypeScript in corso..." Importance="high" />
+		<Exec Command="npx tsc -p tsconfig.json" WorkingDirectory="$(MSBuildProjectDirectory)" />
+		<Touch Files="$(IntermediateOutputPath)tsc.buildmarker" AlwaysCreate="true" />
+	</Target>
+
 </Project>
