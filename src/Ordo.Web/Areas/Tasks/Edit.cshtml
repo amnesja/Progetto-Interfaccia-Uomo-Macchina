@@ -53,7 +53,7 @@
         <div class="ordo-project-form-actions">
             @if (Model.Id.HasValue)
             {
-                <button type="button" class="ordo-link-danger" onclick="document.getElementById('delete-form').submit();">
+                <button type="button" class="ordo-link-danger" id="delete-task-button">
                     Elimina task
                 </button>
             }
@@ -65,10 +65,30 @@
     @if (Model.Id.HasValue)
     {
         <form id="delete-form" hidden method="post" action="@Url.Action(MVC.Tasks.Tasks.Delete())"
-              onsubmit="return confirm('Eliminare definitivamente questo task e tutti i suoi commenti?');">
+              >
             <input type="hidden" name="id" value="@Model.Id" />
             <input type="hidden" name="boardId" value="@Model.BoardId" />
         </form>
+
+        <div id="delete-task-modal" class="ordo-modal-backdrop" hidden>
+            <section class="ordo-modal" role="dialog" aria-modal="true" aria-labelledby="delete-task-modal-title"
+                     aria-describedby="delete-task-modal-description">
+                <header class="ordo-modal-header">
+                    <h2 id="delete-task-modal-title">Eliminare il task?</h2>
+                    <button type="button" class="ordo-modal-close" id="cancel-delete-task-close"
+                            aria-label="Chiudi">&times;</button>
+                </header>
+                <div class="ordo-modal-form">
+                    <p id="delete-task-modal-description">
+                        Il task e tutti i suoi commenti verranno eliminati definitivamente.
+                    </p>
+                    <div class="ordo-project-form-actions">
+                        <button type="button" class="ordo-btn-secondary" id="cancel-delete-task">Annulla</button>
+                        <button type="button" class="ordo-link-danger" id="confirm-delete-task">Elimina task</button>
+                    </div>
+                </div>
+            </section>
+        </div>
     }
 </div>
 
@@ -87,6 +107,38 @@
                 } catch {
                     // Il browser userà il comportamento nativo predefinito.
                 }
+            });
+
+            const deleteButton = document.getElementById("delete-task-button");
+            const deleteForm = document.getElementById("delete-form");
+            const deleteModal = document.getElementById("delete-task-modal");
+            const cancelDeleteButtons = document.querySelectorAll("#cancel-delete-task, #cancel-delete-task-close");
+
+            function closeDeleteModal() {
+                if (deleteModal) {
+                    deleteModal.hidden = true;
+                }
+            }
+
+            deleteButton?.addEventListener("click", function () {
+                if (deleteModal) {
+                    deleteModal.hidden = false;
+                    document.getElementById("cancel-delete-task")?.focus();
+                }
+            });
+
+            cancelDeleteButtons.forEach(function (button) {
+                button.addEventListener("click", closeDeleteModal);
+            });
+
+            deleteModal?.addEventListener("click", function (event) {
+                if (event.target === deleteModal) {
+                    closeDeleteModal();
+                }
+            });
+
+            document.getElementById("confirm-delete-task")?.addEventListener("click", function () {
+                deleteForm?.submit();
             });
         })();
     </script>

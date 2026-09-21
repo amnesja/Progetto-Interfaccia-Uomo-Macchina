@@ -104,7 +104,7 @@ var Ordo;
                         catch (err) {
                             task.stato = statoPrecedente; // rollback se il salvataggio fallisce
                             console.error("Impossibile spostare il task", err);
-                            alert("Non è stato possibile salvare lo spostamento. Riprova.");
+                            utilities.alertError("Non è stato possibile salvare lo spostamento. Riprova.");
                         }
                     },
                     openTaskDetail(taskId) {

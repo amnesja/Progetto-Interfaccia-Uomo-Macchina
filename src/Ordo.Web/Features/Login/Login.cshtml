@@ -35,13 +35,13 @@
     </div>
 }
 
-<form method="post" role="form" autocomplete="off">
+<form method="post" role="form">
     <input asp-for="ReturnUrl" type="hidden" />
 
     <div class="ordo-field">
         <label asp-for="Email">Indirizzo email</label>
         <div class="ordo-input-wrap">
-            <input asp-for="Email" type="text" placeholder="utente@azienda.it" />
+            <input asp-for="Email" type="email" autocomplete="username" placeholder="utente@azienda.it" />
         </div>
         <span asp-validation-for="Email" class="field-validation-error"></span>
     </div>
@@ -49,7 +49,7 @@
     <div class="ordo-field">
         <label asp-for="Password">Password</label>
         <div class="ordo-input-wrap">
-            <input asp-for="Password" type="password" id="passwordInput" placeholder="••••••••••••" />
+            <input asp-for="Password" type="password" id="passwordInput" autocomplete="current-password" placeholder="••••••••••••" />
             <button type="button" class="ordo-toggle-password" data-target="passwordInput" aria-label="Mostra password">
                 <i class="fa-regular fa-eye"></i>
             </button>
@@ -62,7 +62,6 @@
             <input asp-for="RememberMe" type="checkbox" />
             <span>Ricordami</span>
         </label>
-        <a href="#" class="ordo-link">Password dimenticata?</a>
     </div>
 
     <button type="submit" class="ordo-submit-btn">Accedi</button>

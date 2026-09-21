@@ -1,6 +1,9 @@
 /// <reference path="../../node_modules/vue/dist/vue.d.ts" />
 
 declare const Vue: any;
+declare namespace utilities {
+    function alertError(text: string, duration?: number): void;
+}
 namespace Ordo.Kanban {
 
     interface TaskCard {
@@ -49,7 +52,9 @@ namespace Ordo.Kanban {
             },
             methods: {
                 tasksByStato(stato: number): TaskCard[] {
-                    return this.tasks.filter(t => t.stato === stato);
+                    return this.tasks
+                        .filter(t => t.stato === stato)
+                        .sort((left, right) => right.priorita - left.priorita);
                 },
                 formatDate(dateStr: string): string {
                     const d = new Date(dateStr);
@@ -147,7 +152,7 @@ namespace Ordo.Kanban {
                     } catch (err) {
                         task.stato = statoPrecedente; // rollback se il salvataggio fallisce
                         console.error("Impossibile spostare il task", err);
-                        alert("Non è stato possibile salvare lo spostamento. Riprova.");
+                        utilities.alertError("Non è stato possibile salvare lo spostamento. Riprova.");
                     }
                 },
                 openTaskDetail(taskId: string) {
