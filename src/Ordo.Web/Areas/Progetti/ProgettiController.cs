@@ -119,6 +119,17 @@ namespace Ordo.Web.Areas.Progetti
                     }
 
                     Alerts.AddSuccess(this, "Progetto salvato correttamente");
+
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new
+                        {
+                            success = true,
+                            id = model.Id,
+                            nome = model.Nome,
+                            descrizione = model.Descrizione ?? string.Empty
+                        });
+                    }
                 }
                 catch (Exception e)
                 {
@@ -128,6 +139,15 @@ namespace Ordo.Web.Areas.Progetti
 
             if (ModelState.IsValid == false)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        error = "Errore in salvataggio del progetto"
+                    });
+                }
+
                 Alerts.AddError(this, "Errore in salvataggio del progetto");
                 return RedirectToAction(Actions.Edit(model.Id));
             }
@@ -151,6 +171,17 @@ namespace Ordo.Web.Areas.Progetti
             await _publisher.Publish(new ProjectDeletedEvent { ProjectId = id, UtentiCoinvolti = utentiCoinvolti });
 
             Alerts.AddSuccess(this, "Progetto eliminato");
+
+            var dashboardUrl = Url.Action("Index", "Dashboard", new { area = "" });
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    redirectUrl = dashboardUrl
+                });
+            }
 
             return RedirectToAction("Index", "Dashboard", new { area = "" });
         }

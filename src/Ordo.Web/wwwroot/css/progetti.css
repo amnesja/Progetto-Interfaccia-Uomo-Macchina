@@ -451,3 +451,71 @@
     .ordo-chat-form { grid-template-columns:1fr; }
     .ordo-chat-form button { width:100%; }
 }
+/* Modifica progetto: sidebar coerente con la gestione delle attività */
+.ordo-project-danger-zone {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    margin-top:32px;
+    padding-top:22px;
+    border-top:1px solid #edf0f5;
+}
+.ordo-project-danger-zone strong {
+    display:block;
+    margin-bottom:5px;
+    color:#b42318;
+    font-size:13px;
+}
+.ordo-project-danger-zone p {
+    max-width:260px;
+    margin:0;
+    color:var(--ordo-muted);
+    font-size:12px;
+    line-height:1.5;
+}
+.ordo-project-danger-zone .ordo-link-danger {
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:9px 12px;
+    color:#b42318;
+    background:#fff;
+    border:1px solid #f1c4c0;
+    border-radius:8px;
+    font:inherit;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+}
+.ordo-project-danger-zone .ordo-link-danger:hover {
+    background:#fff5f4;
+    border-color:#e89b94;
+}
+.ordo-delete-project-modal {
+    width:min(480px, 100%);
+}
+.ordo-delete-warning {
+    margin-top:12px;
+    padding:12px 14px;
+    color:#8a241d;
+    background:#fff5f4;
+    border:1px solid #f1c4c0;
+    border-radius:8px;
+    font-size:13px;
+    line-height:1.5;
+}
+.ordo-delete-project-modal .ordo-project-form-actions {
+    margin-top:22px;
+}
+@media (max-width:640px) {
+    .ordo-project-danger-zone {
+        align-items:stretch;
+        flex-direction:column;
+    }
+    .ordo-project-danger-zone .ordo-link-danger {
+        justify-content:center;
+    }
+}
+

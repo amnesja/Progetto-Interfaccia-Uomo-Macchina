@@ -7,6 +7,7 @@
     ViewData["BreadcrumbProjectName"] = Model.Nome;
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     var activeTab = Context.Request.Query["tab"].ToString();
+
     if (string.IsNullOrWhiteSpace(activeTab))
     {
         activeTab = Model.Boards.Any() ? "board" : "overview";
@@ -20,284 +21,1029 @@
 }
 
 <div id="projectWorkspace" class="ordo-project-workspace" v-cloak>
+
     <div id="lostConnection" class="ordo-signalr-banner d-none">
-        <i class="fa-solid fa-triangle-exclamation"></i> Connessione in tempo reale persa, riconnessione in corso...
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Connessione in tempo reale persa, riconnessione in corso...
     </div>
-    <div id="lostConnectionManualRetry" class="ordo-signalr-banner ordo-signalr-banner-error d-none">
-        <i class="fa-solid fa-plug-circle-xmark"></i> Impossibile riconnettersi.
+
+    <div id="lostConnectionManualRetry"
+         class="ordo-signalr-banner ordo-signalr-banner-error d-none">
+        <i class="fa-solid fa-plug-circle-xmark"></i>
+        Impossibile riconnettersi.
         <a href="javascript:location.reload()">Ricarica la pagina</a>
     </div>
+
     @Html.AntiForgeryToken()
 
-    <a class="ordo-back-link" href="@Url.Action("Index", "Dashboard", new { area = "" })">
-        <i class="fa-solid fa-arrow-left"></i> Dashboard
+    <a class="ordo-back-link"
+       href="@Url.Action("Index", "Dashboard", new { area = "" })">
+        <i class="fa-solid fa-arrow-left"></i>
+        Dashboard
     </a>
 
     <header class="ordo-project-workspace-header">
+
         <div>
             <h1>@Model.Nome</h1>
-            <p>@(string.IsNullOrWhiteSpace(Model.Descrizione) ? "Workspace del progetto." : Model.Descrizione)</p>
+
+            <p>
+                @(string.IsNullOrWhiteSpace(Model.Descrizione)
+                    ? "Workspace del progetto."
+                    : Model.Descrizione)
+            </p>
         </div>
+
         <div class="ordo-project-workspace-actions">
+
             @if (Model.IsOwner)
             {
-                <a class="ordo-btn-secondary" href="@Url.Action(MVC.Progetti.Progetti.Edit(Model.Id))">
-                    <i class="fa-solid fa-pen"></i> Modifica
-                </a>
+                <button type="button"
+                        class="ordo-btn-secondary"
+                        v-on:click="openProjectEdit">
+
+                    <i class="fa-solid fa-pen"></i>
+                    Modifica
+
+                </button>
             }
+
         </div>
+
     </header>
 
-    <nav class="ordo-project-nav" aria-label="Navigazione progetto">
-        <button type="button" :class="{ active: activeTab === 'overview' }" @@click="selectTab('overview')">Panoramica</button>
-        <button type="button" :class="{ active: activeTab === 'board' }" @@click="selectTab('board')">Board</button>
-        <button type="button" :class="{ active: activeTab === 'people' }" @@click="selectTab('people')">Persone</button>
-        <button type="button" :class="{ active: activeTab === 'chat' }" @@click="selectTab('chat')">Chat</button>
+    <nav class="ordo-project-nav"
+         aria-label="Navigazione progetto">
+
+        <button type="button"
+                :class="{ active: activeTab === 'overview' }"
+                v-on:click="selectTab('overview')">
+            Panoramica
+        </button>
+
+        <button type="button"
+                :class="{ active: activeTab === 'board' }"
+                v-on:click="selectTab('board')">
+            Board
+        </button>
+
+        <button type="button"
+                :class="{ active: activeTab === 'people' }"
+                v-on:click="selectTab('people')">
+            Persone
+        </button>
+
+        <button type="button"
+                :class="{ active: activeTab === 'chat' }"
+                v-on:click="selectTab('chat')">
+            Chat
+        </button>
+
     </nav>
 
-    <section v-show="activeTab === 'overview'" class="ordo-workspace-panel">
+
+    <!-- PANORAMICA -->
+
+    <section v-show="activeTab === 'overview'"
+             class="ordo-workspace-panel">
+
         <div class="ordo-workspace-panel-heading">
+
             <div>
                 <h2>Panoramica</h2>
-                <p>Una sintesi del lavoro e delle persone che collaborano al progetto.</p>
+
+                <p>
+                    Una sintesi del lavoro e delle persone che collaborano al progetto.
+                </p>
             </div>
-            <button v-if="boards.length" type="button" class="ordo-btn-primary" @@click="selectTab('board')">
-                <i class="fa-solid fa-table-columns"></i> Apri board
+
+            <button v-if="boards.length"
+                    type="button"
+                    class="ordo-btn-primary"
+                    v-on:click="selectTab('board')">
+
+                <i class="fa-solid fa-table-columns"></i>
+                Apri board
+
             </button>
+
         </div>
+
         <div class="ordo-workspace-summary">
-            <article><strong>{{ boards.length }}</strong><span>Board</span></article>
-            <article><strong>{{ totalTasks }}</strong><span>Attività</span></article>
-            <article><strong>{{ members.length + 1 }}</strong><span>Persone</span></article>
-            <article><strong>{{ messages.length }}</strong><span>Messaggi</span></article>
+
+            <article>
+                <strong>{{ boards.length }}</strong>
+                <span>Board</span>
+            </article>
+
+            <article>
+                <strong>{{ totalTasks }}</strong>
+                <span>Attività</span>
+            </article>
+
+            <article>
+                <strong>{{ members.length + 1 }}</strong>
+                <span>Persone</span>
+            </article>
+
+            <article>
+                <strong>{{ messages.length }}</strong>
+                <span>Messaggi</span>
+            </article>
+
         </div>
-        @if (Model.IsOwner)
-        {
-            <details class="ordo-workspace-settings">
-                <summary><i class="fa-solid fa-gear"></i> Impostazioni progetto</summary>
-                <form class="ordo-project-form ordo-project-inline-form" method="post" action="@Url.Action(MVC.Progetti.Progetti.Edit())">
-                    <input type="hidden" name="Id" value="@Model.Id" />
-                    <div class="ordo-field">
-                        <label for="workspaceProjectName">Nome progetto</label>
-                        <input id="workspaceProjectName" name="Nome" value="@Model.Nome" required autocomplete="off" />
-                    </div>
-                    <div class="ordo-field">
-                        <label for="workspaceProjectDescription">Descrizione</label>
-                        <textarea id="workspaceProjectDescription" name="Descrizione" rows="3">@Model.Descrizione</textarea>
-                    </div>
-                    <button type="submit" class="ordo-btn-primary">Salva modifiche</button>
-                </form>
-            </details>
-        }
-        <div v-if="!boards.length" class="ordo-dashboard-empty">
+
+        <div v-if="!boards.length"
+             class="ordo-dashboard-empty">
+
             Crea la prima board per iniziare a organizzare il lavoro.
+
         </div>
+
     </section>
 
-    <section v-show="activeTab === 'board'" class="ordo-workspace-panel">
+
+    <!-- BOARD -->
+
+    <section v-show="activeTab === 'board'"
+             class="ordo-workspace-panel">
+
         <div class="ordo-workspace-panel-heading">
+
             <div>
                 <h2>Board</h2>
-                <p>La vista operativa del progetto.</p>
+
+                <p>
+                    La vista operativa del progetto.
+                </p>
             </div>
-            <div v-if="boards.length" class="ordo-kanban-actions">
-                <button type="button" class="ordo-btn-primary" @@click="openNewTask">
-                    <i class="fa-solid fa-plus"></i> Nuova attività
+
+            <div v-if="boards.length"
+                 class="ordo-kanban-actions">
+
+                <button type="button"
+                        class="ordo-btn-primary"
+                        v-on:click="openNewTask">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Nuova attività
+
                 </button>
+
             </div>
+
         </div>
 
-        <div v-if="!boards.length" class="ordo-dashboard-empty">
+        <div v-if="!boards.length"
+             class="ordo-dashboard-empty">
+
             La board non è ancora disponibile.
+
         </div>
+
         <template v-else>
+
             <div class="ordo-kanban-filters">
+
                 <label class="ordo-kanban-search">
+
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input v-model.trim="filters.search" type="search" placeholder="Cerca attività..." />
+
+                    <input v-model.trim="filters.search"
+                           type="search"
+                           placeholder="Cerca attività..." />
+
                 </label>
-                <select v-model="filters.state" aria-label="Filtra per stato">
-                    <option value="">Tutti gli stati</option>
-                    <option v-for="column in columns" :value="String(column.stato)">{{ column.titolo }}</option>
+
+
+                <select v-model="filters.state"
+                        aria-label="Filtra per stato">
+
+                    <option value="">
+                        Tutti gli stati
+                    </option>
+
+                    <option v-for="column in columns"
+                            :value="String(column.stato)">
+
+                        {{ column.titolo }}
+
+                    </option>
+
                 </select>
-                <select v-model="filters.priority" aria-label="Filtra per priorità">
-                    <option value="">Tutte le priorità</option>
-                    <option value="0">Bassa</option>
-                    <option value="1">Media</option>
-                    <option value="2">Alta</option>
+
+
+                <select v-model="filters.priority"
+                        aria-label="Filtra per priorità">
+
+                    <option value="">
+                        Tutte le priorità
+                    </option>
+
+                    <option value="0">
+                        Bassa
+                    </option>
+
+                    <option value="1">
+                        Media
+                    </option>
+
+                    <option value="2">
+                        Alta
+                    </option>
+
                 </select>
-                <select v-model="filters.assignee" aria-label="Filtra per assegnatario">
-                    <option value="">Tutti gli assegnatari</option>
-                    <option v-for="member in members" :value="member.userId">{{ member.nomeCompleto }}</option>
+
+
+                <select v-model="filters.assignee"
+                        aria-label="Filtra per assegnatario">
+
+                    <option value="">
+                        Tutti gli assegnatari
+                    </option>
+
+                    <option v-for="member in members"
+                            :value="member.userId">
+
+                        {{ member.nomeCompleto }}
+
+                    </option>
+
                 </select>
-                <button type="button" class="ordo-filter-reset" @@click="resetFilters">Azzera</button>
+
+
+                <button type="button"
+                        class="ordo-filter-reset"
+                        v-on:click="resetFilters">
+
+                    Azzera
+
+                </button>
+
             </div>
+
+
             <div class="kanban-board ordo-workspace-kanban">
-                <div v-for="column in columns" :key="column.stato" class="kanban-column"
-                     @@dragover.prevent @@drop="dropTask(column.stato)">
+
+                <div v-for="column in columns"
+                     :key="column.stato"
+                     class="kanban-column"
+                     v-on:dragover.prevent
+                     v-on:drop="dropTask(column.stato)">
+
                     <div class="kanban-column-header">
-                        <span>{{ column.titolo }}</span>
-                    <span class="kanban-count">{{ filteredTasksByState(column.stato).length }}</span>
+
+                        <span>
+                            {{ column.titolo }}
+                        </span>
+
+                        <span class="kanban-count">
+                            {{ filteredTasksByState(column.stato).length }}
+                        </span>
+
                     </div>
+
+
                     <div class="kanban-column-body">
-                        <article v-for="task in filteredTasksByState(column.stato)" :key="task.id"
-                                 class="kanban-card" draggable="true"
-                             @@click="handleCardClick(task)"
-                             @@dragstart="startDragging(task)"
-                             @@dragend="endDragging"
-                             v-on:dragover.prevent
-                             v-on:drop.stop="dropTaskOnTask(task)">
-                            <div class="kanban-card-priority" :class="'priority-' + task.priorita"></div>
-                            <div class="kanban-task-title"><b>{{ task.titolo }}</b></div>
-                            <div v-if="task.scadenza" class="kanban-card-meta">
-                                <i class="fa-regular fa-clock"></i> {{ formatDate(task.scadenza) }}
+
+                        <article v-for="task in filteredTasksByState(column.stato)"
+                                 :key="task.id"
+                                 class="kanban-card"
+                                 draggable="true"
+                                 v-on:click="handleCardClick(task)"
+                                 v-on:dragstart="startDragging(task)"
+                                 v-on:dragend="endDragging"
+                                 v-on:dragover.prevent
+                                 v-on:drop.stop="dropTaskOnTask(task)">
+
+                            <div class="kanban-card-priority"
+                                 :class="'priority-' + task.priorita">
                             </div>
-                            <div v-if="task.assignedUserName" class="kanban-card-assignee">{{ task.assignedUserName }}</div>
+
+                            <div class="kanban-task-title">
+                                <b>{{ task.titolo }}</b>
+                            </div>
+
+                            <div v-if="task.scadenza"
+                                 class="kanban-card-meta">
+
+                                <i class="fa-regular fa-clock"></i>
+
+                                {{ formatDate(task.scadenza) }}
+
+                            </div>
+
+                            <div v-if="task.assignedUserName"
+                                 class="kanban-card-assignee">
+
+                                {{ task.assignedUserName }}
+
+                            </div>
+
                         </article>
-                        <div v-if="!filteredTasksByState(column.stato).length" class="kanban-column-empty">
+
+
+                        <div v-if="!filteredTasksByState(column.stato).length"
+                             class="kanban-column-empty">
+
                             Nessuna attività
+
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
-            <p v-if="!filteredTaskCount" class="ordo-dashboard-empty ordo-kanban-empty-filter">Nessuna attività corrisponde ai filtri.</p>
+
+
+            <p v-if="!filteredTaskCount"
+               class="ordo-dashboard-empty ordo-kanban-empty-filter">
+
+                Nessuna attività corrisponde ai filtri.
+
+            </p>
+
         </template>
+
     </section>
 
-    <section v-show="activeTab === 'people'" class="ordo-workspace-panel">
+
+    <!-- PERSONE -->
+
+    <section v-show="activeTab === 'people'"
+             class="ordo-workspace-panel">
+
         <div class="ordo-workspace-panel-heading">
+
             <div>
+
                 <h2>Persone</h2>
-                <p>Gestisci chi ha accesso a questo progetto.</p>
+
+                <p>
+                    Gestisci chi ha accesso a questo progetto.
+                </p>
+
             </div>
+
         </div>
+
+
         <div class="ordo-board-list">
-            <div v-for="member in members" :key="member.userId" class="ordo-board-row">
+
+            <div v-for="member in members"
+                 :key="member.userId"
+                 class="ordo-board-row">
+
                 <div class="ordo-member-info">
-                    <span class="ordo-member-avatar">{{ member.nomeCompleto.substring(0, 1).toUpperCase() }}</span>
-                    <div><strong>{{ member.nomeCompleto }}</strong><small>{{ member.email }}</small></div>
+
+                    <span class="ordo-member-avatar">
+                        {{ member.nomeCompleto.substring(0, 1).toUpperCase() }}
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            {{ member.nomeCompleto }}
+                        </strong>
+
+                        <small>
+                            {{ member.email }}
+                        </small>
+
+                    </div>
+
                 </div>
+
+
                 @if (Model.IsOwner)
                 {
-                    <form v-if="member.userId !== ownerId" method="post" action="@Url.Action(MVC.Progetti.Progetti.MembroRimuovi())">
-                        <input type="hidden" name="projectId" value="@Model.Id" />
-                        <input type="hidden" name="userId" :value="member.userId" />
-                        <button type="submit" class="ordo-link-danger" title="Rimuovi collaboratore"><i class="fa-solid fa-user-minus"></i></button>
+                    <form v-if="member.userId !== ownerId"
+                          method="post"
+                          action="@Url.Action(MVC.Progetti.Progetti.MembroRimuovi())">
+
+                        <input type="hidden"
+                               name="projectId"
+                               value="@Model.Id" />
+
+                        <input type="hidden"
+                               name="userId"
+                               :value="member.userId" />
+
+                        <button type="submit"
+                                class="ordo-link-danger"
+                                title="Rimuovi collaboratore">
+
+                            <i class="fa-solid fa-user-minus"></i>
+
+                        </button>
+
                     </form>
                 }
+
             </div>
+
         </div>
+
+
         @if (Model.IsOwner)
         {
-            <form method="post" action="@Url.Action(MVC.Progetti.Progetti.MembroAggiungi())" class="ordo-board-add-form">
-                <input type="hidden" name="ProjectId" value="@Model.Id" />
-                <input type="email" name="Email" placeholder="Email del collaboratore da invitare" autocomplete="off" required />
-                <button type="submit"><i class="fa-solid fa-user-plus"></i> Invita</button>
+            <form method="post"
+                  action="@Url.Action(MVC.Progetti.Progetti.MembroAggiungi())"
+                  class="ordo-board-add-form">
+
+                <input type="hidden"
+                       name="ProjectId"
+                       value="@Model.Id" />
+
+                <input type="email"
+                       name="Email"
+                       placeholder="Email del collaboratore da invitare"
+                       autocomplete="off"
+                       required />
+
+                <button type="submit">
+
+                    <i class="fa-solid fa-user-plus"></i>
+                    Invita
+
+                </button>
+
             </form>
         }
+
     </section>
 
-    <section v-show="activeTab === 'chat'" class="ordo-workspace-panel ordo-project-chat">
+
+    <!-- CHAT -->
+
+    <section v-show="activeTab === 'chat'"
+             class="ordo-workspace-panel ordo-project-chat">
+
         <div class="ordo-workspace-panel-heading">
+
             <div>
+
                 <h2>Chat</h2>
-                <p>Conversazione con i collaboratori del progetto.</p>
+
+                <p>
+                    Conversazione con i collaboratori del progetto.
+                </p>
+
             </div>
+
         </div>
+
+
         <div class="ordo-chat-messages">
-            <p v-if="!messages.length" class="ordo-dashboard-empty">Nessun messaggio. Inizia la conversazione.</p>
-            <article v-for="message in messages" :key="message.id"
-                     class="ordo-chat-message" :class="{ mine: message.userId === currentUserId }">
-                <span class="ordo-chat-avatar">{{ message.userName ? message.userName.substring(0, 1).toUpperCase() : '?' }}</span>
-                <header><strong>{{ message.userName }}</strong><time>{{ formatMessageDate(message.dataCreazione) }}</time></header>
-                <p>{{ message.testo }}</p>
+
+            <p v-if="!messages.length"
+               class="ordo-dashboard-empty">
+
+                Nessun messaggio. Inizia la conversazione.
+
+            </p>
+
+
+            <article v-for="message in messages"
+                     :key="message.id"
+                     class="ordo-chat-message"
+                     :class="{ mine: message.userId === currentUserId }">
+
+                <span class="ordo-chat-avatar">
+
+                    {{ message.userName
+                        ? message.userName.substring(0, 1).toUpperCase()
+                        : '?' }}
+
+                </span>
+
+                <header>
+
+                    <strong>
+                        {{ message.userName }}
+                    </strong>
+
+                    <time>
+                        {{ formatMessageDate(message.dataCreazione) }}
+                    </time>
+
+                </header>
+
+                <p>
+                    {{ message.testo }}
+                </p>
+
             </article>
+
         </div>
-        <form method="post" action="@Url.Action(MVC.Progetti.Progetti.ChatInvia())" class="ordo-chat-form">
-            <input type="hidden" name="ProjectId" value="@Model.Id" />
-            <textarea name="Testo" maxlength="2000" rows="3" placeholder="Scrivi un messaggio..." required></textarea>
-            <button class="ordo-btn-primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Invia</button>
+
+
+        <form method="post"
+              action="@Url.Action(MVC.Progetti.Progetti.ChatInvia())"
+              class="ordo-chat-form">
+
+            <input type="hidden"
+                   name="ProjectId"
+                   value="@Model.Id" />
+
+            <textarea name="Testo"
+                      maxlength="2000"
+                      rows="3"
+                      placeholder="Scrivi un messaggio..."
+                      required></textarea>
+
+            <button class="ordo-btn-primary"
+                    type="submit">
+
+                <i class="fa-solid fa-paper-plane"></i>
+                Invia
+
+            </button>
+
         </form>
+
     </section>
+
+
+    <!-- SIDEBAR MODIFICA PROGETTO -->
+
+    @if (Model.IsOwner)
+    {
+        <div v-if="projectEdit.open"
+             class="ordo-modal-backdrop ordo-sidebar-backdrop"
+             v-on:click.self="closeProjectEdit">
+
+            <section class="ordo-modal ordo-task-sidebar"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="projectEditTitle">
+
+                <header class="ordo-modal-header">
+
+                    <h2 id="projectEditTitle">
+                        Modifica progetto
+                    </h2>
+
+                    <button type="button"
+                            class="ordo-modal-close"
+                            v-on:click="closeProjectEdit"
+                            aria-label="Chiudi">
+
+                        &times;
+
+                    </button>
+
+                </header>
+
+
+                <form method="post"
+                      action="@Url.Action(MVC.Progetti.Progetti.Edit())"
+                      class="ordo-project-form ordo-modal-form"
+                      v-on:submit.prevent="saveProject">
+
+                    <input type="hidden"
+                           name="Id"
+                           value="@Model.Id" />
+
+
+                    <div class="ordo-field">
+
+                        <label for="projectEditName">
+                            Nome progetto
+                        </label>
+
+                        <input id="projectEditName"
+                               name="Nome"
+                               v-model.trim="projectEdit.nome"
+                               maxlength="200"
+                               required
+                               autocomplete="off" />
+
+                    </div>
+
+
+                    <div class="ordo-field">
+
+                        <label for="projectEditDescription">
+                            Descrizione
+                        </label>
+
+                        <textarea id="projectEditDescription"
+                                  name="Descrizione"
+                                  v-model="projectEdit.descrizione"
+                                  rows="5"
+                                  maxlength="2000"></textarea>
+
+                    </div>
+
+
+                    <div class="ordo-project-form-actions">
+
+                        <button type="button"
+                                class="ordo-btn-secondary"
+                                v-on:click="closeProjectEdit">
+
+                            Annulla
+
+                        </button>
+
+                        <button type="submit"
+                                class="ordo-btn-primary"
+                                :disabled="projectEdit.saving">
+
+                            <i class="fa-solid"
+                               :class="projectEdit.saving
+                                   ? 'fa-spinner fa-spin'
+                                   : 'fa-check'">
+                            </i>
+
+                            {{ projectEdit.saving
+                                ? 'Salvataggio...'
+                                : 'Salva modifiche' }}
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="ordo-project-danger-zone">
+
+                        <div>
+
+                            <strong>
+                                Zona pericolosa
+                            </strong>
+
+                            <p>
+                                L'eliminazione del progetto è permanente.
+                            </p>
+
+                        </div>
+
+
+                        <button type="button"
+                                class="ordo-link-danger"
+                                v-on:click="openDeleteProject">
+
+                            <i class="fa-solid fa-trash"></i>
+
+                            Elimina progetto
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </div>
+
+
+        <!-- CONFERMA ELIMINAZIONE -->
+
+        <div v-if="projectDelete.open"
+             class="ordo-modal-backdrop"
+             v-on:click.self="closeDeleteProject">
+
+            <section class="ordo-modal ordo-delete-project-modal"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="deleteProjectTitle">
+
+                <header class="ordo-modal-header">
+
+                    <h2 id="deleteProjectTitle">
+                        Eliminare il progetto?
+                    </h2>
+
+                    <button type="button"
+                            class="ordo-modal-close"
+                            v-on:click="closeDeleteProject"
+                            aria-label="Chiudi">
+
+                        &times;
+
+                    </button>
+
+                </header>
+
+
+                <div class="ordo-modal-form">
+
+                    <p>
+
+                        Stai per eliminare definitivamente
+
+                        <strong>
+                            {{ projectEdit.nome }}
+                        </strong>.
+
+                    </p>
+
+
+                    <p class="ordo-delete-warning">
+
+                        Questa operazione non può essere annullata.
+
+                    </p>
+
+
+                    <div class="ordo-project-form-actions">
+
+                        <button type="button"
+                                class="ordo-btn-secondary"
+                                v-on:click="closeDeleteProject">
+
+                            Annulla
+
+                        </button>
+
+
+                        <button type="button"
+                                class="ordo-link-danger"
+                                v-on:click="deleteProject"
+                                :disabled="projectDelete.deleting">
+
+                            <i class="fa-solid"
+                               :class="projectDelete.deleting
+                                   ? 'fa-spinner fa-spin'
+                                   : 'fa-trash'">
+                            </i>
+
+                            {{ projectDelete.deleting
+                                ? 'Eliminazione...'
+                                : 'Elimina definitivamente' }}
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+    }
+
+
+    <!-- SIDEBAR ATTIVITÀ -->
 
     <div v-if="taskModal.open"
          class="ordo-modal-backdrop"
          :class="{ 'ordo-sidebar-backdrop': taskModal.mode === 'edit' }"
-         @@click.self="closeTaskModal">
+         v-on:click.self="closeTaskModal">
+
         <section class="ordo-modal"
                  :class="{ 'ordo-task-sidebar': taskModal.mode === 'edit' }"
-                 role="dialog" aria-modal="false" aria-labelledby="taskModalTitle">
+                 role="dialog"
+                 aria-modal="false"
+                 aria-labelledby="taskModalTitle">
+
             <header class="ordo-modal-header">
-                <h2 id="taskModalTitle">{{ taskModal.mode === 'edit' ? 'Dettaglio attività' : 'Nuova attività' }}</h2>
-                <button type="button" class="ordo-modal-close" @@click="closeTaskModal" aria-label="Chiudi">&times;</button>
+
+                <h2 id="taskModalTitle">
+
+                    {{ taskModal.mode === 'edit'
+                        ? 'Dettaglio attività'
+                        : 'Nuova attività' }}
+
+                </h2>
+
+                <button type="button"
+                        class="ordo-modal-close"
+                        v-on:click="closeTaskModal"
+                        aria-label="Chiudi">
+
+                    &times;
+
+                </button>
+
             </header>
-            <form method="post" action="@Url.Action("Edit", "Tasks", new { area = "Tasks" })"
-                  class="ordo-project-form ordo-modal-form" v-on:submit.prevent="saveTask">
-                <input type="hidden" name="Id" :value="taskModal.id" />
-                <input type="hidden" name="BoardId" :value="taskModal.boardId" />
-                <input type="hidden" name="ProjectId" value="@Model.Id" />
+
+
+            <form method="post"
+                  action="@Url.Action("Edit", "Tasks", new { area = "Tasks" })"
+                  class="ordo-project-form ordo-modal-form"
+                  v-on:submit.prevent="saveTask">
+
+                <input type="hidden"
+                       name="Id"
+                       :value="taskModal.id" />
+
+                <input type="hidden"
+                       name="BoardId"
+                       :value="taskModal.boardId" />
+
+                <input type="hidden"
+                       name="ProjectId"
+                       value="@Model.Id" />
+
+
                 <div class="ordo-field">
-                    <label for="workspaceTaskTitle">Titolo</label>
-                    <input id="workspaceTaskTitle" name="Titolo" v-model="taskModal.titolo" required autocomplete="off" />
+
+                    <label for="workspaceTaskTitle">
+                        Titolo
+                    </label>
+
+                    <input id="workspaceTaskTitle"
+                           name="Titolo"
+                           v-model="taskModal.titolo"
+                           required
+                           autocomplete="off" />
+
                 </div>
+
+
                 <div class="ordo-field">
-                    <label for="workspaceTaskDescription">Descrizione</label>
-                    <textarea id="workspaceTaskDescription" name="Descrizione" v-model="taskModal.descrizione" rows="3"></textarea>
+
+                    <label for="workspaceTaskDescription">
+                        Descrizione
+                    </label>
+
+                    <textarea id="workspaceTaskDescription"
+                              name="Descrizione"
+                              v-model="taskModal.descrizione"
+                              rows="3"></textarea>
+
                 </div>
+
+
                 <div class="ordo-field-row">
+
                     <div class="ordo-field">
-                        <label>Priorità</label>
-                        <input type="hidden" name="Priorita" v-model="taskModal.priorita" />
-                        <div class="ordo-priority-picker" role="radiogroup" aria-label="Priorità">
-                            <button type="button" :class="{ active: taskModal.priorita === '0' }" :aria-pressed="taskModal.priorita === '0'" @@click="taskModal.priorita = '0'">
-                                <i class="fa-solid fa-arrow-down"></i><span>Bassa</span>
+
+                        <label>
+                            Priorità
+                        </label>
+
+                        <input type="hidden"
+                               name="Priorita"
+                               v-model="taskModal.priorita" />
+
+
+                        <div class="ordo-priority-picker"
+                             role="radiogroup"
+                             aria-label="Priorità">
+
+                            <button type="button"
+                                    :class="{ active: taskModal.priorita === '0' }"
+                                    :aria-pressed="taskModal.priorita === '0'"
+                                    v-on:click="taskModal.priorita = '0'">
+
+                                <i class="fa-solid fa-arrow-down"></i>
+                                <span>Bassa</span>
+
                             </button>
-                            <button type="button" :class="{ active: taskModal.priorita === '1' }" :aria-pressed="taskModal.priorita === '1'" @@click="taskModal.priorita = '1'">
-                                <i class="fa-solid fa-minus"></i><span>Media</span>
+
+
+                            <button type="button"
+                                    :class="{ active: taskModal.priorita === '1' }"
+                                    :aria-pressed="taskModal.priorita === '1'"
+                                    v-on:click="taskModal.priorita = '1'">
+
+                                <i class="fa-solid fa-minus"></i>
+                                <span>Media</span>
+
                             </button>
-                            <button type="button" :class="{ active: taskModal.priorita === '2' }" :aria-pressed="taskModal.priorita === '2'" @@click="taskModal.priorita = '2'">
-                                <i class="fa-solid fa-arrow-up"></i><span>Alta</span>
+
+
+                            <button type="button"
+                                    :class="{ active: taskModal.priorita === '2' }"
+                                    :aria-pressed="taskModal.priorita === '2'"
+                                    v-on:click="taskModal.priorita = '2'">
+
+                                <i class="fa-solid fa-arrow-up"></i>
+                                <span>Alta</span>
+
                             </button>
+
                         </div>
+
                     </div>
+
+
                     <div class="ordo-field">
-                        <label for="workspaceTaskDueDate">Scadenza</label>
-                        <input id="workspaceTaskDueDate" name="Scadenza" type="date" v-model="taskModal.scadenza" />
+
+                        <label for="workspaceTaskDueDate">
+                            Scadenza
+                        </label>
+
+                        <input id="workspaceTaskDueDate"
+                               name="Scadenza"
+                               type="date"
+                               v-model="taskModal.scadenza" />
+
                     </div>
+
                 </div>
+
+
                 <div class="ordo-field ordo-assignee-field">
-                    <label for="workspaceTaskAssignee">Assegnato a</label>
+
+                    <label for="workspaceTaskAssignee">
+                        Assegnato a
+                    </label>
+
                     <div class="ordo-assignee-select">
+
                         <i class="fa-regular fa-user"></i>
-                        <select id="workspaceTaskAssignee" name="AssignedUserId" v-model="taskModal.assignedUserId">
-                            <option value="">Nessuna assegnazione</option>
-                            <option v-for="member in members" :value="member.userId">{{ member.nomeCompleto }}</option>
+
+                        <select id="workspaceTaskAssignee"
+                                name="AssignedUserId"
+                                v-model="taskModal.assignedUserId">
+
+                            <option value="">
+                                Nessuna assegnazione
+                            </option>
+
+                            <option v-for="member in members"
+                                    :value="member.userId">
+
+                                {{ member.nomeCompleto }}
+
+                            </option>
+
                         </select>
+
                     </div>
+
                 </div>
+
+
                 <div class="ordo-project-form-actions">
-                    <button type="button" class="ordo-btn-secondary" @@click="closeTaskModal">Annulla</button>
-                    <button type="submit" class="ordo-btn-primary" :disabled="savingTask">
-                        <i class="fa-solid" :class="savingTask ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                        {{ savingTask ? 'Salvataggio...' : 'Salva attività' }}
+
+                    <button type="button"
+                            class="ordo-btn-secondary"
+                            v-on:click="closeTaskModal">
+
+                        Annulla
+
                     </button>
+
+
+                    <button type="submit"
+                            class="ordo-btn-primary"
+                            :disabled="savingTask">
+
+                        <i class="fa-solid"
+                           :class="savingTask
+                               ? 'fa-spinner fa-spin'
+                               : 'fa-check'">
+                        </i>
+
+                        {{ savingTask
+                            ? 'Salvataggio...'
+                            : 'Salva attività' }}
+
+                    </button>
+
                 </div>
+
             </form>
+
         </section>
+
     </div>
+
 </div>
 
-<script src="/js/bundle-vue.js" asp-append-version="true"></script>
-<script src="/js/bundle-signalr.js" asp-append-version="true"></script>
-<script src="~/js/signalRConnectionManager.js" asp-append-version="true"></script>
-<script src="~/Areas/Progetti/ProjectWorkspace.js" asp-append-version="true"></script>
-<script type="application/json" id="ProjectWorkspaceSeed">@Html.Raw(Model.ToJson())</script>
+
+<script src="/js/bundle-vue.js"
+        asp-append-version="true"></script>
+
+<script src="/js/bundle-signalr.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/signalRConnectionManager.js"
+        asp-append-version="true"></script>
+
+<script src="~/Areas/Progetti/ProjectWorkspace.js"
+        asp-append-version="true"></script>
+
+
+<script type="application/json"
+        id="ProjectWorkspaceSeed">
+
+    @Html.Raw(Model.ToJson())
+
+</script>
+
+
 <script>
+
     Ordo.ProjectWorkspace.create(
-        JSON.parse(document.getElementById("ProjectWorkspaceSeed").textContent),
+        JSON.parse(
+            document.getElementById("ProjectWorkspaceSeed").textContent
+        ),
         "@activeTab",
         "@currentUserId",
         "@Url.Action("MoveTask", "Kanban", new { area = "Kanban" })",
-        "@Model.Id"
+        "@Model.Id",
+        "@Url.Action(MVC.Progetti.Progetti.Edit())",
+        "@Url.Action(MVC.Progetti.Progetti.Delete())",
+        "@Url.Action("Index", "Dashboard", new { area = "" })"
     );
+
 </script>
