@@ -911,6 +911,12 @@ body { background:#f6f8fb; }
         box-shadow:0 -4px 16px rgba(16,25,46,.18);
     }
 
+    /* Il drawer occupa il posto della navigazione inferiore quando è aperto. */
+    body.ordo-sidebar-open .ordo-mobile-nav {
+        visibility:hidden;
+        pointer-events:none;
+    }
+
     .ordo-mobile-nav a,
     .ordo-mobile-nav button {
         display:grid;

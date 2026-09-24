@@ -15,6 +15,7 @@ La caratteristica distintiva dell'applicazione è l'integrazione tra una normale
 - [Obiettivi](#obiettivi)
 - [Funzionalità](#funzionalità)
 - [Tecnologie](#tecnologie)
+- [Design UI/UX](#design-uiux)
 - [Architettura](#architettura)
 - [Modello dei dati](#modello-dei-dati)
 - [Autenticazione e autorizzazioni](#autenticazione-e-autorizzazioni)
@@ -131,6 +132,12 @@ La Dashboard fornisce una panoramica del lavoro dell'utente, mentre la sezione *
 - .NET SDK;
 - Node.js e npm;
 - IDE compatibili con .NET, ad esempio Rider, Visual Studio o Visual Studio Code.
+
+---
+
+# Design UI/UX
+
+Il progetto grafico e i prototipi dell’interfaccia sono disponibili su Figma: [Ordo — Interfaccia Uomo Macchina](https://www.figma.com/design/FFPMBI0bz4MPkWljhVnqbz/Interfaccia-Uomo-Macchina?node-id=0-1&t=BpFFyC3vp1hO1CqX-1).
 
 ---
 
