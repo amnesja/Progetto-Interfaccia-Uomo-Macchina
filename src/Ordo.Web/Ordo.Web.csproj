@@ -35,7 +35,9 @@
 	  <_ContentIncludedByDefault Remove="Areas\Progetti\Index.cshtml" />
 	</ItemGroup>
 
-	<Target Name="RestoreNpmPackages" BeforeTargets="Build" Condition="!Exists('node_modules')">
+	<Target Name="RestoreNpmPackages"
+        BeforeTargets="Build"
+        Condition="!Exists('node_modules\.bin\tsc.cmd')">
 		<Message Text="Ripristino pacchetti npm in corso..." Importance="high" />
 		<Exec Command="npm install" />
 	</Target>
