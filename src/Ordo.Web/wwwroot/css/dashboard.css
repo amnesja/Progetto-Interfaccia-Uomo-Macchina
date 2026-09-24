@@ -270,6 +270,95 @@ body { margin:0; color:var(--ordo-text); background:var(--ordo-bg); font-family:
     }
 }
 
+@keyframes ordo-fade-up {
+    from { opacity:0; transform:translateY(6px); }
+    to { opacity:1; transform:translateY(0); }
+}
+
+.ordo-sidebar-nav a,
+.ordo-sidebar-group-toggle,
+.ordo-dashboard-stat,
+.ordo-project-card,
+.ordo-dashboard-week-day,
+.ordo-dashboard-week-nav,
+.ordo-dashboard-week-today {
+    transition:color .18s ease, background-color .18s ease, border-color .18s ease,
+        box-shadow .18s ease, transform .18s ease;
+}
+.ordo-sidebar-group-items:not([hidden]) {
+    animation:ordo-fade-up .18s ease both;
+}
+.ordo-dashboard-page > *,
+.ordo-projects-page > * {
+    animation:ordo-fade-up .28s ease both;
+}
+.ordo-dashboard-stat:hover {
+    transform:translateY(-2px);
+    box-shadow:0 8px 18px rgba(16,25,46,.08);
+}
+.ordo-dashboard-stat.is-selected {
+    transform:translateY(-1px);
+}
+.ordo-dashboard-week-day:hover b {
+    transform:translateY(-1px);
+}
+.ordo-dashboard-week-nav:active,
+.ordo-dashboard-week-today:active,
+.ordo-sidebar-group-toggle:active {
+    transform:scale(.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+        transition-duration:.01ms !important;
+    }
+}
+
+@media (max-width:900px) {
+    .ordo-dashboard-context {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .ordo-breadcrumb {
+        overflow: hidden;
+        flex-wrap: nowrap;
+    }
+
+    .ordo-global-search {
+        min-width: 0;
+        flex-basis: 0;
+    }
+
+    .ordo-dashboard-main {
+        padding-top: calc(var(--ordo-topbar-height) + 30px);
+    }
+}
+
+@media (max-width:640px) {
+    .ordo-dashboard-main {
+        padding-top: calc(var(--ordo-topbar-height) + 24px);
+    }
+
+    .ordo-projects-heading,
+    .ordo-project-detail-heading {
+        gap: 12px;
+    }
+
+    .ordo-projects-heading .ordo-btn-primary,
+    .ordo-project-detail-heading .ordo-btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+
 /* Final dashboard alignment */
 .ordo-dashboard-page {
     width:min(100%, 1280px);
@@ -620,7 +709,6 @@ body { background:#f6f8fb; }
     .ordo-dashboard-main { width:100%; margin-left:0; padding:24px 16px 94px; }
     .ordo-dashboard-topbar-actions { padding:0 12px; }
     .ordo-dashboard-heading h1, .ordo-projects-heading h1 { font-size:27px; }
-    .ordo-mobile-nav { grid-template-columns:repeat(4,1fr); }
 }
 
 /*
@@ -629,7 +717,7 @@ body { background:#f6f8fb; }
  */
 .ordo-dashboard-main {
     padding-top: calc(var(--ordo-topbar-height) + 36px);
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 .ordo-dashboard-main .ordo-dashboard-page {
@@ -716,89 +804,201 @@ body { background:#f6f8fb; }
     }
 }
 
-@keyframes ordo-fade-up {
-    from { opacity:0; transform:translateY(6px); }
-    to { opacity:1; transform:translateY(0); }
-}
-
-.ordo-sidebar-nav a,
-.ordo-sidebar-group-toggle,
-.ordo-dashboard-stat,
-.ordo-project-card,
-.ordo-dashboard-week-day,
-.ordo-dashboard-week-nav,
-.ordo-dashboard-week-today {
-    transition:color .18s ease, background-color .18s ease, border-color .18s ease,
-        box-shadow .18s ease, transform .18s ease;
-}
-.ordo-sidebar-group-items:not([hidden]) {
-    animation:ordo-fade-up .18s ease both;
-}
-.ordo-dashboard-page > *,
-.ordo-projects-page > * {
-    animation:ordo-fade-up .28s ease both;
-}
-.ordo-dashboard-stat:hover {
-    transform:translateY(-2px);
-    box-shadow:0 8px 18px rgba(16,25,46,.08);
-}
-.ordo-dashboard-stat.is-selected {
-    transform:translateY(-1px);
-}
-.ordo-dashboard-week-day:hover b {
-    transform:translateY(-1px);
-}
-.ordo-dashboard-week-nav:active,
-.ordo-dashboard-week-today:active,
-.ordo-sidebar-group-toggle:active {
-    transform:scale(.96);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration:.01ms !important;
-        animation-iteration-count:1 !important;
-        scroll-behavior:auto !important;
-        transition-duration:.01ms !important;
-    }
+/* Keep the desktop sidebar model on touch layouts and expose it as a drawer. */
+.ordo-sidebar-backdrop,
+.ordo-sidebar-close {
+    display:none;
 }
 
 @media (max-width:900px) {
-    .ordo-dashboard-context {
-        min-width: 0;
-        overflow: hidden;
+    .ordo-dashboard-sidebar {
+        position:fixed;
+        z-index:3001;
+        display:flex;
+        top:0;
+        bottom:0;
+        left:0;
+        width:min(320px, calc(100vw - 48px));
+        height:100vh;
+        height:100dvh;
+        max-height:none;
+        padding:16px 14px 20px;
+        overflow-y:auto;
+        transform:translateX(-105%);
+        visibility:hidden;
+        transition:transform .22s ease, visibility .22s ease;
     }
 
-    .ordo-breadcrumb {
-        overflow: hidden;
-        flex-wrap: nowrap;
+    .ordo-dashboard-sidebar.is-open {
+        transform:translateX(0);
+        visibility:visible;
     }
 
-    .ordo-global-search {
-        min-width: 0;
-        flex-basis: 0;
+    .ordo-sidebar-backdrop:not([hidden]) {
+        position:fixed;
+        z-index:3000;
+        inset:0;
+        display:block;
+        width:100%;
+        height:100%;
+        padding:0;
+        background:rgba(11,19,38,.52);
+        border:0;
     }
+
+    .ordo-sidebar-close {
+        display:flex;
+        width:100%;
+        min-height:44px;
+        align-items:center;
+        gap:10px;
+        margin-bottom:12px;
+        padding:0 12px;
+        color:#c5cee0;
+        background:rgba(255,255,255,.06);
+        border:1px solid rgba(255,255,255,.1);
+        border-radius:9px;
+        font:inherit;
+        text-align:left;
+        cursor:pointer;
+    }
+
+    .ordo-dashboard-sidebar .ordo-dashboard-nav {
+        align-items:stretch;
+        margin-top:0;
+    }
+
+    .ordo-dashboard-sidebar .ordo-dashboard-nav a,
+    .ordo-dashboard-sidebar .ordo-sidebar-group-toggle {
+        justify-content:flex-start;
+        text-align:left;
+    }
+
+    .ordo-dashboard-sidebar .ordo-dashboard-nav span,
+    .ordo-dashboard-sidebar .ordo-sidebar-group-toggle > span > span,
+    .ordo-dashboard-sidebar .ordo-sidebar-chevron {
+        display:inline !important;
+    }
+
+    .ordo-dashboard-sidebar .ordo-sidebar-group-toggle > span {
+        display:flex !important;
+    }
+
+    .ordo-dashboard-sidebar .ordo-sidebar-group-items {
+        display:grid !important;
+    }
+
+    .ordo-dashboard-sidebar .ordo-sidebar-group-items[hidden] {
+        display:none !important;
+    }
+
+    .ordo-dashboard-sidebar .ordo-sidebar-group-items a {
+        justify-content:flex-start;
+    }
+
+    .ordo-mobile-nav {
+        position:fixed;
+        z-index:2000;
+        right:0;
+        bottom:0;
+        left:0;
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        min-height:64px;
+        padding:4px 6px env(safe-area-inset-bottom);
+        background:var(--ordo-navy);
+        border-top:1px solid #2645a2;
+        box-shadow:0 -4px 16px rgba(16,25,46,.18);
+    }
+
+    .ordo-mobile-nav a,
+    .ordo-mobile-nav button {
+        display:grid;
+        width:100%;
+        min-height:56px;
+        align-content:center;
+        justify-items:center;
+        gap:4px;
+        padding:0 2px;
+        color:#9ba9bf;
+        background:transparent;
+        border:0;
+        border-radius:8px;
+        font:inherit;
+        font-size:11px;
+        text-align:center;
+        text-decoration:none;
+        cursor:pointer;
+    }
+
+    .ordo-mobile-nav i { font-size:18px; }
+    .ordo-mobile-nav .active,
+    .ordo-mobile-nav [aria-expanded="true"] {
+        color:#fff;
+        background:#2645a2;
+        font-weight:700;
+    }
+
+    .ordo-mobile-nav :focus-visible,
+    .ordo-sidebar-close:focus-visible {
+        outline:3px solid var(--ordo-orange);
+        outline-offset:-3px;
+    }
+
+    .ordo-mobile-panel-backdrop {
+        position:fixed;
+        z-index:3000;
+        inset:var(--ordo-topbar-height) 0 calc(64px + env(safe-area-inset-bottom));
+        display:block;
+        width:100%;
+        padding:0;
+        background:rgba(11,19,38,.42);
+        border:0;
+    }
+
+    .ordo-mobile-panel-backdrop[hidden] { display:none; }
+
+    .ordo-mobile-panel {
+        position:fixed;
+        z-index:3001;
+        right:0;
+        bottom:calc(64px + env(safe-area-inset-bottom));
+        left:0;
+        max-height:min(62dvh,540px);
+        overflow-y:auto;
+        padding:10px 18px calc(18px + env(safe-area-inset-bottom));
+        color:var(--ordo-text);
+        background:linear-gradient(180deg,#fbfcff 0%,#fff 38%);
+        border:1px solid var(--ordo-border);
+        border-bottom:0;
+        border-radius:20px 20px 0 0;
+        box-shadow:0 -14px 36px rgba(16,25,46,.16);
+    }
+
+    .ordo-mobile-panel::before { content:""; display:block; width:36px; height:4px; margin:0 auto 12px; background:#d7deea; border-radius:999px; }
+    .ordo-mobile-panel[hidden] { display:none; }
+    .ordo-mobile-panel header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; padding:0 0 12px; border-bottom:1px solid #edf0f5; }
+    .ordo-mobile-panel h2 { margin:0; font-size:18px; font-weight:750; }
+    .ordo-mobile-panel header button { display:grid; width:36px; height:36px; flex:0 0 auto; place-items:center; color:#65738a; background:#eff3f8; border:1px solid #e6ebf2; border-radius:50%; font-size:16px; transition:background-color .16s ease, color .16s ease; }
+    .ordo-mobile-panel header button:hover { color:var(--ordo-blue); background:#e8edfb; }
+    .ordo-mobile-panel nav { display:grid; gap:5px; }
+    .ordo-mobile-panel nav a { display:flex; min-height:50px; min-width:0; align-items:center; gap:12px; padding:8px 10px; color:#46546a; border:1px solid transparent; border-radius:11px; font-size:14px; font-weight:550; text-decoration:none; transition:background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+    .ordo-mobile-panel nav a i { display:grid; width:34px; height:34px; flex:0 0 34px; place-items:center; color:var(--ordo-blue); background:#edf2ff; border:1px solid #e4eafd; border-radius:9px; text-align:center; }
+    .ordo-mobile-panel nav a span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ordo-mobile-panel nav a b { margin-left:auto; padding:3px 8px; color:#52668f; background:#eef2f8; border:1px solid #e3e9f2; border-radius:999px; font-size:11px; }
+    .ordo-mobile-panel nav a:hover { color:var(--ordo-blue); background:#f7f9fd; border-color:#e9eef6; }
+    .ordo-mobile-panel nav a:active { transform:scale(.99); }
+    .ordo-mobile-panel nav a.active { color:var(--ordo-blue); background:#f0f4ff; border-color:#dfe7fb; font-weight:700; }
+    .ordo-mobile-panel nav a.active i { color:#fff; background:var(--ordo-blue); border-color:var(--ordo-blue); }
+    .ordo-mobile-panel nav a:focus-visible,
+    .ordo-mobile-panel header button:focus-visible { outline:3px solid rgba(36,66,157,.28); outline-offset:2px; }
+    .ordo-mobile-panel-empty { padding:10px 11px; color:var(--ordo-muted); font-size:14px; }
 
     .ordo-dashboard-main {
-        padding-top: calc(var(--ordo-topbar-height) + 30px);
-    }
-}
-
-@media (max-width:640px) {
-    .ordo-dashboard-main {
-        padding-top: calc(var(--ordo-topbar-height) + 24px);
+        width:100%;
+        margin-left:0;
+        padding-bottom:calc(88px + env(safe-area-inset-bottom));
     }
 
-    .ordo-projects-heading,
-    .ordo-project-detail-heading {
-        gap: 12px;
-    }
-
-    .ordo-projects-heading .ordo-btn-primary,
-    .ordo-project-detail-heading .ordo-btn-secondary {
-        width: 100%;
-        justify-content: center;
-    }
+    body.ordo-sidebar-open { overflow:hidden; }
 }

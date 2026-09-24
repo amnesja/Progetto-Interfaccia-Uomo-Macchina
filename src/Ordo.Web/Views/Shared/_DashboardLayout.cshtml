@@ -134,7 +134,11 @@
         </div>
     </header>
 
-    <aside class="ordo-dashboard-sidebar">
+    <button class="ordo-sidebar-backdrop" type="button" aria-label="Chiudi il menu" data-sidebar-close hidden></button>
+    <aside id="ordoDashboardSidebar" class="ordo-dashboard-sidebar" aria-label="Navigazione principale">
+        <button class="ordo-sidebar-close" type="button" aria-label="Chiudi il menu" data-sidebar-close>
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Chiudi</span>
+        </button>
         <nav class="ordo-dashboard-nav" aria-label="Navigazione principale">
             <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index">
                 <i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span>
@@ -219,15 +223,166 @@
     </main>
 
     <nav class="ordo-mobile-nav" aria-label="Navigazione mobile">
-        <a class="@(isDashboard ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-table-cells-large"></i><span>Home</span></a>
-        <a class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-regular fa-folder"></i><span>Progetti</span></a>
-        <a class="@(isActivities ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index"><i class="fa-solid fa-list-check"></i><span>Attività</span></a>
-        <form asp-area="" asp-controller="Login" asp-action="Logout" method="post"><button type="submit" class="ordo-mobile-nav-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Esci</span></button></form>
+        <a class="@(isDashboard ? "active" : "")" data-page-current="@(isDashboard ? "true" : "false")" asp-area="" asp-controller="Dashboard" asp-action="Index"><i class="fa-solid fa-table-cells-large"></i><span>Dashboard</span></a>
+        <button type="button" aria-controls="ordoMobileProjects ordoDashboardSidebar" aria-expanded="false" data-page-current="@(area == "Progetti" || isKanban || isTasks ? "true" : "false")" data-sidebar-group="projects" class="@(area == "Progetti" || isKanban || isTasks ? "active" : "")"><i class="fa-regular fa-folder"></i><span>Progetti</span></button>
+        <button type="button" aria-controls="ordoMobileActivities ordoDashboardSidebar" aria-expanded="false" data-page-current="@(isActivities ? "true" : "false")" data-sidebar-group="activities" class="@(isActivities ? "active" : "")"><i class="fa-solid fa-list-check"></i><span>Attività</span></button>
     </nav>
+
+    <button class="ordo-mobile-panel-backdrop" type="button" aria-label="Chiudi il pannello" data-mobile-panel-close hidden></button>
+    <section id="ordoMobileActivities" class="ordo-mobile-panel" aria-labelledby="ordoMobileActivitiesTitle" hidden>
+        <header>
+            <h2 id="ordoMobileActivitiesTitle">Attività</h2>
+            <button type="button" aria-label="Chiudi Attività" data-mobile-panel-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </header>
+        <nav aria-label="Filtri attività">
+            <a class="@(isActivities && string.IsNullOrEmpty(activityFilter) ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index">
+                <i class="fa-solid fa-layer-group"></i><span>Tutte</span>
+            </a>
+            <a class="@(isActivities && activityFilter == TaskState.ToDo.ToString() ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.ToDo">
+                <i class="fa-regular fa-circle"></i><span>Da fare</span><b>@SidebarTaskCount(TaskState.ToDo)</b>
+            </a>
+            <a class="@(isActivities && activityFilter == TaskState.InProgress.ToString() ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.InProgress">
+                <i class="fa-solid fa-spinner"></i><span>In corso</span><b>@SidebarTaskCount(TaskState.InProgress)</b>
+            </a>
+            <a class="@(isActivities && activityFilter == TaskState.Review.ToString() ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Review">
+                <i class="fa-solid fa-magnifying-glass"></i><span>Review</span><b>@SidebarTaskCount(TaskState.Review)</b>
+            </a>
+            <a class="@(isActivities && activityFilter == TaskState.Done.ToString() ? "active" : "")" asp-area="" asp-controller="Attivita" asp-action="Index" asp-route-filtro="@TaskState.Done">
+                <i class="fa-regular fa-circle-check"></i><span>Completate</span><b>@SidebarTaskCount(TaskState.Done)</b>
+            </a>
+        </nav>
+    </section>
+    <section id="ordoMobileProjects" class="ordo-mobile-panel" aria-labelledby="ordoMobileProjectsTitle" hidden>
+        <header>
+            <h2 id="ordoMobileProjectsTitle">Progetti</h2>
+            <button type="button" aria-label="Chiudi Progetti" data-mobile-panel-close><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </header>
+        <nav aria-label="Progetti">
+            @if (sidebarProjects.Count == 0)
+            {
+                <span class="ordo-mobile-panel-empty">Nessun progetto</span>
+            }
+            else
+            {
+                foreach (var project in sidebarProjects)
+                {
+                    <a class="@(projectId == project.Id.ToString() ? "active" : "")" asp-area="Progetti" asp-controller="Progetti" asp-action="Dettaglio" asp-route-id="@project.Id">
+                        <i class="fa-regular fa-folder-open"></i><span>@project.Nome</span>
+                    </a>
+                }
+            }
+        </nav>
+    </section>
 </div>
 
 @section scripts {
     <script>
+        var dashboardSidebar = document.getElementById("ordoDashboardSidebar");
+        var sidebarBackdrop = document.querySelector(".ordo-sidebar-backdrop");
+        var mobileNavigation = window.matchMedia("(max-width: 900px)");
+        var phoneNavigation = window.matchMedia("(max-width: 640px)");
+        var sidebarReturnFocus = null;
+        var mobilePanelReturnFocus = null;
+
+        function closeMobilePanel(restoreFocus, restorePageState) {
+            document.querySelectorAll(".ordo-mobile-panel").forEach(function (panel) { panel.hidden = true; });
+            document.querySelector(".ordo-mobile-panel-backdrop").hidden = true;
+            document.querySelectorAll(".ordo-mobile-nav [data-sidebar-group]").forEach(function (button) { button.setAttribute("aria-expanded", "false"); });
+            document.querySelectorAll(".ordo-mobile-nav [data-page-current]").forEach(function (item) { item.classList.remove("active"); });
+            if (restorePageState) {
+                document.querySelectorAll('.ordo-mobile-nav [data-page-current="true"]').forEach(function (item) { item.classList.add("active"); });
+            }
+            document.body.classList.remove("ordo-mobile-panel-open");
+            if (restoreFocus && mobilePanelReturnFocus) mobilePanelReturnFocus.focus();
+            mobilePanelReturnFocus = null;
+        }
+
+        function openMobilePanel(groupName, trigger) {
+            var panel = document.getElementById(groupName === "activities" ? "ordoMobileActivities" : "ordoMobileProjects");
+            var isAlreadyOpen = !panel.hidden;
+            closeMobilePanel(false, isAlreadyOpen);
+            if (isAlreadyOpen) return;
+
+            mobilePanelReturnFocus = trigger;
+            panel.hidden = false;
+            document.querySelector(".ordo-mobile-panel-backdrop").hidden = false;
+            document.querySelectorAll(".ordo-mobile-nav [data-page-current]").forEach(function (item) { item.classList.remove("active"); });
+            trigger.classList.add("active");
+            trigger.setAttribute("aria-expanded", "true");
+            document.body.classList.add("ordo-mobile-panel-open");
+            panel.querySelector("[data-mobile-panel-close]").focus();
+        }
+
+        function setSidebarOpen(open, groupName) {
+            if (!dashboardSidebar || !mobileNavigation.matches) return;
+
+            document.querySelectorAll(".ordo-mobile-nav [data-page-current]").forEach(function (item) { item.classList.remove("active"); });
+            if (open && groupName) {
+                document.querySelector('.ordo-mobile-nav [data-sidebar-group="' + groupName + '"]')?.classList.add("active");
+            } else if (!open) {
+                document.querySelectorAll('.ordo-mobile-nav [data-page-current="true"]').forEach(function (item) { item.classList.add("active"); });
+            }
+
+            dashboardSidebar.classList.toggle("is-open", open);
+            dashboardSidebar.setAttribute("aria-hidden", String(!open));
+            dashboardSidebar.inert = !open;
+            sidebarBackdrop.hidden = !open;
+            document.body.classList.toggle("ordo-sidebar-open", open);
+
+            document.querySelectorAll("[data-sidebar-open], [data-sidebar-group]").forEach(function (button) {
+                button.setAttribute("aria-expanded", String(open && (button.dataset.sidebarOpen !== undefined || button.dataset.sidebarGroup === groupName)));
+            });
+
+            if (groupName) {
+                document.querySelectorAll("[data-sidebar-accordion]").forEach(function (group) {
+                    var isTarget = group.classList.contains("ordo-sidebar-group-pinned") === (groupName === "activities");
+                    var toggle = group.querySelector(".ordo-sidebar-group-toggle");
+                    var items = group.querySelector(".ordo-sidebar-group-items");
+                    toggle.setAttribute("aria-expanded", String(isTarget));
+                    items.hidden = !isTarget;
+                });
+            }
+
+            if (open) {
+                sidebarReturnFocus = document.activeElement;
+                dashboardSidebar.querySelector("[data-sidebar-close]").focus();
+            } else if (sidebarReturnFocus) {
+                sidebarReturnFocus.focus();
+                sidebarReturnFocus = null;
+            }
+        }
+
+        document.querySelectorAll("[data-sidebar-open]").forEach(function (button) {
+            button.addEventListener("click", function () { setSidebarOpen(true); });
+        });
+        document.querySelectorAll("[data-sidebar-group]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                if (phoneNavigation.matches) openMobilePanel(button.dataset.sidebarGroup, button);
+                else setSidebarOpen(true, button.dataset.sidebarGroup);
+            });
+        });
+        document.querySelectorAll("[data-sidebar-close]").forEach(function (button) {
+            button.addEventListener("click", function () { setSidebarOpen(false); });
+        });
+        dashboardSidebar.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function () { setSidebarOpen(false); });
+        });
+        document.querySelectorAll(".ordo-mobile-panel [data-mobile-panel-close]").forEach(function (button) {
+            button.addEventListener("click", function () { closeMobilePanel(true, true); });
+        });
+        document.querySelector(".ordo-mobile-panel-backdrop").addEventListener("click", function () { closeMobilePanel(true, true); });
+        document.querySelectorAll(".ordo-mobile-panel a").forEach(function (link) {
+            link.addEventListener("click", function () { closeMobilePanel(false); });
+        });
+        phoneNavigation.addEventListener("change", function () { closeMobilePanel(false, true); });
+        mobileNavigation.addEventListener("change", function () {
+            dashboardSidebar.classList.remove("is-open");
+            dashboardSidebar.removeAttribute("aria-hidden");
+            dashboardSidebar.inert = false;
+            sidebarBackdrop.hidden = true;
+            document.body.classList.remove("ordo-sidebar-open");
+        });
+
         document.querySelectorAll("[data-sidebar-accordion] .ordo-sidebar-group-toggle").forEach(function (toggle) {
             toggle.addEventListener("click", function () {
                 var group = toggle.closest("[data-sidebar-accordion]");
@@ -253,6 +408,8 @@
                 document.querySelector(".ordo-global-search input")?.focus();
             }
             if (event.key === "Escape") {
+                setSidebarOpen(false);
+                closeMobilePanel(true, true);
                 document.getElementById("notificationPanel")?.classList.add("d-none");
                 document.getElementById("userMenuPanel")?.classList.add("d-none");
             }
@@ -366,7 +523,20 @@
             });
             globalSignalR.connection.on("ProjectMemberAdded", function (projectId, nome) { ordoNotify("Sei stato aggiunto al progetto «" + nome + "».", "/Progetti/Dettaglio/" + projectId, "project"); });
             globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { ordoNotify("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
-            globalSignalR.connection.on("ProjectDeleted", function () {
+            globalSignalR.connection.on("ProjectDeleted", function (projectId) {
+                if (projectId) {
+                    var deletedProjectUrl = "/Progetti/Dettaglio/" + projectId;
+                    notifications = notifications.filter(function (notification) {
+                        if (!notification.url) return true;
+                        try {
+                            var url = new URL(notification.url, window.location.origin);
+                            return url.pathname.toLowerCase() !== deletedProjectUrl.toLowerCase();
+                        } catch (_) {
+                            return true;
+                        }
+                    });
+                    renderNotifications();
+                }
                 ordoNotify("Un progetto non è più disponibile.", null, "project");
                 // Ricarichiamo la pagina corrente ovunque ci si trovi (sidebar, contatori
                 // e liste sono calcolati lato server): senza questo reload, restavano

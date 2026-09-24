@@ -447,6 +447,17 @@
     .ordo-modal-backdrop { padding:10px; }
     .ordo-modal-header { padding:16px 18px 0; }
     .ordo-modal-form { margin:16px 18px 18px; }
+    .ordo-modal-form .ordo-project-form-actions {
+        flex-direction:column-reverse;
+        align-items:stretch;
+        gap:10px;
+    }
+    .ordo-modal-form .ordo-project-form-actions > button {
+        width:100%;
+        min-height:44px;
+        justify-content:center;
+    }
+    .ordo-modal-form input[type="date"] { cursor:pointer; }
     .ordo-chat-message { width:92%; }
     .ordo-chat-form { grid-template-columns:1fr; }
     .ordo-chat-form button { width:100%; }
@@ -518,4 +529,3 @@
         justify-content:center;
     }
 }
-

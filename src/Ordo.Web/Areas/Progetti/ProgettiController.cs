@@ -194,7 +194,10 @@ namespace Ordo.Web.Areas.Progetti
 
             var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = id });
             if (progetto == null)
-                return NotFound();
+            {
+                Alerts.AddWarning(this, "Il progetto non è più disponibile.");
+                return RedirectToAction("Index", "Dashboard", new { area = "" });
+            }
 
             var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = id });
             var isOwner = progetto.OwnerId == currentUserId;

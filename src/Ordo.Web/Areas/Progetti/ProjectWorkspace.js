@@ -202,6 +202,23 @@ var Ordo;
                     },
 
 
+                    openDatePicker(event) {
+
+                        const input = event.currentTarget;
+
+                        if (typeof input.showPicker !== "function") {
+                            return;
+                        }
+
+                        try {
+                            input.showPicker();
+                        } catch (error) {
+                            // Il browser mantiene il comportamento nativo del campo.
+                        }
+
+                    },
+
+
                     tasksByState(state) {
 
                         return this.selectedBoard.tasks
