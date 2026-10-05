@@ -31,8 +31,6 @@
 
 	<ItemGroup>
 	  <_ContentIncludedByDefault Remove="Areas\Progetti\Dettaglio.cshtml" />
-	  <_ContentIncludedByDefault Remove="Areas\Progetti\Edit.cshtml" />
-	  <_ContentIncludedByDefault Remove="Areas\Progetti\Index.cshtml" />
 	</ItemGroup>
 
 	<Target Name="RestoreNpmPackages"

@@ -599,7 +599,7 @@
 
                 <form method="post"
                       action="@Url.Action(MVC.Progetti.Progetti.Edit())"
-                      class="ordo-project-form ordo-modal-form"
+                      class="ordo-project-form ordo-form"
                       v-on:submit.prevent="saveProject">
 
                     <input type="hidden"
@@ -728,7 +728,7 @@
                 </header>
 
 
-                <div class="ordo-modal-form">
+                <div class="ordo-form">
 
                     <p>
 
@@ -824,7 +824,7 @@
 
             <form method="post"
                   action="@Url.Action("Edit", "Tasks", new { area = "Tasks" })"
-                  class="ordo-project-form ordo-modal-form"
+                  class="ordo-project-form ordo-form"
                   v-on:submit.prevent="saveTask">
 
                 <input type="hidden"

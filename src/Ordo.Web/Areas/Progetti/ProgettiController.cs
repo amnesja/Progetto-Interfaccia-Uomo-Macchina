@@ -44,33 +44,6 @@ namespace Ordo.Web.Areas.Progetti
             return RedirectToAction("Index", "Dashboard", new { area = "" });
         }
 
-        [HttpGet]
-        public virtual IActionResult New()
-        {
-            return RedirectToAction(Actions.Edit());
-        }
-
-        [HttpGet]
-        public virtual async Task<IActionResult> Edit(Guid? id)
-        {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            var model = new EditViewModel();
-
-            if (id.HasValue)
-            {
-                var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = id.Value });
-
-                if (progetto == null || progetto.OwnerId != currentUserId)
-                    return Forbid();
-
-                model.SetProject(progetto);
-            }
-
-            return View(model);
-        }
-
         [HttpPost]
         public virtual async Task<IActionResult> Edit(EditViewModel model)
         {
@@ -149,7 +122,7 @@ namespace Ordo.Web.Areas.Progetti
                 }
 
                 Alerts.AddError(this, "Errore in salvataggio del progetto");
-                return RedirectToAction(Actions.Edit(model.Id));
+                return RedirectToAction("Index", "Dashboard", new { area = "" });
             }
 
             return RedirectToAction(Actions.Dettaglio(model.Id.Value));
@@ -262,36 +235,6 @@ namespace Ordo.Web.Areas.Progetti
             model.SetMessages(messages);
 
             return View(model);
-        }
-
-        [HttpGet]
-        public virtual async Task<IActionResult> Chat(Guid id)
-        {
-            if (!TryGetCurrentUserId(out var currentUserId))
-                return Challenge();
-
-            var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = id });
-            if (progetto == null)
-                return NotFound();
-
-            var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = id });
-            if (progetto.OwnerId != currentUserId && !membri.Members.Any(member => member.UserId == currentUserId))
-                return Forbid();
-
-            var messages = await _sharedService.Query(new ProjectChatMessagesQuery { ProjectId = id });
-            return View(new ChatViewModel
-            {
-                ProjectId = id,
-                ProjectNome = progetto.Nome,
-                Messages = messages.Messages.Select(message => new ChatMessageViewModel
-                {
-                    Id = message.Id,
-                    UserId = message.UserId,
-                    UserName = message.UserName,
-                    Testo = message.Testo,
-                    DataCreazione = message.DataCreazione
-                })
-            });
         }
 
         [HttpPost]

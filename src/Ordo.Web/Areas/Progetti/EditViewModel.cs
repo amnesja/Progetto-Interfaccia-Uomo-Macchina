@@ -15,16 +15,6 @@ namespace Ordo.Web.Areas.Progetti
         [Display(Name = "Descrizione")]
         public string Descrizione { get; set; }
 
-        public void SetProject(ProjectDetailDTO dto)
-        {
-            if (dto != null)
-            {
-                Id = dto.Id;
-                Nome = dto.Nome;
-                Descrizione = dto.Descrizione;
-            }
-        }
-
         public AddOrUpdateProjectCommand ToAddOrUpdateProjectCommand(Guid ownerId)
         {
             return new AddOrUpdateProjectCommand

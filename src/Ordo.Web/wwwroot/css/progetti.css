@@ -272,16 +272,16 @@
     background:#e7ecf4;
     transform:rotate(90deg);
 }
-.ordo-modal-form {
+.ordo-form {
     margin:0;
     padding:24px 28px 28px;
     border:0;
     box-shadow:none;
 }
-.ordo-modal-form .ordo-field {
+.ordo-form .ordo-field {
     gap:8px;
 }
-.ordo-modal-form .ordo-field-row {
+.ordo-form .ordo-field-row {
     gap:14px;
 }
 .ordo-priority-picker {
@@ -349,24 +349,24 @@
     background:transparent !important;
     box-shadow:none !important;
 }
-.ordo-modal-form input,
-.ordo-modal-form textarea,
-.ordo-modal-form select {
+.ordo-form input,
+.ordo-form textarea,
+.ordo-form select {
     border-color:#dce3ed;
     border-radius:9px;
     background:#fbfcfe;
     transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
-.ordo-modal-form input:focus,
-.ordo-modal-form textarea:focus,
-.ordo-modal-form select:focus {
+.ordo-form input:focus,
+.ordo-form textarea:focus,
+.ordo-form select:focus {
     background:#fff;
 }
-.ordo-modal-form .ordo-btn-primary:disabled {
+.ordo-form .ordo-btn-primary:disabled {
     opacity:.72;
     cursor:wait;
 }
-.ordo-modal-form .ordo-project-form-actions {
+.ordo-form .ordo-project-form-actions {
     justify-content:flex-end;
     margin-top:4px;
     padding-top:18px;
@@ -422,7 +422,7 @@
     min-height:0;
     overflow:hidden;
 }
-.ordo-workspace-sidebar .ordo-modal-form {
+.ordo-workspace-sidebar .ordo-form {
     flex:1;
     min-height:0;
     align-content:start;
@@ -431,13 +431,13 @@
     background:var(--ordo-bg);
     color:var(--ordo-text);
 }
-.ordo-workspace-sidebar .ordo-modal-form .ordo-field-row { display:contents; }
-.ordo-workspace-sidebar .ordo-modal-form { margin:0; }
-.ordo-workspace-sidebar .ordo-modal-form label { color:#39465b; }
-.ordo-workspace-sidebar .ordo-modal-form input,
-.ordo-workspace-sidebar .ordo-modal-form textarea,
-.ordo-workspace-sidebar .ordo-modal-form select { color:var(--ordo-text); background:#fff; }
-.ordo-workspace-sidebar .ordo-modal-form .ordo-project-form-actions { border-top-color:var(--ordo-border); }
+.ordo-workspace-sidebar .ordo-form .ordo-field-row { display:contents; }
+.ordo-workspace-sidebar .ordo-form { margin:0; }
+.ordo-workspace-sidebar .ordo-form label { color:#39465b; }
+.ordo-workspace-sidebar .ordo-form input,
+.ordo-workspace-sidebar .ordo-form textarea,
+.ordo-workspace-sidebar .ordo-form select { color:var(--ordo-text); background:#fff; }
+.ordo-workspace-sidebar .ordo-form .ordo-project-form-actions { border-top-color:var(--ordo-border); }
 .ordo-workspace-sidebar .ordo-project-danger-zone { border-top-color:var(--ordo-border); }
 .ordo-workspace-sidebar .ordo-project-danger-zone p { color:var(--ordo-muted); }
 .ordo-project-workspace-layout.has-sidebar .ordo-project-workspace-main { padding-right:22px; }
@@ -460,7 +460,7 @@
         border-left:0;
         border-bottom:1px solid var(--ordo-border);
     }
-    .ordo-workspace-sidebar .ordo-modal-form .ordo-project-form-actions {
+    .ordo-workspace-sidebar .ordo-form .ordo-project-form-actions {
         flex-direction:row;
         align-items:center;
     }
@@ -485,18 +485,18 @@
     .ordo-kanban-filters select { flex:1; min-width:0; }
     .ordo-modal-backdrop { padding:10px; }
     .ordo-modal-header { padding:16px 18px 0; }
-    .ordo-modal-form { margin:16px 18px 18px; }
-    .ordo-modal-form .ordo-project-form-actions {
+    .ordo-form { margin:16px 18px 18px; }
+    .ordo-form .ordo-project-form-actions {
         flex-direction:column-reverse;
         align-items:stretch;
         gap:10px;
     }
-    .ordo-modal-form .ordo-project-form-actions > button {
+    .ordo-form .ordo-project-form-actions > button {
         width:100%;
         min-height:44px;
         justify-content:center;
     }
-    .ordo-modal-form input[type="date"] { cursor:pointer; }
+    .ordo-form input[type="date"] { cursor:pointer; }
     .ordo-chat-message { width:92%; }
     .ordo-chat-form { grid-template-columns:1fr; }
     .ordo-chat-form button { width:100%; }
