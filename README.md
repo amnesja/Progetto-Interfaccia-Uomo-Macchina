@@ -61,10 +61,9 @@ Gli obiettivi principali di Ordo sono:
 
 ## Gestione progetti
 
-- elenco dei progetti accessibili all'utente;
-- ricerca e paginazione;
-- creazione di un progetto;
-- modifica del progetto;
+- accesso ai progetti dalla navigazione laterale e dalla Dashboard;
+- creazione di un progetto dalla Dashboard;
+- modifica del progetto dal workspace;
 - eliminazione del progetto;
 - gestione dei collaboratori;
 - workspace dedicato al singolo progetto.
@@ -123,7 +122,6 @@ La Dashboard fornisce una panoramica del lavoro dell'utente, mentre la sezione *
 | **SCSS/CSS** | Personalizzazione grafica |
 | **Font Awesome** | Icone |
 | **Toastify** | Messaggi e notifiche visuali |
-| **Vue Multiselect** | Selezione dinamica di utenti e filtri |
 
 ## Strumenti
 
@@ -180,7 +178,7 @@ A livello applicativo, le operazioni di lettura e modifica sono separate in **Qu
 │                 OrdoDbContext                          │
 │                        │                               │
 │                        ▼                               │
-│             EF Core InMemory Database                  │
+│       EF Core InMemory / SQLite / SQL Server            │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -209,7 +207,7 @@ SharedService
 OrdoDbContext
   │
   ▼
-InMemory Database
+EF Core (InMemory / SQLite / SQL Server)
 ```
 
 Per le operazioni che richiedono aggiornamenti real-time viene aggiunto il sistema di Domain Events/SignalR:
@@ -397,16 +395,9 @@ Visualizza informazioni relative alle attività, tra cui:
 
 ## Progetti
 
-La pagina Progetti mostra i progetti accessibili all'utente.
+Non esiste una pagina autonoma di elenco Progetti: la route `/Progetti` reindirizza alla Dashboard. I progetti sono raggiungibili dalla navigazione laterale; la Dashboard mostra i progetti del proprietario e consente di crearne uno tramite modale.
 
-Sono disponibili:
-
-- ricerca;
-- paginazione;
-- creazione;
-- modifica;
-- eliminazione;
-- accesso al dettaglio/workspace.
+Dal workspace del progetto il proprietario può modificarne i dati nella sidebar o eliminarlo. La creazione e la modifica inviano i dati all'endpoint `POST /Progetti/Edit`; l'eliminazione usa `POST /Progetti/Delete`.
 
 ---
 
@@ -444,7 +435,7 @@ Il proprietario può aggiungere un utente tramite email e rimuovere i membri esi
 
 ### Chat
 
-Permette ai membri del progetto di comunicare attraverso una chat interna, con aggiornamenti real-time.
+La chat è integrata nel workspace e consente ai membri di comunicare in tempo reale. L'interfaccia carica gli ultimi 50 messaggi e permette di recuperare quelli precedenti a pagine. L'invio avviene senza ricaricare la pagina; `Invio` spedisce il messaggio e `Shift+Invio` inserisce una nuova riga. I messaggi sono raggruppati per autore e separati per giorno; gli arrivi in tempo reale rispettano la posizione di lettura e mostrano un indicatore se l'utente non è in fondo alla conversazione.
 
 ---
 
@@ -605,6 +596,8 @@ ed è implementato dalla classe `OrdoHub`.
 
 Il client utilizza `@microsoft/signalr`.
 
+Il layout autenticato crea una connessione condivisa per le notifiche. Il workspace del progetto e la pagina **Le mie attività** riutilizzano questa connessione; il workspace aggiunge i gruppi del progetto e delle board necessari. La board Kanban e il dettaglio del task configurano inoltre connessioni dedicate ai rispettivi aggiornamenti.
+
 ---
 
 ## Gruppi SignalR
@@ -693,13 +686,15 @@ Non deve invece essere considerata una configurazione di produzione.
 
 ---
 
-## Provider disponibili nel codice
+## Provider disponibili
 
-Il progetto contiene anche il package `Microsoft.EntityFrameworkCore.Sqlite` e il codice di `Startup` prevede un percorso alternativo per una connection string.
+`Startup` seleziona il provider in base alla connection string:
 
-Questo **non cambia il fatto che la configurazione attuale senza connection string utilizzi InMemory**.
+- se non è configurata una connection string, usa **EF Core InMemory**;
+- se la stringa contiene `Data Source=` o `Filename=`, oppure termina con `.db`, usa **SQLite**;
+- negli altri casi usa **SQL Server**.
 
-Il README considera quindi InMemory il database effettivamente utilizzato nell'esecuzione standard del progetto.
+La configurazione predefinita è quindi InMemory; SQLite e SQL Server sono supportati dal codice quando vengono configurati.
 
 ---
 
@@ -806,8 +801,19 @@ Progetto-Interfaccia-Uomo-Macchina/
         │   ├── AuthenticatedBaseController.cs
         │   ├── IdentitaViewModel.cs
         │   ├── Kanban/
+        │   │   ├── Board.cshtml
+        │   │   ├── Board.ts / Board.js
+        │   │   └── KanbanController.cs
         │   ├── Progetti/
+        │   │   ├── Dettaglio.cshtml
+        │   │   ├── DettaglioViewModel.cs
+        │   │   ├── ProjectChatModels.cs
+        │   │   ├── ProjectWorkspace.js
+        │   │   └── ProgettiController.cs
         │   ├── Tasks/
+        │   │   ├── Dettaglio.cshtml
+        │   │   ├── Edit.cshtml
+        │   │   └── TasksController.cs
         │   └── _ViewImports.cshtml
         │
         ├── Features/
@@ -827,6 +833,7 @@ Progetto-Interfaccia-Uomo-Macchina/
         │
         ├── Views/
         │   └── Shared/
+        ├── Infrastructure/
         │
         ├── wwwroot/
         │   ├── css/
@@ -836,9 +843,12 @@ Progetto-Interfaccia-Uomo-Macchina/
         ├── Startup.cs
         ├── Container.cs
         ├── AppSettings.cs
+        ├── bundleconfig.json
         ├── package.json
         └── tsconfig.json
 ```
+
+La vecchia view autonoma di modifica progetto e la vecchia pagina separata della chat non sono presenti: modifica e chat sono integrate nel workspace; la creazione del progetto è disponibile dalla Dashboard.
 
 ---
 
@@ -926,16 +936,23 @@ Le principali sono:
 
 ```text
 vue
-@ microsoft/signalr
+@microsoft/signalr
 bootstrap
 @fortawesome/fontawesome-free
 toastify-js
-vue-multiselect
 ```
 
-Il progetto utilizza TypeScript tramite `tsconfig.json`.
+Il progetto utilizza TypeScript tramite `tsconfig.json`; il bundle delle librerie frontend è descritto in `bundleconfig.json`.
 
 Il target configurato per TypeScript è `ES2019`.
+
+---
+
+# Configurazione
+
+Il database predefinito è InMemory e non richiede configurazione. Per usare un provider relazionale si può configurare `ConnectionStrings:DefaultConnection` in `appsettings.json` o tramite le normali variabili di configurazione ASP.NET Core, oppure impostare la variabile d'ambiente `ORDO_CONNECTION`.
+
+Una stringa SQLite deve contenere `Data Source=` o `Filename=`, oppure terminare con `.db`. Le altre stringhe vengono interpretate come connection string SQL Server. Con un provider relazionale, all'avvio vengono applicate le migration; con InMemory viene inizializzato il database senza migration.
 
 ---
 
@@ -1023,6 +1040,8 @@ Il progetto include diversi meccanismi di protezione:
 
 La password viene trasformata prima della memorizzazione e verificata tramite `PasswordHasher.Verify` durante il login.
 
+La validazione antiforgery è configurata con l'header `RequestVerificationToken`, utilizzato dalle richieste JavaScript che inviano il token. La presenza della configurazione non implica che ogni action POST applichi automaticamente la validazione: le action vanno verificate individualmente.
+
 Per un'applicazione di produzione sarebbe comunque preferibile utilizzare un password hashing adattivo dedicato, come ASP.NET Core Identity/PBKDF2, Argon2 o bcrypt.
 
 ---
@@ -1033,7 +1052,7 @@ Il progetto può essere esteso in diverse direzioni.
 
 ## Persistenza reale
 
-Sostituire il database InMemory con un database persistente, ad esempio SQLite o SQL Server, mantenendo Entity Framework Core come livello di accesso ai dati.
+Configurare SQLite o SQL Server come provider predefinito negli ambienti persistenti, gestendo in modo sicuro le connection string e verificando migration, backup e ripristino dei dati.
 
 ## Kanban
 
@@ -1054,8 +1073,7 @@ Possibili estensioni:
 - modifica dei messaggi;
 - eliminazione;
 - ricerca;
-- paginazione;
-- indicatori di lettura;
+- indicatori di lettura persistenti;
 - stato online degli utenti.
 
 ## Notifiche
@@ -1116,4 +1134,4 @@ Bootstrap
 
 L'architettura separa la presentazione dalla logica applicativa e dall'accesso ai dati, utilizzando Command e Query attraverso `SharedService` e un sistema di Domain Events per propagare le modifiche real-time.
 
-La configurazione InMemory rende il progetto immediatamente eseguibile e adatto a sviluppo e dimostrazione, mentre la struttura del codice permette in futuro di introdurre una persistenza relazionale senza dover riscrivere l'intera applicazione.
+La configurazione InMemory rende il progetto immediatamente eseguibile e adatto a sviluppo e dimostrazione. Il codice supporta anche SQLite e SQL Server quando viene fornita una connection string.
