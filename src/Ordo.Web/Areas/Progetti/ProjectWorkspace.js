@@ -400,6 +400,11 @@ var Ordo;
 
                     openProjectEdit() {
 
+                        if (this.savingTask) {
+                            return;
+                        }
+
+                        this.taskModal.open = false;
                         this.projectEdit.open = true;
 
                         this.projectEdit.nome =
@@ -453,30 +458,6 @@ var Ordo;
                         }
 
                         this.projectDelete.open = false;
-
-                    },
-
-
-                    closeProjectEditOnPageClick(event) {
-
-                        if (
-                            !this.projectEdit.open ||
-                            this.projectDelete.open
-                        ) {
-                            return;
-                        }
-
-
-                        if (
-                            event.target.closest?.(
-                                ".ordo-task-sidebar"
-                            )
-                        ) {
-                            return;
-                        }
-
-
-                        this.closeProjectEdit();
 
                     },
 
@@ -708,6 +689,11 @@ var Ordo;
 
                     openNewTask() {
 
+                        if (this.projectEdit.saving) {
+                            return;
+                        }
+
+                        this.projectEdit.open = false;
                         this.taskModal = {
 
                             open: true,
@@ -736,6 +722,11 @@ var Ordo;
 
                     openEditTask(task) {
 
+                        if (this.projectEdit.saving) {
+                            return;
+                        }
+
+                        this.projectEdit.open = false;
                         this.taskModal = {
 
                             open: true,
@@ -807,22 +798,6 @@ var Ordo;
                     closeTaskModal() {
 
                         this.taskModal.open = false;
-
-                    },
-
-
-                    closeTaskModalOnPageClick(event) {
-
-                        if (
-                            !this.taskModal.open ||
-                            event.target.closest?.(
-                                ".ordo-modal"
-                            )
-                        ) {
-                            return;
-                        }
-
-                        this.closeTaskModal();
 
                     },
 
@@ -1200,21 +1175,6 @@ var Ordo;
 
 
                 mounted() {
-
-                    document.addEventListener(
-                        "click",
-                        this.closeTaskModalOnPageClick,
-                        true
-                    );
-
-
-                    document.addEventListener(
-                        "click",
-                        this.closeProjectEditOnPageClick,
-                        true
-                    );
-
-
                     window.addEventListener(
                         "keydown",
                         event => {

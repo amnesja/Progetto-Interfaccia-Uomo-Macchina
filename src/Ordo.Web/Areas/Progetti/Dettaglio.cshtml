@@ -36,6 +36,11 @@
 
     @Html.AntiForgeryToken()
 
+    <div class="ordo-project-workspace-layout"
+         :class="{ 'has-sidebar': projectEdit.open || (taskModal.open && taskModal.mode === 'edit') }">
+
+    <div class="ordo-project-workspace-main">
+
     <a class="ordo-back-link"
        href="@Url.Action("Index", "Dashboard", new { area = "" })">
         <i class="fa-solid fa-arrow-left"></i>
@@ -350,12 +355,11 @@
 
                         </div>
 
-                    </div>
-
                 </div>
 
             </div>
 
+            </div>
 
             <p v-if="!filteredTaskCount"
                class="ordo-dashboard-empty ordo-kanban-empty-filter">
@@ -565,19 +569,15 @@
 
     </section>
 
+    </div>
 
-    <!-- SIDEBAR MODIFICA PROGETTO -->
+    <!-- PANNELLO MODIFICA PROGETTO -->
 
     @if (Model.IsOwner)
     {
-        <div v-if="projectEdit.open"
-             class="ordo-modal-backdrop ordo-sidebar-backdrop"
-             v-on:click.self="closeProjectEdit">
-
-            <section class="ordo-modal ordo-task-sidebar"
-                     role="dialog"
-                     aria-modal="true"
-                     aria-labelledby="projectEditTitle">
+        <aside v-show="projectEdit.open"
+               class="ordo-workspace-sidebar"
+               aria-labelledby="projectEditTitle">
 
                 <header class="ordo-modal-header">
 
@@ -696,9 +696,7 @@
 
                 </form>
 
-            </section>
-
-        </div>
+        </aside>
 
 
         <!-- CONFERMA ELIMINAZIONE -->
@@ -788,17 +786,18 @@
     }
 
 
-    <!-- SIDEBAR ATTIVITÀ -->
+    <!-- PANNELLO ATTIVITÀ -->
 
-    <div v-if="taskModal.open"
-         class="ordo-modal-backdrop"
-         :class="{ 'ordo-sidebar-backdrop': taskModal.mode === 'edit' }"
-         v-on:click.self="closeTaskModal">
+    <div v-show="taskModal.open"
+         :class="taskModal.mode === 'edit'
+             ? 'ordo-workspace-sidebar'
+             : 'ordo-modal-backdrop'"
+         v-on:click.self="taskModal.mode === 'create' && closeTaskModal()"
+         :role="taskModal.mode === 'edit' ? 'complementary' : 'dialog'"
+         :aria-modal="taskModal.mode === 'create' ? 'true' : null"
+         aria-labelledby="taskModalTitle">
 
-        <section class="ordo-modal"
-                 :class="{ 'ordo-task-sidebar': taskModal.mode === 'edit' }"
-                 role="dialog"
-                 aria-modal="false"
+        <section :class="taskModal.mode === 'edit' ? '' : 'ordo-modal'"
                  aria-labelledby="taskModalTitle">
 
             <header class="ordo-modal-header">
@@ -1011,6 +1010,7 @@
 
 </div>
 
+</div>
 
 <script src="/js/bundle-vue.js"
         asp-append-version="true"></script>
