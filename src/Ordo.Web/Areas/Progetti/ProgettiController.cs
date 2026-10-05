@@ -215,7 +215,11 @@ namespace Ordo.Web.Areas.Progetti
                     AssignedUserName = task.AssignedUserNickName
                 }));
             }
-            var messages = await _sharedService.Query(new ProjectChatMessagesQuery { ProjectId = id });
+            var messages = await _sharedService.Query(new ProjectChatMessagesQuery
+            {
+                ProjectId = id,
+                Take = 50
+            });
 
             var model = new DettaglioViewModel();
             model.SetProject(progetto, isOwner);
@@ -237,6 +241,41 @@ namespace Ordo.Web.Areas.Progetti
             return View(model);
         }
 
+        [HttpGet]
+        public virtual async Task<IActionResult> ChatMessages(Guid id, int skip = 50)
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Challenge();
+
+            var progetto = await _sharedService.Query(new ProjectDetailQuery { Id = id });
+            if (progetto == null)
+                return NotFound();
+
+            var membri = await _sharedService.Query(new ProjectMembersQuery { ProjectId = id });
+            if (progetto.OwnerId != currentUserId && !membri.Members.Any(member => member.UserId == currentUserId))
+                return Forbid();
+
+            var page = await _sharedService.Query(new ProjectChatMessagesQuery
+            {
+                ProjectId = id,
+                Skip = Math.Max(0, skip),
+                Take = 50
+            });
+
+            return Json(new
+            {
+                messages = page.Messages.Select(message => new
+                {
+                    id = message.Id,
+                    userId = message.UserId,
+                    userName = message.UserName,
+                    testo = message.Testo,
+                    dataCreazione = message.DataCreazione
+                }),
+                hasMore = page.HasMore
+            });
+        }
+
         [HttpPost]
         public virtual async Task<IActionResult> ChatInvia(ChatMessageFormViewModel model)
         {
@@ -253,6 +292,15 @@ namespace Ordo.Web.Areas.Progetti
 
             if (!ModelState.IsValid)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        error = "Scrivi un messaggio di massimo 2000 caratteri."
+                    });
+                }
+
                 Alerts.AddError(this, "Messaggio non valido");
                 return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "chat" });
             }
@@ -276,6 +324,18 @@ namespace Ordo.Web.Areas.Progetti
                 DataCreazione = message.DataCreazione,
                 UtentiCoinvolti = await GetInvolvedUserIds(model.ProjectId, progetto.OwnerId)
             });
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    id = message.Id,
+                    userId = currentUserId,
+                    userName,
+                    testo = message.Testo,
+                    dataCreazione = message.DataCreazione
+                });
+            }
 
             return RedirectToAction(nameof(Dettaglio), new { id = model.ProjectId, tab = "chat" });
         }

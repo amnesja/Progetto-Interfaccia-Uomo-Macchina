@@ -18,6 +18,7 @@ namespace Ordo.Web.Areas.Progetti
         public IEnumerable<BoardItemViewModel> Boards { get; set; } = Array.Empty<BoardItemViewModel>();
         public IEnumerable<MemberItemViewModel> Membri { get; set; } = Array.Empty<MemberItemViewModel>();
         public IEnumerable<ChatMessageViewModel> Messages { get; set; } = Array.Empty<ChatMessageViewModel>();
+        public bool HasMoreMessages { get; set; }
 
         public void SetProject(ProjectDetailDTO dto, bool isOwner)
         {
@@ -46,6 +47,7 @@ namespace Ordo.Web.Areas.Progetti
 
         public void SetMessages(ProjectChatMessagesDTO dto)
         {
+            HasMoreMessages = dto.HasMore;
             Messages = dto.Messages.Select(message => new ChatMessageViewModel
             {
                 Id = message.Id,

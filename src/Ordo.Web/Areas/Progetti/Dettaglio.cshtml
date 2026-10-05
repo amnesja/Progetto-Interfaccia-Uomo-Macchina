@@ -20,7 +20,10 @@
     <link href="~/css/signalr-banner.css" asp-append-version="true" rel="stylesheet" />
 }
 
-<div id="projectWorkspace" class="ordo-project-workspace" v-cloak>
+<div id="projectWorkspace"
+     class="ordo-project-workspace"
+     data-project-id="@Model.Id"
+     v-cloak>
 
     <div id="lostConnection" class="ordo-signalr-banner d-none">
         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -499,7 +502,26 @@
         </div>
 
 
-        <div class="ordo-chat-messages">
+        <div id="projectChatMessages"
+             class="ordo-chat-messages"
+             role="log"
+             aria-label="Messaggi del progetto"
+             aria-live="polite"
+             aria-relevant="additions text"
+             v-on:scroll="handleChatScroll">
+
+            <button v-if="hasOlderMessages"
+                    type="button"
+                    class="ordo-chat-load-older"
+                    v-on:click="loadOlderMessages"
+                    :disabled="loadingOlderMessages">
+
+                <i class="fa-solid"
+                   :class="loadingOlderMessages ? 'fa-spinner fa-spin' : 'fa-arrow-up'">
+                </i>
+                {{ loadingOlderMessages ? 'Caricamento...' : 'Carica messaggi precedenti' }}
+
+            </button>
 
             <p v-if="!messages.length"
                class="ordo-dashboard-empty">
@@ -509,63 +531,99 @@
             </p>
 
 
-            <article v-for="message in messages"
-                     :key="message.id"
-                     class="ordo-chat-message"
-                     :class="{ mine: message.userId === currentUserId }">
+            <template v-for="(message, index) in messages"
+                      :key="message.id">
 
-                <span class="ordo-chat-avatar">
+                <div v-if="isNewMessageDay(index)"
+                     class="ordo-chat-day-separator"
+                     role="separator">
+                    <span>{{ formatMessageDay(message.dataCreazione) }}</span>
+                </div>
 
-                    {{ message.userName
-                        ? message.userName.substring(0, 1).toUpperCase()
-                        : '?' }}
+                <article class="ordo-chat-message"
+                         :class="{
+                             mine: message.userId === currentUserId,
+                             grouped: isGroupedMessage(index)
+                         }">
 
-                </span>
+                    <span v-if="!isGroupedMessage(index)"
+                          class="ordo-chat-avatar"
+                          aria-hidden="true">
 
-                <header>
+                        {{ message.userName
+                            ? message.userName.substring(0, 1).toUpperCase()
+                            : '?' }}
 
-                    <strong>
-                        {{ message.userName }}
-                    </strong>
+                    </span>
 
-                    <time>
-                        {{ formatMessageDate(message.dataCreazione) }}
-                    </time>
+                    <header v-if="!isGroupedMessage(index)">
 
-                </header>
+                        <strong>{{ message.userName }}</strong>
+                        <time :datetime="message.dataCreazione">
+                            {{ formatMessageTime(message.dataCreazione) }}
+                        </time>
 
-                <p>
-                    {{ message.testo }}
-                </p>
+                    </header>
 
-            </article>
+                    <p>{{ message.testo }}</p>
+
+                </article>
+
+            </template>
+
+            <button v-if="newChatMessages"
+                    type="button"
+                    class="ordo-chat-new-messages"
+                    v-on:click="scrollChatToBottom(true)">
+                {{ newChatMessages }} {{ newChatMessages === 1 ? 'nuovo messaggio' : 'nuovi messaggi' }}
+                <i class="fa-solid fa-arrow-down"></i>
+            </button>
 
         </div>
 
 
         <form method="post"
-              action="@Url.Action(MVC.Progetti.Progetti.ChatInvia())"
-              class="ordo-chat-form">
+              action="@Url.Action("ChatInvia", "Progetti", new { area = "Progetti" })"
+              class="ordo-chat-form"
+              ref="chatForm"
+              v-on:submit.prevent="sendChatMessage">
+
+            @Html.AntiForgeryToken()
 
             <input type="hidden"
                    name="ProjectId"
                    value="@Model.Id" />
 
             <textarea name="Testo"
+                      v-model="chatDraft"
                       maxlength="2000"
-                      rows="3"
-                      placeholder="Scrivi un messaggio..."
+                      rows="1"
+                      ref="chatComposer"
+                      aria-label="Scrivi un messaggio"
+                      placeholder="Scrivi un messaggio... (Invio per inviare, Shift+Invio per andare a capo)"
+                      v-on:input="resizeChatInput"
+                      v-on:keydown.enter.exact.prevent="sendChatMessage"
+                      :disabled="sendingChatMessage"
                       required></textarea>
 
             <button class="ordo-btn-primary"
-                    type="submit">
+                    type="submit"
+                    :disabled="sendingChatMessage || !chatDraft.trim()">
 
-                <i class="fa-solid fa-paper-plane"></i>
-                Invia
+                <i class="fa-solid"
+                   :class="sendingChatMessage ? 'fa-spinner fa-spin' : 'fa-paper-plane'">
+                </i>
+                {{ sendingChatMessage ? 'Invio...' : 'Invia' }}
 
             </button>
 
         </form>
+
+        <p v-if="chatError"
+           class="ordo-chat-error"
+           role="alert">
+            {{ chatError }}
+        </p>
 
     </section>
 
@@ -1015,12 +1073,6 @@
 <script src="/js/bundle-vue.js"
         asp-append-version="true"></script>
 
-<script src="/js/bundle-signalr.js"
-        asp-append-version="true"></script>
-
-<script src="~/js/signalRConnectionManager.js"
-        asp-append-version="true"></script>
-
 <script src="~/Areas/Progetti/ProjectWorkspace.js"
         asp-append-version="true"></script>
 
@@ -1045,7 +1097,9 @@
         "@Model.Id",
         "@Url.Action(MVC.Progetti.Progetti.Edit())",
         "@Url.Action(MVC.Progetti.Progetti.Delete())",
-        "@Url.Action("Index", "Dashboard", new { area = "" })"
+        "@Url.Action("Index", "Dashboard", new { area = "" })",
+        "@Url.Action("ChatInvia", "Progetti", new { area = "Progetti" })",
+        "@Url.Action("ChatMessages", "Progetti", new { area = "Progetti", id = Model.Id })"
     );
 
 </script>

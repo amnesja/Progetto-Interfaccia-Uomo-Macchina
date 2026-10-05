@@ -9,12 +9,14 @@ namespace Ordo.Services.Shared
     public class ProjectChatMessagesQuery
     {
         public Guid ProjectId { get; set; }
+        public int Skip { get; set; }
         public int Take { get; set; } = 100;
     }
 
     public class ProjectChatMessagesDTO
     {
         public IEnumerable<Message> Messages { get; set; }
+        public bool HasMore { get; set; }
 
         public class Message
         {
@@ -34,7 +36,9 @@ namespace Ordo.Services.Shared
                 .AsNoTracking()
                 .Where(message => message.ProjectId == qry.ProjectId)
                 .OrderByDescending(message => message.DataCreazione)
-                .Take(qry.Take)
+                .ThenByDescending(message => message.Id)
+                .Skip(Math.Max(0, qry.Skip))
+                .Take(Math.Clamp(qry.Take, 1, 100) + 1)
                 .Select(message => new ProjectChatMessagesDTO.Message
                 {
                     Id = message.Id,
@@ -47,7 +51,14 @@ namespace Ordo.Services.Shared
                 })
                 .ToArrayAsync();
 
-            return new ProjectChatMessagesDTO { Messages = messages.Reverse() };
+            var take = Math.Clamp(qry.Take, 1, 100);
+            var hasMore = messages.Length > take;
+
+            return new ProjectChatMessagesDTO
+            {
+                Messages = messages.Take(take).Reverse(),
+                HasMore = hasMore
+            };
         }
     }
 }

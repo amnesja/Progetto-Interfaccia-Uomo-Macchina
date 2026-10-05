@@ -24,10 +24,13 @@ var Ordo;
             projectId,
             editProjectUrl,
             deleteProjectUrl,
-            dashboardUrl
+            dashboardUrl,
+            chatSendUrl,
+            chatMessagesUrl
         ) {
 
-            const app = Vue.createApp({
+            const mountWorkspace = () => {
+                const app = Vue.createApp({
 
                 data() {
 
@@ -60,6 +63,20 @@ var Ordo;
                         members: seed.membri || [],
 
                         messages: seed.messages || [],
+
+                        loadedChatHistoryCount: (seed.messages || []).length,
+
+                        hasOlderMessages: seed.hasMoreMessages || false,
+
+                        chatDraft: "",
+
+                        sendingChatMessage: false,
+
+                        loadingOlderMessages: false,
+
+                        chatError: "",
+
+                        newChatMessages: 0,
 
                         selectedBoardId,
 
@@ -192,6 +209,10 @@ var Ordo;
                     selectTab(tab) {
 
                         this.activeTab = tab;
+
+                        if (tab === "chat") {
+                            this.$nextTick(() => this.scrollChatToBottom(true));
+                        }
 
                         window.history.replaceState(
                             null,
@@ -924,19 +945,276 @@ var Ordo;
                     },
 
 
-                    formatMessageDate(value) {
+                    messageDayKey(value) {
 
-                        return new Date(
-                            value
-                        ).toLocaleString(
+                        const date = new Date(value);
+
+                        return [
+                            date.getFullYear(),
+                            String(date.getMonth() + 1).padStart(2, "0"),
+                            String(date.getDate()).padStart(2, "0")
+                        ].join("-");
+
+                    },
+
+
+                    formatMessageDay(value) {
+
+                        return new Date(value).toLocaleDateString(
                             "it-IT",
                             {
-                                day: "2-digit",
-                                month: "2-digit",
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric"
+                            }
+                        );
+
+                    },
+
+
+                    formatMessageTime(value) {
+
+                        return new Date(value).toLocaleTimeString(
+                            "it-IT",
+                            {
                                 hour: "2-digit",
                                 minute: "2-digit"
                             }
                         );
+
+                    },
+
+
+                    isNewMessageDay(index) {
+
+                        return index === 0 ||
+                            this.messageDayKey(
+                                this.messages[index - 1].dataCreazione
+                            ) !== this.messageDayKey(
+                                this.messages[index].dataCreazione
+                            );
+
+                    },
+
+
+                    isGroupedMessage(index) {
+
+                        if (index === 0) {
+                            return false;
+                        }
+
+                        const previous = this.messages[index - 1];
+                        const current = this.messages[index];
+
+                        return previous.userId === current.userId &&
+                            this.messageDayKey(previous.dataCreazione) ===
+                            this.messageDayKey(current.dataCreazione);
+
+                    },
+
+
+                    chatIsNearBottom() {
+
+                        const container = document.getElementById(
+                            "projectChatMessages"
+                        );
+
+                        return !container ||
+                            container.scrollHeight -
+                            container.scrollTop -
+                            container.clientHeight < 80;
+
+                    },
+
+
+                    handleChatScroll() {
+
+                        if (this.chatIsNearBottom()) {
+                            this.newChatMessages = 0;
+                        }
+
+                    },
+
+
+                    scrollChatToBottom() {
+
+                        this.$nextTick(() => {
+                            const container = document.getElementById(
+                                "projectChatMessages"
+                            );
+
+                            if (container) {
+                                container.scrollTop = container.scrollHeight;
+                            }
+
+                            this.newChatMessages = 0;
+                        });
+
+                    },
+
+
+                    appendChatMessage(message) {
+
+                        if (
+                            !message?.id ||
+                            this.messages.some(
+                                item => item.id === message.id
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const shouldScroll = this.chatIsNearBottom();
+                        this.messages.push(message);
+
+                        if (
+                            shouldScroll ||
+                            message.userId === this.currentUserId
+                        ) {
+                            this.scrollChatToBottom();
+                        }
+                        else {
+                            this.newChatMessages++;
+                        }
+
+                    },
+
+
+                    resizeChatInput(event) {
+
+                        const input = event.currentTarget;
+                        input.style.height = "auto";
+                        input.style.height = Math.min(
+                            input.scrollHeight,
+                            140
+                        ) + "px";
+                        this.chatError = "";
+
+                    },
+
+
+                    async sendChatMessage() {
+
+                        const text = this.chatDraft.trim();
+
+                        if (!text || this.sendingChatMessage) {
+                            return;
+                        }
+
+                        this.chatError = "";
+                        this.sendingChatMessage = true;
+
+                        try {
+                            const formData = new FormData(this.$refs.chatForm);
+                            formData.set("Testo", text);
+
+                            const response = await fetch(chatSendUrl, {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    "Accept": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest"
+                                }
+                            });
+
+                            const result = await response.json().catch(() => null);
+
+                            if (!response.ok || !result?.id) {
+                                throw new Error(
+                                    result?.error || "Invio del messaggio non riuscito."
+                                );
+                            }
+
+                            this.appendChatMessage(result);
+                            this.chatDraft = "";
+                            this.$nextTick(() => {
+                                const composer = this.$refs.chatComposer;
+                                composer.style.height = "auto";
+                                composer.focus();
+                            });
+                        }
+                        catch (error) {
+                            this.chatError = error.message ||
+                                "Impossibile inviare il messaggio. Riprova.";
+                        }
+                        finally {
+                            this.sendingChatMessage = false;
+                        }
+
+                    },
+
+
+                    async loadOlderMessages() {
+
+                        if (this.loadingOlderMessages || !this.hasOlderMessages) {
+                            return;
+                        }
+
+                        const container = document.getElementById(
+                            "projectChatMessages"
+                        );
+                        const previousHeight = container?.scrollHeight || 0;
+                        const previousTop = container?.scrollTop || 0;
+                        this.loadingOlderMessages = true;
+                        this.chatError = "";
+
+                        try {
+                            const url = new URL(chatMessagesUrl, window.location.origin);
+                            url.searchParams.set(
+                                "skip",
+                                this.loadedChatHistoryCount
+                            );
+
+                            const response = await fetch(url, {
+                                headers: { "Accept": "application/json" }
+                            });
+
+                            if (!response.ok) {
+                                throw new Error("Caricamento dei messaggi non riuscito.");
+                            }
+
+                            const result = await response.json();
+
+                            if (
+                                !Array.isArray(result.messages) ||
+                                typeof result.hasMore !== "boolean"
+                            ) {
+                                throw new Error(
+                                    "Risposta non valida durante il caricamento dei messaggi."
+                                );
+                            }
+
+                            const existingIds = new Set(
+                                this.messages.map(message => message.id)
+                            );
+                            const olderMessages = result.messages.filter(
+                                message => !existingIds.has(message.id)
+                            );
+
+                            this.messages = [
+                                ...olderMessages,
+                                ...this.messages
+                            ];
+                            this.loadedChatHistoryCount += result.messages.length;
+                            this.hasOlderMessages = result.hasMore;
+
+                            this.$nextTick(() => {
+                                if (container) {
+                                    container.scrollTop =
+                                        previousTop +
+                                        container.scrollHeight -
+                                        previousHeight;
+                                }
+                            });
+                        }
+                        catch (error) {
+                            this.chatError = error.message ||
+                                "Impossibile caricare i messaggi precedenti.";
+                        }
+                        finally {
+                            this.loadingOlderMessages = false;
+                        }
 
                     },
 
@@ -1222,17 +1500,14 @@ var Ordo;
                     );
 
 
-                    const manager =
-                        new SignalRConnectionManager(
-                            "/OrdoHub",
-                            projectId,
-                            "JoinGroup",
-                            "LeaveGroup"
-                        );
+                    const manager = window.ordoGlobalSignalR;
 
+                    if (!manager) {
+                        console.error("La connessione SignalR condivisa non è disponibile.");
+                        return;
+                    }
 
-                    manager.registerEvents();
-
+                    manager.addAdditionalGroup(projectId);
 
                     this.boards.forEach(
                         board =>
@@ -1388,11 +1663,19 @@ var Ordo;
                     manager.connection.on(
                         "ProjectChatMessageAdded",
                         message =>
-                            this.messages.push(message)
+                            this.appendChatMessage({
+                                id: message.id || message.messageId,
+                                userId: message.userId,
+                                userName: message.userName,
+                                testo: message.testo,
+                                dataCreazione: message.dataCreazione
+                            })
                     );
 
 
-                    manager.startConnection();
+                    if (this.activeTab === "chat") {
+                        this.scrollChatToBottom();
+                    }
 
 
                     const taskId =
@@ -1436,7 +1719,19 @@ var Ordo;
             });
 
 
-            app.mount("#projectWorkspace");
+                app.mount("#projectWorkspace");
+            };
+
+            if (window.ordoGlobalSignalR) {
+                mountWorkspace();
+            }
+            else {
+                window.addEventListener(
+                    "ordo:signalr-ready",
+                    mountWorkspace,
+                    { once: true }
+                );
+            }
 
         }
 

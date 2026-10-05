@@ -91,6 +91,10 @@ class SignalRConnectionManager {
     addAdditionalGroup(groupParameter: string) {
         if (groupParameter && groupParameter !== this.joinGroupParamethers && !this.additionalGroupParameters.includes(groupParameter)) {
             this.additionalGroupParameters.push(groupParameter);
+            if (this.connection.state === signalR.HubConnectionState.Connected) {
+                this.connection.invoke(this.joinGroupMethod, groupParameter)
+                    .catch(error => console.error("Impossibile aggiungere il gruppo SignalR", error));
+            }
         }
     }
 
