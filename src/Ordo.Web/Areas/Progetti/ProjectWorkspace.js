@@ -1577,6 +1577,10 @@ var Ordo;
                                 return;
                             }
 
+                            if (this.projectDelete.deleting) {
+                                return;
+                            }
+
                             window.location.href = dashboardUrl;
                         }
                     );

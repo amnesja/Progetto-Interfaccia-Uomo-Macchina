@@ -525,9 +525,10 @@
             globalSignalR.connection.on("ProjectUpdated", function (projectId, nome) { ordoNotify("Il progetto «" + nome + "» è stato aggiornato.", "/Progetti/Dettaglio/" + projectId, "project"); });
             globalSignalR.connection.on("ProjectDeleted", function (projectId) {
                 var projectWorkspace = document.getElementById("projectWorkspace");
-                if (projectWorkspace && projectId &&
-                    projectWorkspace.dataset.projectId.toLowerCase() !== projectId.toLowerCase()) {
-                    return;
+                if (projectWorkspace && projectId) {
+                    if (projectWorkspace.dataset.projectId.toLowerCase() === projectId.toLowerCase()) {
+                        return;
+                    }
                 }
                 if (projectId) {
                     var deletedProjectUrl = "/Progetti/Dettaglio/" + projectId;
